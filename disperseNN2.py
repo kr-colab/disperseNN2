@@ -1,12 +1,5 @@
 
-# v42: copied from v41:  going for more than 10 samples by subsampling the pairs
-
-# implementation notes:
-#     45 pairs: 15Gb * 10 threads ~= 150Gb RAM (runs consistently with 200Gb allocated)
-#     100 pairs: 25Gb * 10 threads ~= 250Gb RAM (ran the first time with 200Gb allocated... but should ask for more)
-#     500 pairs:
-
-# e.g. python Maps/devTwoTone/disperseNN_2cnns.py --out temp1 --tree_list Boxes80/tree_list.txt --train --num_snps 5000 --min_n 10 --max_n 10 --edge_width 3 --batch_size 2 --validation_split 0.5 --sampling_width 1 --mutate True --num_samples 50 > Boxes80/2cnns.txt_v2
+# e.g. python disperseNN2/disperseNN2.py --out temp1 --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 1 --min_n 10 --max_n 10 --mu 1e-15 --seed 12345 --tree_list ../Maps/Boxes84/tree_list.txt --target_list ../Maps/Boxes84/target_list.txt --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --train --learning_rate 1e-4 --grid_coarseness 50 --upsample 6 --num_pairs 45 --gpu_index any
 
 import os
 import argparse
@@ -34,6 +27,12 @@ parser.add_argument(
 )
 parser.add_argument(
     "--predict", action="store_true", default=False, help="run prediction pipeline"
+)
+parser.add_argument(
+    "--preprocess",
+    action="store_true",
+    default=False,
+    help="create preprocessed tensors from tree sequences",
 )
 parser.add_argument(
     "--preprocessed",
@@ -735,7 +734,48 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
     return
 
 
+def preprocess_trees():
+    trees = read_list(args.tree_list)
+    maps = read_list(args.target_list)
+    total_sims = len(trees)
+    
+    for i in range(total_sims):
+        target = read_map(maps[i], args.grid_coarseness) 
+        params = make_generator_params_dict(
+            targets=None,
+            trees=None,
+            shuffle=None,
+            genos=None,
+            sample_widths=None,
+        )
+        training_generator = DataGenerator([None], **params) 
+        geno_mat, locs = training_generator.sample_ts(trees[i], args.seed) 
+
+        # write results
+        os.makedirs(args.out+"/Maps/"+str(args.seed), exist_ok=True)
+        os.makedirs(args.out+"/Genos/"+str(args.seed), exist_ok=True)
+        os.makedirs(args.out+"/Locs/"+str(args.seed), exist_ok=True)
+        np.save(args.out+"/Maps/"+str(args.seed)+"/"+str(i)+".target", target)
+        np.save(args.out+"/Genos/"+str(args.seed)+"/"+str(i)+".genos", geno_mat)
+        np.save(args.out+"/Locs/"+str(args.seed)+"/"+str(i)+".locs", locs)
+
+
+
+    
+
+    exit()
+    return
+
+
+
+
 ### main ###
+
+# pre-process
+if args.preprocess == True:
+    print("starting pre-processing pipeline")
+    preprocess_trees()
+
 # train
 if args.train == True:
     print("starting training pipeline")
