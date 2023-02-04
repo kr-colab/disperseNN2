@@ -507,7 +507,7 @@ def prep_trees_and_train():
 def prep_preprocessed_and_train():
 
     # read targets
-    print("loading input data; this could take a while if the lists are very long")
+    print("loading data paths; this could take a while if the lists are very long")
     print("\ttargets")
     sys.stderr.flush()
     targets = read_single_value(args.target_list)
@@ -738,9 +738,21 @@ def preprocess_trees():
     trees = read_list(args.tree_list)
     maps = read_list(args.target_list)
     total_sims = len(trees)
-    
+
+    # loop through maps to get mean and sd          
+    if not os.path.isfile(args.out+"/mean_sd.txt"):
+        targets = []
+        for i in range(total_sims):
+            target = read_map(maps[i], args.grid_coarseness)
+            targets.append(arr)
+        meanSig = np.mean(targets)
+        sdSig = np.std(targets)
+        np.save(args.out+"/mean_sd.txt", [meanSig,sdSig])
+
+    # preprocess
     for i in range(total_sims):
         target = read_map(maps[i], args.grid_coarseness) 
+        target = (target - meanSig) / sdSig
         params = make_generator_params_dict(
             targets=None,
             trees=None,
@@ -760,10 +772,6 @@ def preprocess_trees():
         np.save(args.out+"/Locs/"+str(args.seed)+"/"+str(i)+".locs", locs)
 
 
-
-    
-
-    exit()
     return
 
 
