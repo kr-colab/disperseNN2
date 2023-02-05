@@ -6,13 +6,13 @@
 #SBATCH --time=24:00:00       ### Wall clock time limit in Days-HH:MM:SS
 #SBATCH --nodes=1              ### Number of nodes needed for the job
 #SBATCH --account=kernlab       ### Account used for job submission 
-#SBATCH --mem=4gb
+#SBATCH --mem=10gb   # adjust for loading in all maps at once to calc. mean and sd.
 #SBATCH --cpus-per-task 1
 #SBATCH --requeue
 
 
 
-box=Boxes85
+box=Boxes86
 trees=/home/chriscs/kernlab/Maps/$box/tree_list.txt
 targets=/home/chriscs/kernlab//Maps/$box/target_list.txt
 
@@ -36,6 +36,6 @@ python disperseNN2/disperseNN2.py --out $box"_"preprocess --num_snps 5000 --max_
 # make lists
 #     find $box"_"preprocess | grep genos.npy | cut -d "/" -f 3- | cut -d "." -f 1 > $box"_"preprocess/master_list.txt
 #     for i in $(cat $box"_"preprocess/master_list.txt | cut -d "_" -f 3 ); do ls $box"_"preprocess/Genos/$i.genos.npy; done > $box"_"preprocess/geno_list.txt
-#     for i in $(cat $box"_"preprocess/master_list.txt | cut -d "_" -f 3 ); do ls $box"_"preprocess/Locs/$i.locs.npy; done > $box"_"preprocess/locs_list.txt
+#     for i in $(cat $box"_"preprocess/master_list.txt | cut -d "_" -f 3 ); do ls $box"_"preprocess/Locs/$i.locs.npy; done > $box"_"preprocess/loc_list.txt
 #     for i in $(cat $box"_"preprocess/master_list.txt | cut -d "_" -f 3 ); do ls $box"_"preprocess/Maps/$i.target.npy; done > $box"_"preprocess/map_list.txt
 

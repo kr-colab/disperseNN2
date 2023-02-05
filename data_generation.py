@@ -39,6 +39,7 @@ class DataGenerator(tf.keras.utils.Sequence):
     polarize: int
     sample_widths: dict
     genos: dict
+    locs: dict
     preprocessed: bool
     num_reps: int
     combination_size: int
@@ -361,27 +362,35 @@ class DataGenerator(tf.keras.utils.Sequence):
 
 
 
-    def preprocess_sample_ts(self, geno_path): 
-        "Seperate function for loading in pre-processed data"
+    # def preprocessed_sample_ts(self, geno_path): 
+    #     "Seperate function for loading in pre-processed data"
         
-        # read input
-        geno_mat = np.load(geno_path)
+    #     # read input
+    #     geno_mat = np.load(geno_path)
+    #     loc_mat = np.load(_path)
+    #     target_mat = np.load(geno_path)
 
-        return geno_mat
+    #     return geno_mat
 
     def __data_generation(self, list_IDs_temp):
-        "Generates data containing batch_size samples"
+        "Generates data containing batch_size samples"        
+        X1 = np.empty((self.batch_size, self.num_snps, self.max_n))  # genos
+        X2 = np.empty((self.batch_size, 2, self.max_n))  # locs                                 
+        y = np.empty((self.batch_size, 500,500), dtype=float)  # targets
 
-        X1 = np.empty((self.batch_size, self.num_snps, self.max_n))  # genos1               
-        X2 = np.empty((self.batch_size, 2, self.max_n))  # locs                                                                                 
-        y = np.empty((self.batch_size, 500,500), dtype=float)  # targets 
-
-        for i, ID in enumerate(list_IDs_temp):
-            y[i] = self.targets[ID]
-            out = self.sample_ts(self.trees[ID], np.random.randint(1e9,size=1))
-            X1[i, :] = out[0]
-            X2[i, :] = out[1]
-
-        X = [X1, X2]
+        
+        if self.preprocessed != True:
+            for i, ID in enumerate(list_IDs_temp):
+                y[i] = self.targets[ID]
+                out = self.sample_ts(self.trees[ID], np.random.randint(1e9,size=1))
+                X1[i, :] = out[0]
+                X2[i, :] = out[1]
+                X = [X1, X2]
+        else:
+            for i, ID in enumerate(list_IDs_temp):
+                y[i] = np.load(self.targets[ID])
+                X1[i, :] = np.load(self.genos[ID])
+                X2[i, :] = np.load(self.locs[ID])
+                X = [X1, X2]
 
         return (X, y)

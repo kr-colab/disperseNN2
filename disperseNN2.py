@@ -170,6 +170,7 @@ parser.add_argument(
 )
 parser.add_argument("--samplewidth_list", help="", default=None)
 parser.add_argument("--geno_list", help="", default=None)
+parser.add_argument("--loc_list", help="", default=None)
 parser.add_argument(
     "--training_params", help="params used in training: sigma mean and sd, max_n, num_snps", default=None
 )
@@ -225,7 +226,7 @@ def load_network():
 
     # load inputs
     geno_input = tf.keras.layers.Input(shape=(args.num_snps, args.max_n)) 
-    loc_input = tf.keras.layers.Input(shape=(2,args.max_n))
+    loc_input = tf.keras.layers.Input(shape=(2, args.max_n))
 
     # convolutions for each pair
     first_iteration = True 
@@ -399,7 +400,7 @@ def load_network():
 
 
 def make_generator_params_dict(
-    targets, trees, shuffle, genos, sample_widths
+    targets, trees, shuffle, genos, locs, sample_widths
 ):
     params = {
         "targets": targets,
@@ -422,6 +423,7 @@ def make_generator_params_dict(
         "polarize": args.polarize,
         "sample_widths": sample_widths,
         "genos": genos,
+        "locs": locs,
         "preprocessed": args.preprocessed,
         "num_reps": args.num_reps,
         "combination_size": args.combination_size,
@@ -481,6 +483,7 @@ def prep_trees_and_train():
         trees=trees,
         shuffle=True,
         genos=None,
+        locs=None,
         sample_widths=None,
     )
     training_generator = DataGenerator(partition["train"], **params)
@@ -510,25 +513,17 @@ def prep_preprocessed_and_train():
     print("loading data paths; this could take a while if the lists are very long")
     print("\ttargets")
     sys.stderr.flush()
-    targets = read_single_value(args.target_list)
-    targets = np.log(targets)
+    targets = read_dict(args.target_list)
     total_sims = len(targets)
 
-    # normalize targets
-    meanSig = np.mean(targets)
-    sdSig = np.std(targets)
-    np.save(f"{args.out}_training_params", [
-            meanSig, sdSig, args.max_n, args.num_snps])
-    targets = [(x - meanSig) / sdSig for x in targets]  # center and scale
-    targets = dict_from_list(targets)
-
     # other inputs
-    print("\tsample_widths")
-    sys.stderr.flush()
-    sample_widths = load_single_value_dict(args.samplewidth_list)
     print("\tgenos")
     sys.stderr.flush()
     genos = read_dict(args.geno_list)
+    print("\tlocs")
+    sys.stderr.flush()
+    locs = read_dict(args.loc_list)
+
 
     # split into val,train sets
     sim_ids = np.arange(0, total_sims)
@@ -550,7 +545,8 @@ def prep_preprocessed_and_train():
         trees=None,
         shuffle=True,
         genos=genos,
-        sample_widths=sample_widths,
+        locs=locs,
+        sample_widths=None,
     )
     training_generator = DataGenerator(partition["train"], **params)
     validation_generator = DataGenerator(partition["validation"], **params)
@@ -563,7 +559,7 @@ def prep_preprocessed_and_train():
         generator=training_generator,
         use_multiprocessing=False,
         epochs=args.max_epochs,
-        shuffle=False,
+        shuffle=False, # (redundant with shuffling inside generator)
         verbose=args.keras_verbose,
         validation_data=validation_generator,
         callbacks=[checkpointer, earlystop, reducelr],
@@ -637,6 +633,7 @@ def prep_preprocessed_and_pred():
         trees=None,
         shuffle=False,
         genos=genos,
+        locs=None,
         sample_widths=sample_widths,
     )
     generator = DataGenerator(partition["prediction"], **params)
@@ -687,6 +684,7 @@ def prep_trees_and_pred():
         trees=trees,
         shuffle=False,
         genos=None,
+        locs=None,
         sample_widths=None,
     )
     generator = DataGenerator(partition["prediction"], **params)
@@ -743,10 +741,11 @@ def preprocess_trees():
     if not os.path.isfile(args.out+"/mean_sd.txt"):
         targets = []
         for i in range(total_sims):
-            target = read_map(maps[i], args.grid_coarseness)
+            arr = read_map(maps[i], args.grid_coarseness)
             targets.append(arr)
         meanSig = np.mean(targets)
         sdSig = np.std(targets)
+        os.makedirs(args.out, exist_ok=True)
         np.save(args.out+"/mean_sd.txt", [meanSig,sdSig])
 
     # preprocess
@@ -758,6 +757,7 @@ def preprocess_trees():
             trees=None,
             shuffle=None,
             genos=None,
+            locs=None,
             sample_widths=None,
         )
         training_generator = DataGenerator([None], **params) 
