@@ -1,6 +1,7 @@
 # helper utils for reading in data
 
 import numpy as np
+import os
 
 # reads a list of filepaths, stores in list
 def read_list(path):
@@ -94,3 +95,27 @@ def parse_provenance(ts, param):
             break
     return(val)
             
+# read in the training targets and input paths from a preprocessed, hierarchical folder
+def dict_from_preprocessed(path):
+    targets,genos,locs,counter={},{},{},0
+    for root, subdir, files in os.walk(path+"/Maps/"): # everything under Maps/
+        if subdir == []: # excluding the Maps/ folder itself
+            for f in files:
+                mappath = os.path.join(root, f)
+                genopath = mappath.replace("Maps", "Genos").replace("target","genos")
+                locpath = mappath.replace("Maps", "Locs").replace("target","locs")
+                targets[counter] = mappath
+                genos[counter] = genopath
+                locs[counter] = locpath
+                counter += 1
+    return targets,genos,locs
+
+
+
+
+
+
+
+
+
+

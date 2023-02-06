@@ -366,7 +366,7 @@ def load_network():
         model.load_weights(args.load_weights)
     else:
         if args.train == True and args.predict == True:
-            weights = args.out + "_model.hdf5"
+            weights = args.out + "/pwConv_" + args.seed + "_model.hdf5"
             print("loading weights:", weights)
             model.load_weights(weights)
         elif args.predict == True:
@@ -375,7 +375,7 @@ def load_network():
 
     # callbacks
     checkpointer = tf.keras.callbacks.ModelCheckpoint(
-        filepath=args.out + "_model.hdf5",
+        filepath= args.out + "/pwConv_" + str(args.seed) + "_model.hdf5",
         verbose=args.keras_verbose,
         save_best_only=True,
         saveweights_only=False,
@@ -513,17 +513,8 @@ def prep_preprocessed_and_train():
     print("loading data paths; this could take a while if the lists are very long")
     print("\ttargets")
     sys.stderr.flush()
-    targets = read_dict(args.target_list)
+    targets,genos,locs = dict_from_preprocessed(args.out)
     total_sims = len(targets)
-
-    # other inputs
-    print("\tgenos")
-    sys.stderr.flush()
-    genos = read_dict(args.geno_list)
-    print("\tlocs")
-    sys.stderr.flush()
-    locs = read_dict(args.loc_list)
-
 
     # split into val,train sets
     sim_ids = np.arange(0, total_sims)
@@ -749,6 +740,9 @@ def preprocess_trees():
         np.save(args.out+"/mean_sd.txt", [meanSig,sdSig])
 
     # preprocess
+    os.makedirs(os.path.join(args.out,"Maps",str(args.seed)), exist_ok=True)
+    os.makedirs(os.path.join(args.out,"Genos",str(args.seed)), exist_ok=True)
+    os.makedirs(os.path.join(args.out,"Locs",str(args.seed)), exist_ok=True)
     for i in range(total_sims):
         target = read_map(maps[i], args.grid_coarseness) 
         target = (target - meanSig) / sdSig
@@ -764,15 +758,15 @@ def preprocess_trees():
         geno_mat, locs = training_generator.sample_ts(trees[i], args.seed) 
 
         # write results
-        os.makedirs(args.out+"/Maps/"+str(args.seed), exist_ok=True)
-        os.makedirs(args.out+"/Genos/"+str(args.seed), exist_ok=True)
-        os.makedirs(args.out+"/Locs/"+str(args.seed), exist_ok=True)
-        np.save(args.out+"/Maps/"+str(args.seed)+"/"+str(i)+".target", target)
-        np.save(args.out+"/Genos/"+str(args.seed)+"/"+str(i)+".genos", geno_mat)
-        np.save(args.out+"/Locs/"+str(args.seed)+"/"+str(i)+".locs", locs)
-
+        mapfile = os.path.join(args.out,"Maps",str(args.seed),str(i)+".target")
+        genofile = os.path.join(args.out,"Genos",str(args.seed),str(i)+".genos")
+        locfile = os.path.join(args.out,"Locs",str(args.seed),str(i)+".locs")
+        np.save(mapfile, target)
+        np.save(genofile, geno_mat)
+        np.save(locfile, locs)
 
     return
+
 
 
 
