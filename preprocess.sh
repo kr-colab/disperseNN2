@@ -12,8 +12,8 @@
 
 
 
-box=Boxes86
-n=100
+box=Boxes87
+n=10
 trees=/home/chriscs/kernlab/Maps/$box/tree_list.txt
 targets=/home/chriscs/kernlab//Maps/$box/target_list.txt
 
@@ -31,11 +31,4 @@ conda activate /home/chriscs/Software/miniconda3/envs/disperseNN
 
 python disperseNN2/disperseNN2.py --out $box"_"n$n"_"preprocess --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 10 --min_n $n --max_n $n --mu 1e-15 --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --preprocess --learning_rate 1e-4 --grid_coarseness 50 --seed XX --tree_list $trees --target_list $targets
 
-
-
-# make lists
-#     find $box"_"n$n"_"preprocess | grep genos.npy | cut -d "/" -f 3- | cut -d "." -f 1 > $box"_"n$n"_"preprocess/master_list.txt
-#     for i in $(cat $box"_"n$n"_"preprocess/master_list.txt | cut -d "_" -f 3 ); do ls $box"_"n$n"_"preprocess/Genos/$i.genos.npy; done > $box"_"n$n"_"preprocess/geno_list.txt
-#     for i in $(cat $box"_"n$n"_"preprocess/master_list.txt | cut -d "_" -f 3 ); do ls $box"_"n$n"_"preprocess/Locs/$i.locs.npy; done > $box"_"n$n"_"preprocess/loc_list.txt
-#     for i in $(cat $box"_"n$n"_"preprocess/master_list.txt | cut -d "_" -f 3 ); do ls $box"_"n$n"_"preprocess/Maps/$i.target.npy; done > $box"_"n$n"_"preprocess/map_list.txt
 

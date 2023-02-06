@@ -228,19 +228,19 @@ def load_network():
     geno_input = tf.keras.layers.Input(shape=(args.num_snps, args.max_n)) 
     loc_input = tf.keras.layers.Input(shape=(2, args.max_n))
 
+    # initialize shared convolution layers
+    CONV_1 = tf.keras.layers.Conv1D(filter_size, kernel_size=conv_kernal_size, activation="relu")
+    CONV_2 = tf.keras.layers.Conv1D(filter_size +44, kernel_size=conv_kernal_size, activation="relu")
+
     # convolutions for each pair
-    first_iteration = True 
+    first_iteration = True     
     for comb in combinations:
         filter_size = 64
         h = tf.gather(geno_input, comb, axis = 2)
-        h = tf.keras.layers.Conv1D(filter_size, kernel_size=conv_kernal_size, activation="relu")(h)
-        h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)                  
-        for i in range(num_conv_iterations):                                             
-            filter_size += 44                                                            
-            h = tf.keras.layers.Conv1D(                                                  
-                filter_size, kernel_size=conv_kernal_size, activation="relu"             
-            )(h)                                                                         
-            h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)            
+        h = CONV_1(h)
+        h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)
+        h = CONV_2(h)        
+        h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)            
         h = tf.keras.layers.Dense(128, activation="relu")(h)                             
         h = tf.keras.layers.Flatten()(h)        
         l = tf.gather(loc_input, comb, axis = 2)
