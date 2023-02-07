@@ -1,5 +1,5 @@
 
-# e.g. python disperseNN2/disperseNN2.py --out temp1 --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 1 --min_n 10 --max_n 10 --mu 1e-15 --seed 12345 --tree_list ../Maps/Boxes84/tree_list.txt --target_list ../Maps/Boxes84/target_list.txt --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --train --learning_rate 1e-4 --grid_coarseness 50 --upsample 6 --num_pairs 45 --gpu_index any
+# e.g. python disperseNN2/disperseNN2.py --out temp1 --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 1 --min_n 10 --max_n 10 --mu 1e-15 --seed 12345 --tree_list ../Maps/Boxes84/tree_list.txt --target_list ../Maps/Boxes84/target_list.txt --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --train --learning_rate 1e-4 --grid_coarseness 50 --upsample 6 --pairs 45 --gpu_index any
 
 import os
 import argparse
@@ -183,7 +183,7 @@ parser.add_argument(
 parser.add_argument("--combination_size", help="", default=2, type=int)
 parser.add_argument("--grid_coarseness", help="", default=50, type=int)
 parser.add_argument("--upsample", help="number of upsample layers", default=6, type=int)
-parser.add_argument("--num_pairs", help="number of pairs to subsample", default=45, type=int)
+parser.add_argument("--pairs", help="number of pairs to subsample", default=45, type=int)
 
 
 args = parser.parse_args()
@@ -222,7 +222,7 @@ def load_network():
     pooling_size = 10
     filter_size = 64
     combinations = list(itertools.combinations(range(args.max_n), args.combination_size))
-    combinations = random.sample(combinations, args.num_pairs)
+    combinations = random.sample(combinations, args.pairs)
 
     # load inputs
     geno_input = tf.keras.layers.Input(shape=(args.num_snps, args.max_n)) 
@@ -245,9 +245,9 @@ def load_network():
             h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)            
         h = DENSE(h)                             
         h = tf.keras.layers.Flatten()(h)        
+        hs.append(h)
         l = tf.gather(loc_input, comb, axis = 2)
         l = tf.keras.layers.Flatten()(l)
-        hs.append(h)
         ls.append(l)
 
     # reshape conv. output and locs
@@ -268,28 +268,21 @@ def load_network():
         current_break = np.exp(current_break)                    
         current_break = np.round(current_break)                  
         upsamples.append(int(current_break))                        
-    # early_breaks,late_breaks = [],[]
-    # for b in breaks:
-    #     if b <= args.num_pairs:
-    #         early_breaks.append(b)
-    #     elif b > args.num_pairs:
-    #         late_breaks.append(b)
     print("map sizes:", upsamples)
-    # print(early_breaks,late_breaks)
 
     # upsample
     for u in range(len(upsamples)-1):                                                                                       
-        num_partitions = int(np.ceil(args.num_pairs / float(upsamples[u])))
+        num_partitions = int(np.ceil(args.pairs / float(upsamples[u])))
         print("\n upsample #"+str(u+1), "(index", str(u)+"), partitions:", num_partitions)
         if num_partitions > 1: # "early" upsamples (map dimension is smaller than number of pairs)
             row = 0
             dense_stack = []
-            DENSE = tf.keras.layers.Dense(upsamples[u], activation="relu") # shared layer
+            DENSE = tf.keras.layers.Dense(upsamples[u], activation="relu") # initialize shared layer
             for p in range(num_partitions):
                 part = feature_block[:,row:row+upsamples[u],:]
                 print(part.shape, 'partitioned')
                 row += upsamples[u]
-                if part.shape[1] < upsamples[u]: # if map dimension isn't divisible by num_pairs, then pad the final partition
+                if part.shape[1] < upsamples[u]: # if map dimension isn't divisible by # pairs, then pad the final partition
                     paddings = tf.constant([[0,0], [0,upsamples[u]-part.shape[1]], [0,0]]) 
                     part = tf.pad(part, paddings, "CONSTANT")
                     print(part.shape,'padded')
@@ -302,26 +295,29 @@ def load_network():
             h = tf.stack(dense_stack, axis=1)
             print(h.shape,'stacked')
             h = tf.keras.layers.AveragePooling2D(pool_size=(num_partitions,1))(h)
-            #h = tf.keras.layers.Conv2D(32, upsamples[u]-part.shape[1], activation='relu',padding='same', kernel_initializer='HeNormal')) # *** try this out ***   
             print(h.shape,'pooled')
         else: # "late" upsamples (map dimension >= number of pairs)
             print(feature_block.shape,'feature block (for reference)')
-            paddings = tf.constant([[0,0], [0,upsamples[u]-args.num_pairs], [0,0]])
+            paddings = tf.constant([[0,0], [0,upsamples[u]-args.pairs], [0,0]])
             feature_block_padded = tf.pad(feature_block, paddings, "CONSTANT")
             print(feature_block_padded.shape,'padded feature block')
-            h = tf.keras.layers.concatenate([h, feature_block_padded]) # ~~~ skip connection engaged ~~~                        
-            print(h.shape,'skip connect / concat.')
-            h = tf.keras.layers.Dense(upsamples[u], activation="relu")(h)
-            print(h.shape,'dense')            
-        if u < len(upsamples):
-            h = tf.keras.layers.Reshape((upsamples[u],upsamples[u],1))(h)
-            print(h.shape, 'reshapen')                                                              
-            h = tf.keras.layers.Conv2DTranspose(filters=1, kernel_size=(upsamples[u+1]-upsamples[u]+1), activation="relu")(h)
-            print(h.shape,'conv2dTranspose')                                                                
-            h = tf.keras.layers.Reshape((upsamples[u+1],upsamples[u+1]))(h)
-            print(h.shape,'reshapen')                                                                                
+            if u > 0: # unless first layer, concatenate with current map
+                h = tf.keras.layers.concatenate([h, feature_block_padded]) # ~~~ skip connection engaged ~~~                        
+                print(h.shape,'skip connect / concat.')
+                h = tf.keras.layers.Dense(upsamples[u], activation="relu")(h)
+                print(h.shape,'dense')
+            else:
+                h = tf.keras.layers.Dense(upsamples[u], activation="relu")(feature_block_padded)
+                print(h.shape,'dense')            
+        # (unindent)
+        h = tf.keras.layers.Reshape((upsamples[u],upsamples[u],1))(h) 
+        print(h.shape, 'reshapen')                                                              
+        h = tf.keras.layers.Conv2DTranspose(filters=1, kernel_size=(upsamples[u+1]-upsamples[u]+1), activation="relu")(h)
+        print(h.shape,'conv2dTranspose')                                                                
+        h = tf.keras.layers.Reshape((upsamples[u+1],upsamples[u+1]))(h)
+        print(h.shape,'reshapen')                                                                                
     output = tf.keras.layers.Dense(sizeOut, activation='linear')(h) 
-    print("\n output", output.shape, "\n")
+    print("\n output: ", output.shape, " dense w/ linear act.\n")
 
     # model overview and hyperparams
     model = tf.keras.Model(
@@ -332,7 +328,6 @@ def load_network():
     model.compile(loss="mse", optimizer=opt)
     #model.summary()
     print("total params:", np.sum([np.prod(v.shape) for v in model.trainable_variables]), "\n")
-    exit()
 
     # load weights
     if args.load_weights is not None:
@@ -484,9 +479,7 @@ def prep_trees_and_train():
 def prep_preprocessed_and_train():
 
     # read targets
-    print("loading data paths; this could take a while if the lists are very long")
-    print("\ttargets")
-    sys.stderr.flush()
+    print("reading input paths", flush=True)
     targets,genos,locs = dict_from_preprocessed(args.out)
     total_sims = len(targets)
 
