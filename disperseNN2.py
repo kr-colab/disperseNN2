@@ -729,7 +729,9 @@ def preprocess_trees():
     total_sims = len(trees)
 
     # loop through maps to get mean and sd          
-    if not os.path.isfile(args.out+"/mean_sd.txt"):
+    if os.path.isfile(args.out+"/mean_sd.npy"):
+        meanSig,sdSig = np.load(args.out+"/mean_sd.npy")
+    else:
         targets = []
         for i in range(total_sims):
             arr = read_map(maps[i], args.grid_coarseness)
@@ -737,33 +739,35 @@ def preprocess_trees():
         meanSig = np.mean(targets)
         sdSig = np.std(targets)
         os.makedirs(args.out, exist_ok=True)
-        np.save(args.out+"/mean_sd.txt", [meanSig,sdSig])
+        np.save(args.out+"/mean_sd", [meanSig,sdSig])
 
-    # preprocess
+    # initialize generator and some things
     os.makedirs(os.path.join(args.out,"Maps",str(args.seed)), exist_ok=True)
     os.makedirs(os.path.join(args.out,"Genos",str(args.seed)), exist_ok=True)
     os.makedirs(os.path.join(args.out,"Locs",str(args.seed)), exist_ok=True)
-    for i in range(total_sims):
-        target = read_map(maps[i], args.grid_coarseness) 
-        target = (target - meanSig) / sdSig
-        params = make_generator_params_dict(
-            targets=None,
-            trees=None,
-            shuffle=None,
-            genos=None,
-            locs=None,
-            sample_widths=None,
-        )
-        training_generator = DataGenerator([None], **params) 
-        geno_mat, locs = training_generator.sample_ts(trees[i], args.seed) 
+    params = make_generator_params_dict(
+        targets=None,
+        trees=None,
+        shuffle=None,
+        genos=None,
+        locs=None,
+        sample_widths=None,
+    )
+    training_generator = DataGenerator([None], **params)
 
-        # write results
+    # preprocess
+    for i in range(total_sims):
         mapfile = os.path.join(args.out,"Maps",str(args.seed),str(i)+".target")
         genofile = os.path.join(args.out,"Genos",str(args.seed),str(i)+".genos")
         locfile = os.path.join(args.out,"Locs",str(args.seed),str(i)+".locs")
-        np.save(mapfile, target)
-        np.save(genofile, geno_mat)
-        np.save(locfile, locs)
+        if os.path.isfile(mapfile+".npy") == False:
+            target = read_map(maps[i], args.grid_coarseness) 
+            target = (target - meanSig) / sdSig
+            np.save(mapfile, target)
+        if os.path.isfile(genofile+".npy") == False or os.path.isfile(locfile+".npy") == False:
+            geno_mat, locs = training_generator.sample_ts(trees[i], args.seed) 
+            np.save(genofile, geno_mat)
+            np.save(locfile, locs)
 
     return
 
