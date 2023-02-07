@@ -228,27 +228,27 @@ def load_network():
     geno_input = tf.keras.layers.Input(shape=(args.num_snps, args.max_n)) 
     loc_input = tf.keras.layers.Input(shape=(2, args.max_n))
 
-    # initialize shared convolution layers
+    # initialize shared layers
     CONV_1 = tf.keras.layers.Conv1D(filter_size, kernel_size=conv_kernal_size, activation="relu")
     CONV_2 = tf.keras.layers.Conv1D(filter_size +44, kernel_size=conv_kernal_size, activation="relu")
+    DENSE_1 = tf.keras.layers.Dense(128, activation="relu")
 
     # convolutions for each pair
-    first_iteration = True     
+    first_pair = True     
     for comb in combinations:
-        filter_size = 64
         h = tf.gather(geno_input, comb, axis = 2)
         h = CONV_1(h)
         h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)
         h = CONV_2(h)        
         h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)            
-        h = tf.keras.layers.Dense(128, activation="relu")(h)                             
+        h = DENSE_1(h)                             
         h = tf.keras.layers.Flatten()(h)        
         l = tf.gather(loc_input, comb, axis = 2)
         l = tf.keras.layers.Flatten()(l)
-        if first_iteration == True: 
+        if first_pair == True: 
             h0 = h
             l0 = l
-            first_iteration = False
+            first_pair = False
         else:
             h0 = tf.keras.layers.concatenate([h0,h])
             l0 = tf.keras.layers.concatenate([l0,l])
@@ -348,7 +348,7 @@ def load_network():
         h = tf.keras.layers.concatenate([h, feature_block_padded]) # ~~~ skip connection engaged ~~~
         print(h.shape)
     output = tf.keras.layers.Dense(sizeOut, activation='linear')(h) 
-    print(output.shape)
+    print(output.shape, "\n")
 
     # model overview and hyperparams
     model = tf.keras.Model(
@@ -358,7 +358,7 @@ def load_network():
     opt = tf.keras.optimizers.Adam(learning_rate=args.learning_rate)
     model.compile(loss="mse", optimizer=opt)
     model.summary()
-
+    print("total params:", np.sum([np.prod(v.shape) for v in model.trainable_variables]), "\n")
 
     # load weights
     if args.load_weights is not None:
@@ -366,7 +366,7 @@ def load_network():
         model.load_weights(args.load_weights)
     else:
         if args.train == True and args.predict == True:
-            weights = args.out + "/pwConv_" + args.seed + "_model.hdf5"
+            weights = args.out + "/pwConv_" + str(args.seed) + "_model.hdf5"
             print("loading weights:", weights)
             model.load_weights(weights)
         elif args.predict == True:

@@ -1,5 +1,5 @@
 #!/bin/bash                                                          
-#SBATCH --partition=preempt
+#SBATCH --partition=kern
 #SBATCH --job-name=jobXX         ### Job Name
 #SBATCH --output=Output/jobXX.out         ### File in which to store job output
 #SBATCH --error=Output/jobXX.err          ### File in which to store job error messages

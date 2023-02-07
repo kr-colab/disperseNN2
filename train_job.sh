@@ -8,7 +8,7 @@
 #SBATCH --account=kernlab       ### Account used for job submission 
 #SBATCH --mem=200gb
 #SBATCH --cpus-per-task 2
-#SBATCH --gpus=3g.20gb:1 # --gpus=2g.10gb:1 --gpus=3g.20gb:1
+#SBATCH --gpus=2g.10gb:1 # --gpus=2g.10gb:1 --gpus=3g.20gb:1
 
 
 
@@ -29,9 +29,11 @@ nvidia-smi
 #     - --gpus=2g.10gb:1 works for 45 and 90 pairs;  --gpus=3g.20gb:1 is required for 450 pairs.
 id=2
 u=6
-n=100
-pairs=90
-python disperseNN2/disperseNN2.py --out Boxes84_n100_preprocess/pwConv.$id --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 1 --min_n $n --max_n $n --mu 1e-15 --seed 12345 --geno_list Boxes84_n100_preprocess/geno_list.txt --loc_list Boxes84_n100_preprocess/loc_list.txt --target_list Boxes84_n100_preprocess/map_list.txt --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --train --preprocessed --learning_rate 1e-4 --grid_coarseness 50 --upsample $u --num_pairs $pairs --gpu_index any  > Boxes84_n100_preprocess/pwConv.$id.txt_upsample$u"_"pairs$pairs
+n=10
+pairs=45
+python disperseNN2/disperseNN2.py --out Boxes84_preprocess/ --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 1 --min_n $n --max_n $n --mu 1e-15 --seed $id --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --train --preprocessed --learning_rate 1e-4 --grid_coarseness 50 --upsample $u --num_pairs $pairs --gpu_index any  > Boxes84_preprocess/pwConv.$id.txt_upsample$u"_"pairs$pairs
+#
+#python disperseNN2/disperseNN2.py --out Boxes84_n100_preprocess/ --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 1 --min_n $n --max_n $n --mu 1e-15 --seed $id --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --train --preprocessed --learning_rate 1e-4 --grid_coarseness 50 --upsample $u --num_pairs $pairs --gpu_index any  > Boxes84_n100_preprocess/pwConv.$id.txt_upsample$u"_"pairs$pairs
 
 # # pred
 # id=1
