@@ -213,7 +213,7 @@ def load_network():
     tf.config.threading.set_intra_op_parallelism_threads(args.threads)
 
     # update conv+pool iterations based on number of SNPs
-    num_conv_iterations = int(np.floor(np.log10(args.num_snps))-2)
+    num_conv_iterations = int(np.floor(np.log10(args.num_snps))-1) # was -2...
     if num_conv_iterations < 0:
         num_conv_iterations = 0
 
@@ -229,19 +229,20 @@ def load_network():
     loc_input = tf.keras.layers.Input(shape=(2, args.max_n))
 
     # initialize shared layers
-    CONV_1 = tf.keras.layers.Conv1D(filter_size, kernel_size=conv_kernal_size, activation="relu")
-    CONV_2 = tf.keras.layers.Conv1D(filter_size +44, kernel_size=conv_kernal_size, activation="relu")
-    DENSE_1 = tf.keras.layers.Dense(128, activation="relu")
+    CONV_LAYERS = []
+    for i in range(num_conv_iterations):                                             
+        CONV_LAYERS.append(tf.keras.layers.Conv1D(filter_size, kernel_size=conv_kernal_size, activation="relu"))
+        filter_size += 44
+    DENSE = tf.keras.layers.Dense(128, activation="relu")
 
     # convolutions for each pair
     first_pair = True     
     for comb in combinations:
         h = tf.gather(geno_input, comb, axis = 2)
-        h = CONV_1(h)
-        h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)
-        h = CONV_2(h)        
-        h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)            
-        h = DENSE_1(h)                             
+        for i in range(num_conv_iterations):                                             
+            h = CONV_LAYERS[i](h)
+            h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)            
+        h = DENSE(h)                             
         h = tf.keras.layers.Flatten()(h)        
         l = tf.gather(loc_input, comb, axis = 2)
         l = tf.keras.layers.Flatten()(l)
@@ -357,8 +358,9 @@ def load_network():
     )
     opt = tf.keras.optimizers.Adam(learning_rate=args.learning_rate)
     model.compile(loss="mse", optimizer=opt)
-    model.summary()
+    #model.summary()
     print("total params:", np.sum([np.prod(v.shape) for v in model.trainable_variables]), "\n")
+    exit()
 
     # load weights
     if args.load_weights is not None:
