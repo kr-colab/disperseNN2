@@ -803,9 +803,21 @@ def preprocess_trees():
                 np.save(locfile, locs)
 
     else: # just do the ordinal maps
-        meanSig,sdSig = np.load(args.out+"/mean_sd.npy")
         maps = read_list(args.target_list)
         total_sims = len(maps)
+        msfile=args.out+"/Maps_ordinal/mean_sd.npy"
+        if os.path.isfile(msfile): # the values in the ordinal maps are different than the above
+            meanSig,sdSig = np.load(msfile)
+        else:
+            targets = []
+            for i in range(total_sims):
+                arr = read_map(maps[i], args.grid_coarseness, args.segment)
+                targets.append(arr[:,:,0])
+            meanSig = np.mean(targets)
+            sdSig = np.std(targets)
+            os.makedirs(args.out, exist_ok=True)
+            np.save(msfile, [meanSig,sdSig])
+        # 
         os.makedirs(os.path.join(args.out,"Maps_ordinal",str(args.seed)), exist_ok=True)
         for i in range(total_sims):
             mapfile = os.path.join(args.out,"Maps_ordinal",str(args.seed),str(i)+".target")
