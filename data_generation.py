@@ -382,10 +382,10 @@ class DataGenerator(tf.keras.utils.Sequence):
         else:
             y_reg = np.empty((self.batch_size, 500, 500), dtype=float)
             y_class = np.empty((self.batch_size, 500, 500, 4), dtype=float)
-            targets_reg = self.targets[0]
-            targets_class = self.targets[1]
         
-        if self.preprocessed != True:
+        if self.preprocessed == False:
+            targets_reg = self.targets[0] # * this is what I did before and it worked... seem weird that it's outside the loop. *
+            targets_class = self.targets[1]
             for i, ID in enumerate(list_IDs_temp):
                 if self.segment == False:
                     y[i] = self.targets[ID]
@@ -398,7 +398,12 @@ class DataGenerator(tf.keras.utils.Sequence):
                 X = [X1, X2]
         else:
             for i, ID in enumerate(list_IDs_temp):
-                y[i] = np.load(self.targets[ID])
+                if self.segment == False:
+                    y[i] = np.load(self.targets[ID])
+                else:
+                    y_both = np.load(self.targets[ID])
+                    y_reg[i] = y_both[:,:,0]
+                    y_class[i] = y_both[:,:,1:5]
                 X1[i, :] = np.load(self.genos[ID])
                 X2[i, :] = np.load(self.locs[ID])
                 X = [X1, X2]
