@@ -350,7 +350,7 @@ def load_network():
     else:
         output_reg = h
         h = tf.keras.layers.Dense(sizeOut*4, activation='sigmoid')(h) 
-        output_class = tf.keras.layers.Reshape((500,500,4), input_shape=(500,2000))(h)
+        output_class = tf.keras.layers.Reshape((sizeOut,sizeOut,4), input_shape=(sizeOut,sizeOut*4))(h)
         model = tf.keras.Model(
             inputs = [geno_input, loc_input],
             outputs = [output_reg, output_class],
@@ -803,6 +803,7 @@ def preprocess_trees():
                 np.save(locfile, locs)
 
     else: # just do the ordinal maps
+        meanSig,sdSig = np.load(args.out+"/mean_sd.npy")
         maps = read_list(args.target_list)
         total_sims = len(maps)
         os.makedirs(os.path.join(args.out,"Maps_ordinal",str(args.seed)), exist_ok=True)
@@ -810,6 +811,7 @@ def preprocess_trees():
             mapfile = os.path.join(args.out,"Maps_ordinal",str(args.seed),str(i)+".target")
             if os.path.isfile(mapfile+".npy") == False:
                 target = read_map(maps[i], args.grid_coarseness, args.segment)
+                target[:,:,0] = (target[:,:,0] - meanSig) / sdSig
                 np.save(mapfile, target)
         
     return
