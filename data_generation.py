@@ -44,6 +44,7 @@ class DataGenerator(tf.keras.utils.Sequence):
     num_reps: int
     combination_size: int
     grid_coarseness: int
+    segment: bool
 
     def __attrs_post_init__(self):
         "Initialize a few things"
@@ -376,12 +377,21 @@ class DataGenerator(tf.keras.utils.Sequence):
         "Generates data containing batch_size samples"        
         X1 = np.empty((self.batch_size, self.num_snps, self.max_n))  # genos
         X2 = np.empty((self.batch_size, 2, self.max_n))  # locs                                 
-        y = np.empty((self.batch_size, 500,500), dtype=float)  # targets
-
+        if self.segment == False:
+            y = np.empty((self.batch_size, 500,500), dtype=float)  # targets      
+        else:
+            y_reg = np.empty((self.batch_size, 500, 500), dtype=float)
+            y_class = np.empty((self.batch_size, 500, 500, 4), dtype=float)
+            targets_reg = self.targets[0]
+            targets_class = self.targets[1]
         
         if self.preprocessed != True:
             for i, ID in enumerate(list_IDs_temp):
-                y[i] = self.targets[ID]
+                if self.segment == False:
+                    y[i] = self.targets[ID]
+                else:
+                    y_reg[i] = targets_reg[ID]
+                    y_class[i] = targets_class[ID]
                 out = self.sample_ts(self.trees[ID], np.random.randint(1e9,size=1))
                 X1[i, :] = out[0]
                 X2[i, :] = out[1]
@@ -392,5 +402,8 @@ class DataGenerator(tf.keras.utils.Sequence):
                 X1[i, :] = np.load(self.genos[ID])
                 X2[i, :] = np.load(self.locs[ID])
                 X = [X1, X2]
+
+        if self.segment == True:
+            y =[y_reg, y_class]
 
         return (X, y)

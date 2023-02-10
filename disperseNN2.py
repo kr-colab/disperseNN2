@@ -40,6 +40,12 @@ parser.add_argument(
     default=False,
     help="use preprocessed tensors, rather than tree sequences, as input",
 )
+parser.add_argument(
+    "--segment",
+    action="store_true",
+    default=False,
+    help="predict number of (sigma) classes, and which class for each pixel",
+)
 parser.add_argument("--empirical", default=None,
                     help="prefix for vcf and locs")
 parser.add_argument(
@@ -333,12 +339,22 @@ def load_network():
             print(h.shape,'reshapen')                                                                                
     
     # model overview and hyperparams
-    model = tf.keras.Model(
-        inputs = [geno_input, loc_input],                                                                                                      
-        outputs = [h],
-    )
     opt = tf.keras.optimizers.Adam(learning_rate=args.learning_rate)
-    model.compile(loss="mse", optimizer=opt)
+    if args.segment == False:
+        model = tf.keras.Model(
+            inputs = [geno_input, loc_input],                                                                                                      
+            outputs = [h],
+        )
+        model.compile(loss="mse", optimizer=opt)
+    else:
+        output_reg = h
+        h = tf.keras.layers.Dense(sizeOut*4, activation='sigmoid')(h) 
+        output_class = tf.keras.layers.Reshape((500,500,4), input_shape=(500,2000))(h)
+        model = tf.keras.Model(
+            inputs = [geno_input, loc_input],
+            outputs = [output_reg, output_class],
+        )
+        model.compile(loss=['mse','BinaryCrossentropy'], optimizer=opt) # note: ordinal* data. Apparently this was the correct loss.
     #model.summary()
     print("total params:", np.sum([np.prod(v.shape) for v in model.trainable_variables]), "\n")
 
@@ -410,6 +426,7 @@ def make_generator_params_dict(
         "num_reps": args.num_reps,
         "combination_size": args.combination_size,
         "grid_coarseness": args.grid_coarseness,
+        "segment": args.segment,
     }
     return params
 
@@ -425,11 +442,18 @@ def prep_trees_and_train():
     print("reading targets from tree sequences: this should take several minutes", flush=True)
     targets = []
     maps = read_dict(args.target_list)
-    for i in range(total_sims):
-        arr = read_map(maps[i], args.grid_coarseness)
-        targets.append(arr)
-        print("finished with " + str(i), flush=True)
-
+    if args.segment == False:
+        for i in range(total_sims):
+            arr = read_map(maps[i], args.grid_coarseness, args.segment)
+            targets.append(arr)
+            print("finished with " + str(i), flush=True)
+    else:
+        targets_class = []
+        for i in range(total_sims):
+            arr = read_map(maps[i], args.grid_coarseness, args.segment)
+            targets.append(arr[:,:,0])
+            targets_class.append(arr[:,:,1:5])
+            print("finished with " + str(i), flush=True)
 
     # normalize targets                                                               
     meanSig = np.mean(targets)
@@ -438,7 +462,10 @@ def prep_trees_and_train():
             meanSig, sdSig, args.max_n, args.num_snps])
     targets = [(x - meanSig) / sdSig for x in targets]  # center and scale
     targets = dict_from_list(targets)    
-
+    if args.segment == True:
+        targets_class = dict_from_list(targets_class)
+        targets = [targets, targets_class]
+    
     # split into val,train sets
     sim_ids = np.arange(0, total_sims)
     train, val = train_test_split(sim_ids, test_size=args.validation_split)
