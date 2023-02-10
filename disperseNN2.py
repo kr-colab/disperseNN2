@@ -187,7 +187,8 @@ parser.add_argument(
     help="learning rate.",
 )
 parser.add_argument("--combination_size", help="", default=2, type=int)
-parser.add_argument("--grid_coarseness", help="", default=50, type=int)
+parser.add_argument("--grid_coarseness", help="TO DO", default=50, type=int)
+parser.add_argument("--sample_grid", help="coarseness of grid for grid-sampling", default=None, type=int)
 parser.add_argument("--upsample", help="number of upsample layers", default=6, type=int)
 parser.add_argument("--pairs", help="number of pairs to subsample", default=45, type=int)
 
@@ -427,6 +428,7 @@ def make_generator_params_dict(
         "combination_size": args.combination_size,
         "grid_coarseness": args.grid_coarseness,
         "segment": args.segment,
+        "sample_grid": args.sample_grid,
     }
     return params
 

@@ -45,6 +45,8 @@ class DataGenerator(tf.keras.utils.Sequence):
     combination_size: int
     grid_coarseness: int
     segment: bool
+    sample_grid: int
+
 
     def __attrs_post_init__(self):
         "Initialize a few things"
@@ -100,6 +102,27 @@ class DataGenerator(tf.keras.utils.Sequence):
 
         return cropped
 
+
+    def sample_ind(self, ts, sampled_inds, W, i, j):
+        bin_size = W / self.sample_grid
+        output_ind = None
+        for ind in sampled_inds:
+            indiv = ts.individual(ind)
+            loc = indiv.location[0:2]
+            if (
+                loc[0] > (i*bin_size)
+                and loc[0] < ((i+1)*bin_size)
+                and loc[1] > (j*bin_size)
+                and loc[1] < ((j+1)*bin_size)
+            ):
+                output_ind = ind
+                break
+        if output_ind == None: # if no individuals in the current square, then choose a random ind.
+            output_ind = np.random.choice(sampled_inds, 1, replace=False)                          
+
+        return output_ind
+
+
     def unpolarize(self, snp, n):
         "Change 0,1 encoding to major/minor allele. Also filter no-biallelic"
         alleles = {}                                                                          
@@ -124,6 +147,7 @@ class DataGenerator(tf.keras.utils.Sequence):
             new_genotypes = False
             
         return new_genotypes
+
     
     def sample_ts(self, filepath, seed):
         "The meat: load in and fully process a tree sequence"
@@ -188,7 +212,20 @@ class DataGenerator(tf.keras.utils.Sequence):
             sampled_inds = self.cropper(ts, W, sample_width, edge_width, alive_inds)
 
         # sample individuals
-        keep_indivs = np.random.choice(sampled_inds, n, replace=False)
+        if self.sample_grid == None:
+            keep_indivs = np.random.choice(sampled_inds, n, replace=False)
+        else:
+            if n < self.sample_grid**2:
+                print("your sample grid is too fine, not enough samples to fill it")
+                exit()
+            keep_indivs = []
+            for r in range(int(np.ceil(self.max_n / self.sample_grid**2))): # sampling from each square multiple times until >= n samples
+                for i in range(self.sample_grid):
+                    for j in range(self.sample_grid):
+                        new_guy = self.sample_ind(ts,sampled_inds,W,i,j)                    
+                        keep_indivs.append(new_guy)
+                        sampled_inds.remove(new_guy) # to avoid sampling same guy twice
+            keep_indivs = np.random.choice(keep_indivs, n, replace=False) # taking n from the >=n list            
         keep_nodes = []
         for i in keep_indivs:
             ind = ts.individual(i)
