@@ -566,7 +566,7 @@ def prep_preprocessed_and_train():
     return
 
 
-def prep_empirical_and_pred():
+def prep_empirical_and_pred(): # *** ths hasn't been updated since disperseNN ***
 
     # grab mean and sd from training distribution
     meanSig, sdSig, args.max_n, args.num_snps = np.load(args.training_params)
@@ -600,22 +600,16 @@ def prep_empirical_and_pred():
     return
 
 
-def prep_preprocessed_and_pred():
+def prep_preprocessed_and_pred(): # *** not tested / will need work***
 
     # grab mean and sd from training distribution
-    meanSig, sdSig, args.max_n, args.num_snps = np.load(args.training_params)
-    args.max_n = int(args.max_n)
-    args.num_snps = int(args.num_snps)
+    meanSig, sdSig = np.load(args.out + "/mean_sd.npy")
+    #? args.max_n = int(args.max_n)
+    #args.num_snps = int(args.num_snps)
 
     # load inputs
-    targets = read_single_value(args.target_list)
-    targets = np.log(targets)
-    targets = dict_from_list(targets)
-    genos = read_dict(args.geno_list)
-    sample_widths = load_single_value_dict(args.samplewidth_list)
-    # storing just the names, for output.
-    file_names = read_dict(args.geno_list)
-    total_sims = len(file_names)
+    targets,genos,locs = dict_from_preprocessed(args.out, args.segment)
+    total_sims = len(targets)
 
     # organize "partition" to hand to data generator
     partition = {}
@@ -647,15 +641,15 @@ def prep_preprocessed_and_pred():
     return
 
 
-def prep_trees_and_pred():
+def prep_trees_and_pred(): # *** never tested ***
 
     # grab mean and sd from training distribution
-    meanSig, sdSig, args.max_n, args.num_snps = np.load(args.training_params)
-    args.max_n = int(args.max_n)
-    args.num_snps = int(args.num_snps)
+    meanSig, sdSig = np.load(args.out + "mean_sd.npy")
+    #args.max_n = int(args.max_n)
+    #args.num_snps = int(args.num_snps)
 
     # tree sequences                                                              
-    print(args.tree_list)
+    print(args.tree_list, flush=True)
     trees = read_dict(args.tree_list)
     total_sims = len(trees)
 
@@ -663,9 +657,21 @@ def prep_trees_and_pred():
     print("reading targets from tree sequences: this should take several minutes")
     targets = []
     maps = read_dict(args.target_list)
-    for i in range(total_sims):
-        arr = read_map(maps[i], args.grid_coarseness, args.segment)
-        targets.append(arr)
+    if args.segment == False:
+        for i in range(total_sims):
+            arr = read_map(maps[i], args.grid_coarseness, args.segment)
+            targets.append(arr)
+    else:
+        targets_class = []
+        for i in range(total_sims):
+            arr = read_map(maps[i], args.grid_coarseness, args.segment)
+            targets.append(arr[:,:,0])
+            targets_class.append(arr[:,:,1:5])
+            print("finished with " + str(i), flush=True)
+    targets = dict_from_list(targets) # (unindent)
+    if args.segment == True:
+        targets_class = dict_from_list(targets_class)
+        targets = [targets, targets_class]
 
     # organize "partition" to hand to data generator
     partition = {}
@@ -697,17 +703,30 @@ def prep_trees_and_pred():
     return
 
 
-def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names):
+def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names): # *** never tested ***
+
+    # need to split targets into two pieces
+    if args.segment == True:
+        targets_class = targets[:,:,1:5]
+        targets = targets[:,:,0]
+
     if args.empirical == None:
-        with open(f"{args.out}_predictions.txt", "w") as out_f:
+        with open(args.out + "/pwConv_" + str(args.seed) + "_predictions.txt", "w") as out_f:
             raes = []
             for i in range(args.num_pred):
                 for r in range(args.num_reps):
-                    pred_index = r + (i*args.num_reps) # predicted in "normalized space"    
+
+                    # regression part
+                    pred_index = r + (i*args.num_reps) # predicted in "normalized space" (old comment)
                     trueval = targets[simids[i]] # not normalized as read in
-                    prediction = predictions[pred_index]
+                    prediction = predictions[0][pred_index] # (500x500) (index 0 for the regression output)
                     prediction = (prediction * sdSig) + meanSig # back transform to real space
 
+                    # classification part                                                                        
+                    trueclass = targets_class[simids[i]] # not normalized as read in (500x500)                   
+                    predict_class = predictions[1][pred_index] # (500x500) (index 1 for the classification output)   
+
+                    # format output - one row per test dataset
                     outline = ""
                     outline += file_names[simids[i]]
                     outline += "\t"
@@ -716,11 +735,15 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
                     outline += "\t".join(list(map(str,trueval.flatten())))
                     outline += "\t"
                     outline += "\t".join(list(map(str,prediction.flatten())))
+                    if segment == True:
+                        outline += "\t"
+                        outline += "\t".join(list(map(str,trueclass.flatten()))) # another 250000*4channels=1mil fields for true classes
+                        outline += "\t"
+                        outline += "\t".join(list(map(str,predict_class.flatten()))) # another 1mil fields for predicted class
                     print(outline, file=out_f)
 
-     #   print("mean RAE:", np.mean(raes))
-    else:
-        with open(f"{args.out}_predictions.txt", "a") as out_f:
+    else: # *** not updated since disperseNN ***
+        with open(args.out + "/pwConv_" + str(args.seed) + "_predictions.txt", "w") as out_f:
             prediction = predictions[0][0]
             prediction = (prediction * sdSig) + meanSig
             prediction = np.exp(prediction)
