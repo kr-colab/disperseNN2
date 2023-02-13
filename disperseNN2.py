@@ -202,7 +202,7 @@ check_params(args)
 
 
 
-def load_network():
+def load_network(num_targets):
     # set seed, gpu
     if args.seed is not None:
         np.random.seed(args.seed)
@@ -325,10 +325,16 @@ def load_network():
                 h = feature_block_padded
             if u<(len(upsamples)-1): 
                 h = tf.keras.layers.Dense(upsamples[u], activation="relu")(h)
-                print(h.shape,'dense w/ linear act')
-            else: 
-                h = tf.keras.layers.Dense(upsamples[u], activation="linear")(h)
                 print(h.shape,'dense')
+            else:
+                h = tf.keras.layers.Dense(upsamples[u], activation="linear")(h)
+                print(h.shape,'dense w/ linear act.')
+                ### 2nd channel ###########################################################
+                # *** this needs work. just testing to see what works *** 
+                h2 = tf.keras.layers.Dense(upsamples[u], activation="linear")(h)
+                h = tf.stack([h,h2], axis=1)
+                print(h.shape,'stacked')
+                ############################################################################
 
         # the upsample step
         if u < (len(upsamples)-1):
@@ -399,7 +405,7 @@ def load_network():
 
 
 def make_generator_params_dict(
-    targets, trees, shuffle, genos, locs, sample_widths
+    targets, trees, shuffle, genos, locs, sample_widths, num_targets
 ):
     params = {
         "targets": targets,
@@ -429,6 +435,7 @@ def make_generator_params_dict(
         "grid_coarseness": args.grid_coarseness,
         "segment": args.segment,
         "sample_grid": args.sample_grid,
+        "num_targets": num_targets,
     }
     return params
 
@@ -441,33 +448,50 @@ def prep_trees_and_train():
     total_sims = len(trees)
 
     # read targets                                                                 
-    print("reading targets from tree sequences: this should take several minutes", flush=True)
     targets = []
-    maps = read_dict(args.target_list)
+    maps,num_targets = read_dict_of_lists(args.target_list)
     if args.segment == False:
-        for i in range(total_sims):
-            arr = read_map(maps[i], args.grid_coarseness, args.segment)
-            targets.append(arr)
+        for t in range(num_targets):
+            targets.append( [] )
+            for i in range(total_sims):
+                arr = read_map(maps[i][t], args.grid_coarseness, args.segment)
+                targets[t].append(arr)
             print("finished with " + str(i), flush=True)
     else:
         targets_class = []
-        for i in range(total_sims):
-            arr = read_map(maps[i], args.grid_coarseness, args.segment)
-            targets.append(arr[:,:,0])
-            targets_class.append(arr[:,:,1:5])
+        for t in range(num_targets):
+            targets.append( [] )
+            targets_class.append( [] )
+            for i in range(total_sims):
+                arr = read_map(maps[i][t], args.grid_coarseness, args.segment)
+                targets[t].append(arr[:,:,0])
+                targets_class[t].append(arr[:,:,1:5])
             print("finished with " + str(i), flush=True)
 
     # normalize targets                                                               
-    meanSig = np.mean(targets)
-    sdSig = np.std(targets)
-    np.save(f"{args.out}_training_params", [
-            meanSig, sdSig, args.max_n, args.num_snps])
-    targets = [(x - meanSig) / sdSig for x in targets]  # center and scale
-    targets = dict_from_list(targets)    
-    if args.segment == True:
-        targets_class = dict_from_list(targets_class)
-        targets = [targets, targets_class]
-    
+    training_params = []
+    for t in range(num_targets):
+        meanSig = np.mean(targets[t])
+        sdSig = np.std(targets[t])
+        training_params.extend([meanSig, sdSig])
+        targets[t] = [(x - meanSig) / sdSig for x in targets[t]]  # center and scale
+        targets[t] = dict_from_list(targets[t])    
+        if args.segment == True:
+            targets_class[t] = dict_from_list(targets_class[t])
+            targets[t] = [targets, targets_class]
+    training_params.extend([args.max_n, args.num_snps])
+    np.save(f"{args.out}_training_params", training_params)
+
+    # hack: at this point "targets" contains two separate lists of maps; I want to merge into one list of 2-channel maps
+    new_targets = []
+    for i in range(total_sims):
+        channels = []
+        for t in range(num_targets):
+            channels.append(targets[t][i])
+        print(np.stack(channels).shape)
+        new_targets.append(np.stack(channels))
+    targets = list(new_targets)
+
     # split into val,train sets
     sim_ids = np.arange(0, total_sims)
     train, val = train_test_split(sim_ids, test_size=args.validation_split)
@@ -496,13 +520,14 @@ def prep_trees_and_train():
         genos=None,
         locs=None,
         sample_widths=None,
+        num_targets=num_targets,
     )
     training_generator = DataGenerator(partition["train"], **params)
     validation_generator = DataGenerator(partition["validation"], **params)
 
     # train
     load_dl_modules()
-    model, checkpointer, earlystop, reducelr = load_network()
+    model, checkpointer, earlystop, reducelr = load_network(num_targets)
     print("training!")
     history = model.fit(
         x=training_generator,
@@ -523,6 +548,7 @@ def prep_preprocessed_and_train():
     # read targets
     print("reading input paths", flush=True)
     targets,genos,locs = dict_from_preprocessed(args.out, args.segment)
+    num_targets = np.load(targets[0]).shape[0]
     total_sims = len(targets)
 
     # split into val,train sets
@@ -547,13 +573,14 @@ def prep_preprocessed_and_train():
         genos=genos,
         locs=locs,
         sample_widths=None,
+        num_targets=num_targets,
     )
     training_generator = DataGenerator(partition["train"], **params)
     validation_generator = DataGenerator(partition["validation"], **params)
 
     # train
     load_dl_modules()
-    model, checkpointer, earlystop, reducelr = load_network()
+    model, checkpointer, earlystop, reducelr = load_network(num_targets)
     print("training!")
     history = model.fit_generator(
         generator=training_generator,
@@ -658,7 +685,7 @@ def prep_trees_and_pred(): # *** never tested ***
     # read targets                                                                
     print("reading targets from tree sequences: this should take several minutes")
     targets = []
-    maps = read_dict(args.target_list)
+    maps,num_targets = read_dict_of_lists(args.target_list)
     if args.segment == False:
         for i in range(total_sims):
             arr = read_map(maps[i], args.grid_coarseness, args.segment)
@@ -758,21 +785,32 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
 def preprocess_trees():
     if args.segment == False:
         trees = read_list(args.tree_list)
-        maps = read_list(args.target_list)
+        maps, num_targets = read_list_of_lists(args.target_list)
         total_sims = len(trees)
 
         # loop through maps to get mean and sd          
         if os.path.isfile(args.out+"/mean_sd.npy"):
-            meanSig,sdSig = np.load(args.out+"/mean_sd.npy")
+            stats = np.load(args.out+"/mean_sd.npy")
         else:
             targets = []
-            for i in range(total_sims):
-                arr = read_map(maps[i], args.grid_coarseness, args.segment)
-                targets.append(arr)
-            meanSig = np.mean(targets)
-            sdSig = np.std(targets)
+            for t in range(num_targets):
+                targets.append( [] )
+                for i in range(total_sims):
+                    arr = read_map(maps[i][t], args.grid_coarseness, args.segment)
+                    targets[t].append(arr)
+
+            # meanSig = np.mean(targets)
+            # sdSig = np.std(targets)
+            # os.makedirs(args.out, exist_ok=True)
+            # np.save(args.out+"/mean_sd", [meanSig,sdSig])
+
+            stats = []
+            for t in range(num_targets):
+                meanSig = np.mean(targets[t])
+                sdSig = np.std(targets[t])
+                stats.append(np.array([meanSig, sdSig]))
             os.makedirs(args.out, exist_ok=True)
-            np.save(args.out+"/mean_sd", [meanSig,sdSig])
+            np.save(args.out+"/mean_sd", stats) 
 
         # initialize generator and some things
         os.makedirs(os.path.join(args.out,"Maps",str(args.seed)), exist_ok=True)
@@ -785,6 +823,7 @@ def preprocess_trees():
             genos=None,
             locs=None,
             sample_widths=None,
+            num_targets=num_targets,
         )
         training_generator = DataGenerator([None], **params)
 
@@ -794,9 +833,13 @@ def preprocess_trees():
             genofile = os.path.join(args.out,"Genos",str(args.seed),str(i)+".genos")
             locfile = os.path.join(args.out,"Locs",str(args.seed),str(i)+".locs")
             if os.path.isfile(mapfile+".npy") == False:
-                target = read_map(maps[i], args.grid_coarseness, args.segment) 
-                target = (target - meanSig) / sdSig
-                np.save(mapfile, target)
+                channels = []
+                for t in range(num_targets):
+                    target = read_map(maps[i][t], args.grid_coarseness, args.segment) 
+                    target = (target - stats[t][0]) / stats[t][1]
+                    channels.append(target)
+                channels = np.stack(channels)
+                np.save(mapfile, channels)
             if os.path.isfile(genofile+".npy") == False or os.path.isfile(locfile+".npy") == False:
                 geno_mat, locs = training_generator.sample_ts(trees[i], args.seed) 
                 np.save(genofile, geno_mat)
