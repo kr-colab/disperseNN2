@@ -19,8 +19,10 @@ segment=""
 #segment="--segment"
 grid=""
 #grid="--sample_grid 4"
-trees=/home/chriscs/kernlab/Maps/$box/tree_list.txt
-targets=/home/chriscs/kernlab//Maps/$box/target_list.txt
+#trees=/home/chriscs/kernlab/Maps/$box/tree_list.txt
+#targets=/home/chriscs/kernlab//Maps/$box/target_list.txt
+trees=/home/chriscs/kernlab/Maps/$box/tree_list_temp.txt
+targets=/home/chriscs/kernlab//Maps/$box/target_list_temp.txt
 #targets=/home/chriscs/kernlab//Maps/$box/target_list_ordinal.txt
 
 

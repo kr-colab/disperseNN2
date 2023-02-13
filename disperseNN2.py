@@ -329,12 +329,10 @@ def load_network(num_targets):
             else:
                 h = tf.keras.layers.Dense(upsamples[u], activation="linear")(h)
                 print(h.shape,'dense w/ linear act.')
-                ### 2nd channel ###########################################################
-                # *** this needs work. just testing to see what works *** 
-                h2 = tf.keras.layers.Dense(upsamples[u], activation="linear")(h)
-                h = tf.stack([h,h2], axis=1)
-                print(h.shape,'stacked')
-                ############################################################################
+                for t in range(num_targets-1):
+                    h2 = tf.keras.layers.Dense(upsamples[u], activation="linear")(h)
+                    h = tf.stack([h,h2], axis=1)
+                    print(h.shape,'stacked')
 
         # the upsample step
         if u < (len(upsamples)-1):
@@ -798,12 +796,6 @@ def preprocess_trees():
                 for i in range(total_sims):
                     arr = read_map(maps[i][t], args.grid_coarseness, args.segment)
                     targets[t].append(arr)
-
-            # meanSig = np.mean(targets)
-            # sdSig = np.std(targets)
-            # os.makedirs(args.out, exist_ok=True)
-            # np.save(args.out+"/mean_sd", [meanSig,sdSig])
-
             stats = []
             for t in range(num_targets):
                 meanSig = np.mean(targets[t])
@@ -860,7 +852,6 @@ def preprocess_trees():
             sdSig = np.std(targets)
             os.makedirs(args.out, exist_ok=True)
             np.save(msfile, [meanSig,sdSig])
-        # 
         os.makedirs(os.path.join(args.out,"Maps_ordinal",str(args.seed)), exist_ok=True)
         for i in range(total_sims):
             mapfile = os.path.join(args.out,"Maps_ordinal",str(args.seed),str(i)+".target")
