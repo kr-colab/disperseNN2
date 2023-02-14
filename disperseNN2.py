@@ -289,6 +289,9 @@ def load_network(num_targets):
                 DENSE = tf.keras.layers.Dense(upsamples[u], activation="relu") # initialize shared layer
             else:
                 DENSE = tf.keras.layers.Dense(upsamples[u], activation="linear")
+                if num_targets > 1:
+                    print("still need to deal with multiple targets, here.")
+                    exit()
             for p in range(num_partitions):
                 part = feature_block[:,row:row+upsamples[u],:]
                 print(part.shape, 'partitioned')
@@ -329,7 +332,7 @@ def load_network(num_targets):
             else:
                 h = tf.keras.layers.Dense(upsamples[u], activation="linear")(h)
                 print(h.shape,'dense w/ linear act.')
-                for t in range(num_targets-1):
+                for t in range(num_targets-1): # (target has multiple channels)
                     h2 = tf.keras.layers.Dense(upsamples[u], activation="linear")(h)
                     h = tf.stack([h,h2], axis=1)
                     print(h.shape,'stacked')
@@ -354,6 +357,10 @@ def load_network(num_targets):
     else:
         output_reg = h
         h = tf.keras.layers.Dense(sizeOut*4, activation='sigmoid')(h) 
+        print(h.shape,'dense, sigmoid')
+        for t in range(num_targets-1): # (target has multiple channels)     
+            print("we're not going there right now. Changes the code TOO much")
+            exit()
         output_class = tf.keras.layers.Reshape((sizeOut,sizeOut,4), input_shape=(sizeOut,sizeOut*4))(h)
         model = tf.keras.Model(
             inputs = [geno_input, loc_input],
@@ -438,7 +445,7 @@ def make_generator_params_dict(
     return params
 
 
-def prep_trees_and_train():
+def prep_trees_and_train(): # *** never tested (not for more than one or two batches, don't knw if it learns)
 
     # tree sequences
     print(args.tree_list, flush=True)
@@ -488,7 +495,8 @@ def prep_trees_and_train():
             channels.append(targets[t][i])
         print(np.stack(channels).shape)
         new_targets.append(np.stack(channels))
-    targets = list(new_targets)
+    targets = list(new_targets) # *** is this supposed to be dict?
+    #targets = dict_from_list(targets) # (unindent)                                                                                         
 
     # split into val,train sets
     sim_ids = np.arange(0, total_sims)
@@ -627,10 +635,10 @@ def prep_empirical_and_pred(): # *** ths hasn't been updated since disperseNN **
     return
 
 
-def prep_preprocessed_and_pred(): # *** not tested / will need work***
+def prep_preprocessed_and_pred(): # *** not tested / will need work ***
 
     # grab mean and sd from training distribution
-    meanSig, sdSig = np.load(args.out + "/mean_sd.npy")
+    mean_sd = np.load(args.out + "/mean_sd.npy")
     #? args.max_n = int(args.max_n)
     #args.num_snps = int(args.num_snps)
 
@@ -662,8 +670,8 @@ def prep_preprocessed_and_pred(): # *** not tested / will need work***
     model, checkpointer, earlystop, reducelr = load_network()
     print("predicting")
     predictions = model.predict_generator(generator)
-    unpack_predictions(predictions, meanSig, sdSig,
-                       targets, simids, file_names)
+    unpack_predictions(predictions, mean_sd,
+                       targets, simids, file_names, num_targets)
 
     return
 
@@ -671,29 +679,31 @@ def prep_preprocessed_and_pred(): # *** not tested / will need work***
 def prep_trees_and_pred(): # *** never tested ***
 
     # grab mean and sd from training distribution
-    meanSig, sdSig = np.load(args.out + "mean_sd.npy")
-    #args.max_n = int(args.max_n)
-    #args.num_snps = int(args.num_snps)
+    mean_sd = np.load(args.out+"_training_params")
 
     # tree sequences                                                              
-    print(args.tree_list, flush=True)
     trees = read_dict(args.tree_list)
     total_sims = len(trees)
 
-    # read targets                                                                
-    print("reading targets from tree sequences: this should take several minutes")
+    # read targets                                                            
     targets = []
     maps,num_targets = read_dict_of_lists(args.target_list)
     if args.segment == False:
-        for i in range(total_sims):
-            arr = read_map(maps[i], args.grid_coarseness, args.segment)
-            targets.append(arr)
+        for t in range(num_targets):
+            targets.append( [] )
+            for i in range(total_sims):
+                arr = read_map(maps[i][t], args.grid_coarseness, args.segment)
+                targets[t].append(arr)
+            print("finished with " + str(i), flush=True)
     else:
         targets_class = []
-        for i in range(total_sims):
-            arr = read_map(maps[i], args.grid_coarseness, args.segment)
-            targets.append(arr[:,:,0])
-            targets_class.append(arr[:,:,1:5])
+        for t in range(num_targets):
+            targets.append( [] )
+            targets_class.append( [] )
+            for i in range(total_sims):
+                arr = read_map(maps[i][t], args.grid_coarseness, args.segment)
+                targets[t].append(arr[:,:,0])
+                targets_class[t].append(arr[:,:,1:5])
             print("finished with " + str(i), flush=True)
     targets = dict_from_list(targets) # (unindent)
     if args.segment == True:
@@ -725,12 +735,12 @@ def prep_trees_and_pred(): # *** never tested ***
     model, checkpointer, earlystop, reducelr = load_network()
     print("predicting")
     predictions = model.predict_generator(generator)
-    unpack_predictions(predictions, meanSig, sdSig, targets, simids, trees)
+    unpack_predictions(predictions, mean_sd, targets, simids, trees, num_targets)
 
     return
 
 
-def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names): # *** never tested ***
+def unpack_predictions(predictions, mean_sd, targets, simids, file_names, num_targets): # *** never tested ***
 
     # need to split targets into two pieces
     if args.segment == True:
@@ -744,10 +754,13 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
                 for r in range(args.num_reps):
 
                     # regression part
-                    pred_index = r + (i*args.num_reps) # predicted in "normalized space" (old comment)
-                    trueval = targets[simids[i]] # not normalized as read in
+                    trueval = targets[simids[i]] # not normalized as read in 
+                    pred_index = r + (i*args.num_reps) # predicted in "normalized space"
                     prediction = predictions[0][pred_index] # (500x500) (index 0 for the regression output)
-                    prediction = (prediction * sdSig) + meanSig # back transform to real space
+
+                    # un-normalize each channel
+                    for t in num_targets:
+                        prediction[t] = (prediction[t] * mean_sd[t][0]) + mean_sd[t][1] # back transform to real space
 
                     # classification part                                                                        
                     trueclass = targets_class[simids[i]] # not normalized as read in (500x500)                   
