@@ -22,6 +22,25 @@ def read_dict(path):
             counter += 1
     return collection
 
+# reads a list of filepath-lists (comma-separated), stores in list
+def read_list_of_lists(path):
+    collection = []
+    with open(path) as infile:
+        for line in infile:
+            newline = line.strip().split(",")
+            collection.append(newline)
+    return collection, len(newline)
+
+# reads a list of filepath-lists (comma-separated), stores in dict
+def read_dict_of_lists(path):
+    collection, counter = {}, 0
+    with open(path) as infile:
+        for line in infile:
+            newline = line.strip().split(",")
+            collection[counter] = newline
+            counter += 1
+    return collection, len(newline)
+
 # reads a list of floats, stores in list
 def read_single_value(path):
     collection = []
@@ -111,3 +130,13 @@ def dict_from_preprocessed(path, segment):
                 locs[counter] = locpath
                 counter += 1
     return targets,genos,locs
+
+
+
+
+
+
+
+
+
+
