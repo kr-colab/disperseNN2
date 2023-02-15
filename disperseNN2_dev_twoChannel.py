@@ -6,7 +6,7 @@ import argparse
 import tskit
 from sklearn.model_selection import train_test_split
 from check_params import *
-from read_input_data_dev_twoChannel import *
+from read_input_dev_twoChannel import *
 from process_input import *
 from data_generation_dev_twoChannel import DataGenerator
 import gpustat

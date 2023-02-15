@@ -39,7 +39,7 @@ def check_params(args):
             exit()
 
     # check some other param combinations
-    if args.train == False and args.predict == False and args.preprocess == False:
+    if args.train == False and args.predict == False and args.preprocess == False and args.plot_history == False:
         print("either --train or --predict or --preprocess")
         exit()
     if args.sampling_width != None:

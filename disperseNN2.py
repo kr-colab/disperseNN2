@@ -11,6 +11,7 @@ from process_input import *
 from data_generation import DataGenerator
 import gpustat
 import itertools
+import matplotlib.pyplot as plt
 
 def load_dl_modules():
     print("loading bigger modules")
@@ -136,6 +137,8 @@ parser.add_argument(
 parser.add_argument("--seed", default=None, type=int, help="random seed.")
 parser.add_argument("--gpu_index", default="-1", type=str,
                     help="index of gpu. To avoid GPUs, skip this flag or say '-1'. To use any available GPU say 'any' ")
+parser.add_argument('--plot_history', default=False, type=str,
+                    help="plot training history? default: False")
 parser.add_argument(
     "--load_weights",
     default=None,
@@ -829,7 +832,23 @@ def preprocess_trees():
     return
 
 
-
+def plot_history():
+    loss,val_loss = [],[]
+    with open(args.plot_history) as infile:
+        for line in infile:
+            if "val_loss:" in line:
+                endofline = line.strip().split(" loss:")[-1]
+                loss.append(float(endofline.split()[0]))
+                val_loss.append(float(endofline.split()[3]))
+    epochs = np.arange(len(loss))
+    fig = plt.figure(figsize=(4,1.5),dpi=200)
+    plt.rcParams.update({'font.size': 7})
+    ax1=fig.add_axes([0,0,0.4,1])
+    ax1.plot(epochs, val_loss, color="blue", lw=0.5, label='val_loss')
+    ax1.set_xlabel("Epoch")
+    ax1.plot(epochs, loss, color="red", lw=0.5, label='loss')
+    ax1.legend()
+    fig.savefig(args.plot_history+"_plot.pdf",bbox_inches='tight')
 
 
 ### main ###
@@ -848,6 +867,10 @@ if args.train == True:
     else:
         print("using pre-processed tensors")
         prep_preprocessed_and_train()
+
+# plot training history               
+if args.plot_history:
+    plot_history()
 
 # predict
 if args.predict == True:
