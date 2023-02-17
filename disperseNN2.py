@@ -571,38 +571,38 @@ def prep_preprocessed_and_train():
     return
 
 
-def prep_empirical_and_pred(): # *** ths hasn't been updated since disperseNN ***
+# def prep_empirical_and_pred(): # *** ths hasn't been updated since disperseNN ***
 
-    # grab mean and sd from training distribution
-    meanSig, sdSig, args.max_n, args.num_snps = np.load(args.training_params)
-    args.max_n = int(args.max_n)
-    args.num_snps = int(args.num_snps)
+#     # grab mean and sd from training distribution
+#     meanSig, sdSig, args.max_n, args.num_snps = np.load(args.training_params)
+#     args.max_n = int(args.max_n)
+#     args.num_snps = int(args.num_snps)
 
-    # project locs
-    locs = read_locs(args.empirical + ".locs")
-    locs = np.array(locs)
-    sampling_width = project_locs(locs)
-    print("sampling_width:", sampling_width)
-    sampling_width = np.reshape(sampling_width, (1))
+#     # project locs
+#     locs = read_locs(args.empirical + ".locs")
+#     locs = np.array(locs)
+#     sampling_width = project_locs(locs)
+#     print("sampling_width:", sampling_width)
+#     sampling_width = np.reshape(sampling_width, (1))
 
-    # load model
-    load_dl_modules()
-    model, checkpointer, earlystop, reducelr = load_network()
+#     # load model
+#     load_dl_modules()
+#     model, checkpointer, earlystop, reducelr = load_network()
 
-    # convert vcf to geno matrix
-    for i in range(args.num_reps):
-        test_genos = vcf2genos(
-            args.empirical + ".vcf", args.max_n, args.num_snps, args.phase
-        )
-        ibd(test_genos, locs, args.phase, args.num_snps)
-        test_genos = np.reshape(
-            test_genos, (1, test_genos.shape[0], test_genos.shape[1])
-        )
-        dataset = args.empirical + "_" + str(i)
-        prediction = model.predict([test_genos, sampling_width])
-        unpack_predictions(prediction, meanSig, sdSig, None, None, dataset)
+#     # convert vcf to geno matrix
+#     for i in range(args.num_reps):
+#         test_genos = vcf2genos(
+#             args.empirical + ".vcf", args.max_n, args.num_snps, args.phase
+#         )
+#         ibd(test_genos, locs, args.phase, args.num_snps)
+#         test_genos = np.reshape(
+#             test_genos, (1, test_genos.shape[0], test_genos.shape[1])
+#         )
+#         dataset = args.empirical + "_" + str(i)
+#         prediction = model.predict([test_genos, sampling_width])
+#         unpack_predictions(prediction, meanSig, sdSig, None, None, dataset)
 
-    return
+#     return
 
 
 def prep_preprocessed_and_pred():
@@ -644,74 +644,69 @@ def prep_preprocessed_and_pred():
     return
 
 
-def prep_trees_and_pred(): # *** never tested ***
+# def prep_trees_and_pred(): # *** never tested ***
 
-    # grab mean and sd from training distribution
-    meanSig, sdSig = np.load(args.out + "mean_sd.npy")
-    #args.max_n = int(args.max_n)
-    #args.num_snps = int(args.num_snps)
+#     # grab mean and sd from training distribution
+#     meanSig, sdSig = np.load(args.out + "mean_sd.npy")
+#     #args.max_n = int(args.max_n)
+#     #args.num_snps = int(args.num_snps)
 
-    # tree sequences                                                              
-    print(args.tree_list, flush=True)
-    trees = read_dict(args.tree_list)
-    total_sims = len(trees)
+#     # tree sequences                                                              
+#     print(args.tree_list, flush=True)
+#     trees = read_dict(args.tree_list)
+#     total_sims = len(trees)
 
-    # read targets                                                                
-    print("reading targets from tree sequences: this should take several minutes")
-    targets = []
-    maps = read_dict(args.target_list)
-    if args.segment == False:
-        for i in range(total_sims):
-            arr = read_map(maps[i], args.grid_coarseness, args.segment)
-            targets.append(arr)
-    else:
-        targets_class = []
-        for i in range(total_sims):
-            arr = read_map(maps[i], args.grid_coarseness, args.segment)
-            targets.append(arr[:,:,0])
-            targets_class.append(arr[:,:,1:5])
-            print("finished with " + str(i), flush=True)
-    targets = dict_from_list(targets) # (unindent)
-    if args.segment == True:
-        targets_class = dict_from_list(targets_class)
-        targets = [targets, targets_class]
+#     # read targets                                                                
+#     print("reading targets from tree sequences: this should take several minutes")
+#     targets = []
+#     maps = read_dict(args.target_list)
+#     if args.segment == False:
+#         for i in range(total_sims):
+#             arr = read_map(maps[i], args.grid_coarseness, args.segment)
+#             targets.append(arr)
+#     else:
+#         targets_class = []
+#         for i in range(total_sims):
+#             arr = read_map(maps[i], args.grid_coarseness, args.segment)
+#             targets.append(arr[:,:,0])
+#             targets_class.append(arr[:,:,1:5])
+#             print("finished with " + str(i), flush=True)
+#     targets = dict_from_list(targets) # (unindent)
+#     if args.segment == True:
+#         targets_class = dict_from_list(targets_class)
+#         targets = [targets, targets_class]
 
-    # organize "partition" to hand to data generator
-    partition = {}
-    if args.num_pred == None:
-        args.num_pred = int(total_sims)
+#     # organize "partition" to hand to data generator
+#     partition = {}
+#     if args.num_pred == None:
+#         args.num_pred = int(total_sims)
 
-    simids = np.random.choice(np.arange(total_sims),
-                              args.num_pred, replace=False)
-    partition["prediction"] = simids
+#     simids = np.random.choice(np.arange(total_sims),
+#                               args.num_pred, replace=False)
+#     partition["prediction"] = simids
 
-    # get generator ready
-    params = make_generator_params_dict(
-        targets=[None]*total_sims,
-        trees=trees,
-        shuffle=False,
-        genos=None,
-        locs=None,
-        sample_widths=None,
-    )
-    generator = DataGenerator(partition["prediction"], **params)
+#     # get generator ready
+#     params = make_generator_params_dict(
+#         targets=[None]*total_sims,
+#         trees=trees,
+#         shuffle=False,
+#         genos=None,
+#         locs=None,
+#         sample_widths=None,
+#     )
+#     generator = DataGenerator(partition["prediction"], **params)
 
-    # predict
-    load_dl_modules()
-    model, checkpointer, earlystop, reducelr = load_network()
-    print("predicting")
-    predictions = model.predict_generator(generator)
-    unpack_predictions(predictions, meanSig, sdSig, targets, simids, trees)
+#     # predict
+#     load_dl_modules()
+#     model, checkpointer, earlystop, reducelr = load_network()
+#     print("predicting")
+#     predictions = model.predict_generator(generator)
+#     unpack_predictions(predictions, meanSig, sdSig, targets, simids, trees)
 
-    return
+#     return
 
 
 def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names): 
-
-    # need to split targets into two pieces
-    if args.segment == True:
-        targets_class = targets[:,:,1:5]
-        targets = targets[:,:,0]
 
     if args.empirical == None:
         with open(args.out + "/pwConv_" + str(args.seed) + "_predictions.txt", "w") as out_f:
@@ -721,21 +716,22 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
 
                     # regression part
                     pred_index = r + (i*args.num_reps) # predicted in "normalized space" (old comment)
-                    if args.preprocessed == False:
-                        trueval = targets[simids[i]] # read in as not normalized *** are you sure? ***
-                    else:
+                    if args.preprocessed == True and args.segment == False:
                         trueval = np.load(targets[simids[i]]) # read in normalized
                         trueval = (trueval * sdSig) + meanSig
-                    if args.segment == False:
                         prediction = predictions[pred_index] # (500x500) 
+                        prediction = (prediction * sdSig) + meanSig 
+                    elif args.preprocessed == True and args.segment == True:
+                        trues = np.load(targets[simids[i]]) # read in normalized                
+                        trueval = trues[:,:,0] # continuous channel
+                        trueclass = trues[:,:,1:5] # ordinal channels
+                        trueval = (trueval * sdSig) + meanSig
+                        prediction = predictions[0][pred_index] #  regression output
+                        predict_class = predictions[1][pred_index] # classification output
+                        prediction = (prediction * sdSig) + meanSig
                     else:
-                        prediction = predictions[0][pred_index] #  (index 0 for the regression output)
-                    prediction = (prediction * sdSig) + meanSig # back transform to real space
-
-                    # classification part                                                                        
-                    if args.segment == True:
-                        trueclass = targets_class[simids[i]] # not normalized as read in (500x500)                   
-                        predict_class = predictions[1][pred_index] # (500x500) (index 1 for the classification output)   
+                        print("TO DO: predict starting with with tree sequences")
+                        exit()
 
                     # format output - one row per test dataset
                     outline = ""
@@ -753,13 +749,13 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
                         outline += "\t".join(list(map(str,predict_class.flatten()))) # another 1mil fields for predicted class
                     print(outline, file=out_f)
 
-    else: # *** not updated since disperseNN ***
-        with open(args.out + "/pwConv_" + str(args.seed) + "_predictions.txt", "w") as out_f:
-            prediction = predictions[0][0]
-            prediction = (prediction * sdSig) + meanSig
-            prediction = np.exp(prediction)
-            prediction = np.round(prediction, 10)
-            print(file_names, prediction, file=out_f)
+    # else: # *** not updated since disperseNN ***
+    #     with open(args.out + "/pwConv_" + str(args.seed) + "_predictions.txt", "w") as out_f:
+    #         prediction = predictions[0][0]
+    #         prediction = (prediction * sdSig) + meanSig
+    #         prediction = np.exp(prediction)
+    #         prediction = np.round(prediction, 10)
+    #         print(file_names, prediction, file=out_f)
 
     return
 
