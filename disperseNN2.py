@@ -721,6 +721,8 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
                         trueval = (trueval * sdSig) + meanSig
                         prediction = predictions[pred_index] # (500x500) 
                         prediction = (prediction * sdSig) + meanSig 
+                        c = 0.001 # hack to make RAE work with 0s in denominator
+                        mrae = np.mean(abs((trueval+c)-(prediction+c)) / (trueval+c))
                     elif args.preprocessed == True and args.segment == True:
                         trues = np.load(targets[simids[i]]) # read in normalized                
                         trueval = trues[:,:,0] # continuous channel
