@@ -605,12 +605,10 @@ def prep_empirical_and_pred(): # *** ths hasn't been updated since disperseNN **
     return
 
 
-def prep_preprocessed_and_pred(): # *** not tested / will need work***
+def prep_preprocessed_and_pred():
 
     # grab mean and sd from training distribution
     meanSig, sdSig = np.load(args.out + "/mean_sd.npy")
-    #? args.max_n = int(args.max_n)
-    #args.num_snps = int(args.num_snps)
 
     # load inputs
     targets,genos,locs = dict_from_preprocessed(args.out, args.segment)
@@ -630,8 +628,8 @@ def prep_preprocessed_and_pred(): # *** not tested / will need work***
         trees=None,
         shuffle=False,
         genos=genos,
-        locs=None,
-        sample_widths=sample_widths,
+        locs=locs,
+        sample_widths=None,
     )
     generator = DataGenerator(partition["prediction"], **params)
 
@@ -641,7 +639,7 @@ def prep_preprocessed_and_pred(): # *** not tested / will need work***
     print("predicting")
     predictions = model.predict_generator(generator)
     unpack_predictions(predictions, meanSig, sdSig,
-                       targets, simids, file_names)
+                       targets, simids, targets)
 
     return
 
@@ -708,7 +706,7 @@ def prep_trees_and_pred(): # *** never tested ***
     return
 
 
-def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names): # *** never tested ***
+def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names): 
 
     # need to split targets into two pieces
     if args.segment == True:
@@ -723,13 +721,21 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
 
                     # regression part
                     pred_index = r + (i*args.num_reps) # predicted in "normalized space" (old comment)
-                    trueval = targets[simids[i]] # not normalized as read in
-                    prediction = predictions[0][pred_index] # (500x500) (index 0 for the regression output)
+                    if args.preprocessed == False:
+                        trueval = targets[simids[i]] # read in as not normalized *** are you sure? ***
+                    else:
+                        trueval = np.load(targets[simids[i]]) # read in normalized
+                        trueval = (trueval * sdSig) + meanSig
+                    if args.segment == False:
+                        prediction = predictions[pred_index] # (500x500) 
+                    else:
+                        prediction = predictions[0][pred_index] #  (index 0 for the regression output)
                     prediction = (prediction * sdSig) + meanSig # back transform to real space
 
                     # classification part                                                                        
-                    trueclass = targets_class[simids[i]] # not normalized as read in (500x500)                   
-                    predict_class = predictions[1][pred_index] # (500x500) (index 1 for the classification output)   
+                    if args.segment == True:
+                        trueclass = targets_class[simids[i]] # not normalized as read in (500x500)                   
+                        predict_class = predictions[1][pred_index] # (500x500) (index 1 for the classification output)   
 
                     # format output - one row per test dataset
                     outline = ""
@@ -740,7 +746,7 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
                     outline += "\t".join(list(map(str,trueval.flatten())))
                     outline += "\t"
                     outline += "\t".join(list(map(str,prediction.flatten())))
-                    if segment == True:
+                    if args.segment == True:
                         outline += "\t"
                         outline += "\t".join(list(map(str,trueclass.flatten()))) # another 250000*4channels=1mil fields for true classes
                         outline += "\t"
