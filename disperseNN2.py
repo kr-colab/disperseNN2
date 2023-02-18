@@ -634,9 +634,10 @@ def prep_preprocessed_and_pred():
 
     # predict
     print("predicting")
-    if os.path.isfile(args.out + "/pwConv_" + str(args.seed) + "_predictions.txt"):
+    os.makedirs(args.out + "/Test_" + str(args.seed), exist_ok=True)
+    if os.path.isfile(args.out + "/Test_" + str(args.seed) + "/pwConv_" + str(args.seed) + "_predictions.txt"):
         print("pred output exists; overwriting...")
-        os.remove(args.out + "/pwConv_" + str(args.seed) + "_predictions.txt")
+        os.remove(args.out + "/Test_" + str(args.seed) + "/pwConv_" + str(args.seed) + "_predictions.txt")
     load_dl_modules()
     model, checkpointer, earlystop, reducelr = load_network()
     for b in range(int(np.ceil(args.num_pred/args.batch_size))): # loop to alleviate memory
@@ -719,7 +720,7 @@ def prep_preprocessed_and_pred():
 def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names): 
 
     if args.empirical == None:
-        with open(args.out + "/pwConv_" + str(args.seed) + "_predictions.txt", "a") as out_f:
+        with open(args.out + "/Test_" + str(args.seed) + "/pwConv_" + str(args.seed) + "_predictions.txt", "a") as out_f:
             raes = []
             for i in range(len(predictions)):
 
@@ -776,7 +777,7 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
                     trueval,
                 ], axis=-1)
                 im = Image.fromarray(rgb.astype("uint8"))
-                im.save(args.out + "/pwConv_" + str(args.seed) + "_" + str(simids[i]) + "_true.png")
+                im.save(args.out + "/Test_" + str(args.seed) + "/pwConv_" + str(args.seed) + "_" + str(simids[i]) + "_true.png")
                 rgb = np.concatenate([
                     np.full((500, 500, 1), 0, dtype='uint8'),
                     np.full((500, 500, 1), 0, dtype='uint8'),
@@ -784,7 +785,7 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
                     prediction,
                 ], axis=-1)
                 im = Image.fromarray(rgb.astype("uint8"))
-                im.save(args.out + "/pwConv_" + str(args.seed) + "_" + str(simids[i]) + "_pred.png")
+                im.save(args.out + "/Test_" + str(args.seed) + "/pwConv_" + str(args.seed) + "_" + str(simids[i]) + "_pred.png")
 
                 if args.segment == True:
                     # convert ordinal classification output to segmentation                                                                         
@@ -842,7 +843,7 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
                         true_class_out,
                     ], axis=-1)
                     im = Image.fromarray(rgb.astype("uint8"))
-                    im.save(args.out + "/pwConv_" + str(args.seed) + "_" + str(simids[i]) + "_trueclass.png")
+                    im.save(args.out + "/Test_" + str(args.seed) + "/pwConv_" + str(args.seed) + "_" + str(simids[i]) + "_trueclass.png")
 
                     rgb = np.concatenate([
                         np.full((500, 500, 1), 0, dtype='uint8'),
@@ -851,7 +852,7 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
                         pred_class_out,
                     ], axis=-1)
                     im = Image.fromarray(rgb.astype("uint8"))
-                    im.save(args.out + "/pwConv_" + str(args.seed) + "_" + str(simids[i]) + "_predclass.png")
+                    im.save(args.out + "/Test_" + str(args.seed) + "/pwConv_" + str(args.seed) + "_" + str(simids[i]) + "_predclass.png")
                     
     # else: # *** not updated since disperseNN ***
     #     with open(args.out + "/pwConv_" + str(args.seed) + "_predictions.txt", "w") as out_f:
