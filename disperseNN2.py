@@ -796,33 +796,33 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
                         predict_class = np.reshape(predict_class, (500,500,4))
                         number_of_surfaces_true = 1
                         number_of_surfaces_pred = 1
-                        for k in range(1,4):
-                            for i in range(500):
-                                for j in range(500):
-                                    c = float(true_class[i,j,k])
+                        for k_ in range(1,4):
+                            for i_ in range(500):
+                                for j_ in range(500):
+                                    c = float(true_class[i_,j_,k_])
                                     if c == 1.0:
-                                        number_of_surfaces_true = int(k)+1
-                                    c = round(float(predict_class[i,j,k])) # rounding to nearest integer   
+                                        number_of_surfaces_true = int(k_)+1
+                                    c = round(float(predict_class[i_,j_,k_])) # rounding to nearest integer   
                                     if c == 1.0:
-                                        number_of_surfaces_pred = int(k)+1
+                                        number_of_surfaces_pred = int(k_)+1
 
                         # loop back through and assign surfaces                                         
                         true_class_out = np.zeros((500,500))
                         pred_class_out = np.zeros((500,500))
-                        for i in range(500):
-                            for j in range(500):
+                        for i_ in range(500):
+                            for j_ in range(500):
                                 current_class = 0
-                                for k in range(1,4):
-                                    c = float(true_class[i,j,k])
+                                for k_ in range(1,4):
+                                    c = float(true_class[i_,j_,k_])
                                     if c == 1:
-                                        current_class = int(k)
-                                true_class_out[i,j] = class_map[number_of_surfaces_true][current_class]
-                                current_class =0
-                                for k in range(1,4):
-                                    c = round(float(predict_class[i,j,k]))
+                                        current_class = int(k_)
+                                true_class_out[i_,j_] = class_map[number_of_surfaces_true][current_class]
+                                current_class = 0
+                                for k_ in range(1,4):
+                                    c = round(float(predict_class[i_,j_,k_]))
                                     if c == 1:
-                                        current_class =int(k)
-                                pred_class_out[i,j] = class_map[number_of_surfaces_pred][current_class]
+                                        current_class =int(k_)
+                                pred_class_out[i_,j_] = class_map[number_of_surfaces_pred][current_class]
                         true_class_out = np.reshape(true_class_out, (500,500,1))
                         pred_class_out = np.reshape(pred_class_out, (500,500,1))
 
@@ -835,6 +835,8 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
                         ], axis=-1)
                         im = Image.fromarray(rgb.astype("uint8"))
                         im.save(args.out + "/pwConv_" + str(args.seed) + "_" + str(i) + "_trueclass.png")
+                        im.save(args.out + "/pwConv_" + str(args.seed) + "_" + str(i) + "_true.png")
+
                         rgb = np.concatenate([
                             np.full((500, 500, 1), 0, dtype='uint8'),
                             np.full((500, 500, 1), 0, dtype='uint8'),
