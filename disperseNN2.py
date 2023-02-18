@@ -715,7 +715,7 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
             for i in range(args.num_pred):
                 for r in range(args.num_reps):
 
-                    # regression part
+                    # process output and read targets
                     pred_index = r + (i*args.num_reps) # predicted in "normalized space" (old comment)
                     if args.preprocessed == True and args.segment == False:
                         trueval = np.load(targets[simids[i]]) # read in normalized
@@ -734,7 +734,7 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
                         print("TO DO: predict starting with with tree sequences")
                         exit()
 
-                    # format output - one row per test dataset
+                    # text output - one row per test dataset
                     outline = ""
                     outline += file_names[simids[i]]
                     outline += "\t"
@@ -749,6 +749,34 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
                         outline += "\t"
                         outline += "\t".join(list(map(str,predict_class.flatten()))) # another 1mil fields for predicted class
                     print(outline, file=out_f)
+
+                    # PNG
+                    trueval *= 255 
+                    trueval = np.round(trueval)
+                    trueval = np.clip(trueval, 0, 255) # (not sure if this is necessary with true maps, but can't hurt I gues)
+                    trueval = trueval.astype(int)
+                    trueval = np.reshape(trueval, (500,500,1))
+                    prediction *= 255         
+                    prediction = np.round(prediction)
+                    prediction = np.clip(prediction, 0, 255) # truncates off the negative numbers, which were causing a splotch. Also truncating other end at 255.
+                    prediction = prediction.astype(int)
+                    prediction = np.reshape(prediction, (500,500,1))
+                    rgb = np.concatenate([
+                        np.full((500, 500, 1), 0, dtype='uint8'),
+                        np.full((500, 500, 1), 0, dtype='uint8'),
+                        trueval,
+                        trueval,
+                    ], axis=-1)
+                    im = Image.fromarray(rgb.astype("uint8"))
+                    im.save(args.out + "/pwConv_" + str(args.seed) + "_" + str(i) + "_true.png")
+                    rgb = np.concatenate([
+                        np.full((500, 500, 1), 0, dtype='uint8'),
+                        np.full((500, 500, 1), 0, dtype='uint8'),
+                        prediction,
+                        prediction,
+                    ], axis=-1)
+                    im = Image.fromarray(rgb.astype("uint8"))
+                    im.save(args.out + "/pwConv_" + str(args.seed) + "_" + str(i) + "_pred.png")
 
     # else: # *** not updated since disperseNN ***
     #     with open(args.out + "/pwConv_" + str(args.seed) + "_predictions.txt", "w") as out_f:
