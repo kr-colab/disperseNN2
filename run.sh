@@ -1,15 +1,16 @@
 #!/bin/bash                                                          
-#SBATCH --partition=kerngpu
+#SBATCH --partition=longgpu
 #SBATCH --job-name=pwConv         ### Job Name
 #SBATCH --output=Output/pwConv.out         ### File in which to store job output
 #SBATCH --error=Output/pwConv.err          ### File in which to store job error messages
-#SBATCH --time=30-00:00:00       ### Wall clock time limit in Days-HH:MM:SS
+#SBATCH --time=7-00:00:00       ### Wall clock time limit in Days-HH:MM:SS
 #SBATCH --nodes=1              ### Number of nodes needed for the job
 #SBATCH --account=kernlab       ### Account used for job submission 
 #SBATCH --mem=50gb
-#SBATCH --cpus-per-task 2
+#SBATCH --cpus-per-task 1
 #SBATCH --exclude=n244
-#SBATCH --gpus=3g.20gb:1 # --gpus=2g.10gb:1 --gpus=3g.20gb:1   
+#SBATCH --gres=gpu:1
+##SBATCH --gpus=3g.20gb:1 # --gpus=2g.10gb:1 --gpus=3g.20gb:1   
 
 
 
@@ -25,7 +26,7 @@ nvidia-smi
 # - 50gb ram, and 2g.10gb:1 for 45 pairs. 3g.20gb:1 for 450 pairs. (once you go bigger, you run into GPU memory limits, and then RAM limits)
 date=0217
 box=84
-id=5
+id=6
 u=6
 n=100
 pairs=450
