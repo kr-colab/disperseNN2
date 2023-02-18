@@ -638,6 +638,10 @@ def prep_empirical_and_pred(): # *** ths hasn't been updated since disperseNN **
 
 def prep_preprocessed_and_pred(): 
 
+    if args.num_pred == None or args.num_pred > 100:
+        print("use num_pred <= 100 to avoid OOM")
+        exit()
+
     # grab mean and sd from training distribution
     mean_sd = np.load(args.out + "/mean_sd.npy")
 
