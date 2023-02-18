@@ -11,6 +11,7 @@ from process_input import *
 from data_generation_dev_twoChannel import DataGenerator
 import gpustat
 import itertools
+import PIL.Image as Image
 
 def load_dl_modules():
     print("loading bigger modules")
@@ -643,6 +644,7 @@ def prep_preprocessed_and_pred():
     # load inputs
     targets,genos,locs = dict_from_preprocessed(args.out, args.segment)
     total_sims = len(targets)
+    num_targets = np.load(targets[0]).shape[0]
 
     # organize "partition" to hand to data generator
     partition = {}
@@ -658,18 +660,19 @@ def prep_preprocessed_and_pred():
         trees=None,
         shuffle=False,
         genos=genos,
-        locs=None,
+        locs=locs,
         sample_widths=None,
+        num_targets=num_targets,
     )
     generator = DataGenerator(partition["prediction"], **params)
 
     # predict
     load_dl_modules()
-    model, checkpointer, earlystop, reducelr = load_network()
+    model, checkpointer, earlystop, reducelr = load_network(num_targets)
     print("predicting")
     predictions = model.predict_generator(generator)
     unpack_predictions(predictions, mean_sd,
-                       targets, simids, file_names, num_targets)
+                       targets, simids, targets, num_targets)
 
     return
 
@@ -739,12 +742,7 @@ def prep_trees_and_pred(): # *** never tested ***
 
 
 
-def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names): 
-
-    # need to split targets into two pieces
-    if args.segment == True:
-        targets_class = targets[:,:,1:5]
-        targets = targets[:,:,0]
+def unpack_predictions(predictions, mean_sd, targets, simids, file_names, num_targets): 
 
     if args.empirical == None:
         with open(args.out + "/pwConv_" + str(args.seed) + "_predictions.txt", "w") as out_f:
@@ -752,49 +750,149 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
             for i in range(args.num_pred):
                 for r in range(args.num_reps):
 
-                    # regression part
+                    # process output and read targets
                     pred_index = r + (i*args.num_reps) # predicted in "normalized space" (old comment)
-                    if args.preprocessed == False:
-                        trueval = targets[simids[i]] # read in as not normalized *** are you sure? ***
-                    else:
+                    if args.preprocessed == True and args.segment == False:
                         trueval = np.load(targets[simids[i]]) # read in normalized
-                        trueval = (trueval * sdSig) + meanSig
-                    if args.segment == False:
-                        prediction = predictions[pred_index] # (500x500) 
+                        prediction = predictions[pred_index] # (500x500)                                                               
+                        for t in range(num_targets):
+                            trueval[t,:,:] = (trueval[t,:,:] * mean_sd[t][1]) + mean_sd[t][0]
+                            prediction[t,:,:] = (prediction[t,:,:] * mean_sd[t][1]) +mean_sd[t][0]
+                    # elif args.preprocessed == True and args.segment == True:
+                    #     trues = np.load(targets[simids[i]]) # read in normalized                
+                    #     trueval = trues[:,:,0] # continuous channel
+                    #     true_class = trues[:,:,1:5] # ordinal channels
+                    #     trueval = (trueval * sdSig) + meanSig
+                    #     prediction = predictions[0][pred_index] #  regression output
+                    #     predict_class = predictions[1][pred_index] # classification output
+                    #     prediction = (prediction * sdSig) + meanSig
                     else:
-                        prediction = predictions[0][pred_index] #  (index 0 for the regression output)
-                    prediction = (prediction * sdSig) + meanSig # back transform to real space
+                        print("TO DO: predict starting with with tree sequences")
+                        exit()
 
-                    # classification part                                                                        
-                    if args.segment == True:
-                        trueclass = targets_class[simids[i]] # not normalized as read in (500x500)                   
-                        predict_class = predictions[1][pred_index] # (500x500) (index 1 for the classification output)   
+                    # # text output - one row per test dataset
+                    # outline = ""
+                    # outline += file_names[simids[i]]
+                    # outline += "\t"
+                    # outline += str(500)
+                    # outline += "\t"
+                    # outline += "\t".join(list(map(str,trueval.flatten())))
+                    # outline += "\t"
+                    # outline += "\t".join(list(map(str,prediction.flatten())))
+                    # if args.segment == True:
+                    #     outline += "\t"
+                    #     outline += "\t".join(list(map(str,true_class.flatten()))) # another 250000*4channels=1mil fields for true classes
+                    #     outline += "\t"
+                    #     outline += "\t".join(list(map(str,predict_class.flatten()))) # another 1mil fields for predicted class
+                    # print(outline, file=out_f)
 
-                    # format output - one row per test dataset
-                    outline = ""
-                    outline += file_names[simids[i]]
-                    outline += "\t"
-                    outline += str(500)
-                    outline += "\t"
-                    outline += "\t".join(list(map(str,trueval.flatten())))
-                    outline += "\t"
-                    outline += "\t".join(list(map(str,prediction.flatten())))
-                    if args.segment == True:
-                        outline += "\t"
-                        outline += "\t".join(list(map(str,trueclass.flatten()))) # another 250000*4channels=1mil fields for true classes
-                        outline += "\t"
-                        outline += "\t".join(list(map(str,predict_class.flatten()))) # another 1mil fields for predicted class
-                    print(outline, file=out_f)
+                    # PNG
+                    trueval *= 255 
+                    trueval = np.round(trueval)
+                    trueval = np.clip(trueval, 0, 255) # (not sure if this is necessary with true maps, but can't hurt I gues)
+                    trueval = trueval.astype(int)
+                    trueval = np.reshape(trueval, (2,500,500,1))
+                    prediction *= 255         
+                    prediction = np.round(prediction)
+                    prediction = np.clip(prediction, 0, 255) # truncates off the negative numbers, which were causing a splotch. Also truncating other end at 255.
+                    prediction = prediction.astype(int)
+                    prediction = np.reshape(prediction, (2,500,500,1))
+                    for t in range(num_targets):
+                        rgb = np.concatenate([
+                            np.full((500, 500, 1), 0, dtype='uint8'),
+                            np.full((500, 500, 1), 0, dtype='uint8'),
+                            trueval[t],
+                            trueval[t],
+                        ], axis=-1)
+                        im = Image.fromarray(rgb.astype("uint8"))
+                        im.save(args.out + "/pwConv_" + str(args.seed) + "_" + str(i) + "_" + str(t) + "_true.png")
+                        rgb = np.concatenate([
+                            np.full((500, 500, 1), 0, dtype='uint8'),
+                            np.full((500, 500, 1), 0, dtype='uint8'),
+                            prediction[t],
+                            prediction[t],
+                        ], axis=-1)
+                        im = Image.fromarray(rgb.astype("uint8"))
+                        im.save(args.out + "/pwConv_" + str(args.seed) + "_" + str(i) + "_" + str(t) + "_pred.png")
 
-    else: # *** not updated since disperseNN ***
-        with open(args.out + "/pwConv_" + str(args.seed) + "_predictions.txt", "w") as out_f:
-            prediction = predictions[0][0]
-            prediction = (prediction * sdSig) + meanSig
-            prediction = np.exp(prediction)
-            prediction = np.round(prediction, 10)
-            print(file_names, prediction, file=out_f)
+                    # if args.segment == True:
+                    #     # convert ordinal classification output to segmentation                                                                         
+                    #     # so what is this going to look like                                                                                        
+                    #     # at least for the current training set, the sigma range is always the same, 0 to 255 on the blue scale                     
+                    #     # so, at least for now, I want to divide that up based on the number identified segments                                    
+                    #     # so, first, I'll want to loop through ALL the pixels and find the largest identified class (maybe it's always 4? we'll see)
+                    #     # then go back and assign shades of blue based on the number of different surfaces                                          
+                    #     class_map = {
+                    #         1: [255],
+                    #         2: [0,255],
+                    #         3: [0,128,255],
+                    #         4: [0,85,190,255],
+                    #     }
+
+                    #     # find the number of different surfaces                                         
+                    #     predict_class = np.reshape(predict_class, (500,500,4))
+                    #     number_of_surfaces_true = 1
+                    #     number_of_surfaces_pred = 1
+                    #     for k_ in range(1,4):
+                    #         for i_ in range(500):
+                    #             for j_ in range(500):
+                    #                 c = float(true_class[i_,j_,k_])
+                    #                 if c == 1.0:
+                    #                     number_of_surfaces_true = int(k_)+1
+                    #                 c = round(float(predict_class[i_,j_,k_])) # rounding to nearest integer   
+                    #                 if c == 1.0:
+                    #                     number_of_surfaces_pred = int(k_)+1
+
+                    #     # loop back through and assign surfaces                                         
+                    #     true_class_out = np.zeros((500,500))
+                    #     pred_class_out = np.zeros((500,500))
+                    #     for i_ in range(500):
+                    #         for j_ in range(500):
+                    #             current_class = 0
+                    #             for k_ in range(1,4):
+                    #                 c = float(true_class[i_,j_,k_])
+                    #                 if c == 1:
+                    #                     current_class = int(k_)
+                    #             true_class_out[i_,j_] = class_map[number_of_surfaces_true][current_class]
+                    #             current_class = 0
+                    #             for k_ in range(1,4):
+                    #                 c = round(float(predict_class[i_,j_,k_]))
+                    #                 if c == 1:
+                    #                     current_class =int(k_)
+                    #             pred_class_out[i_,j_] = class_map[number_of_surfaces_pred][current_class]
+                    #     true_class_out = np.reshape(true_class_out, (500,500,1))
+                    #     pred_class_out = np.reshape(pred_class_out, (500,500,1))
+
+                    #     # save
+                    #     rgb = np.concatenate([
+                    #         np.full((500, 500, 1), 0, dtype='uint8'),
+                    #         np.full((500, 500, 1), 0, dtype='uint8'),
+                    #         true_class_out,
+                    #         true_class_out,
+                    #     ], axis=-1)
+                    #     im = Image.fromarray(rgb.astype("uint8"))
+                    #     im.save(args.out + "/pwConv_" + str(args.seed) + "_" + str(i) + "_trueclass.png")
+                    #     im.save(args.out + "/pwConv_" + str(args.seed) + "_" + str(i) + "_true.png")
+
+                    #     rgb = np.concatenate([
+                    #         np.full((500, 500, 1), 0, dtype='uint8'),
+                    #         np.full((500, 500, 1), 0, dtype='uint8'),
+                    #         pred_class_out,
+                    #         pred_class_out,
+                    #     ], axis=-1)
+                    #     im = Image.fromarray(rgb.astype("uint8"))
+                    #     im.save(args.out + "/pwConv_" + str(args.seed) + "_" + str(i) + "_predclass.png")
+
+    # else: # *** not updated since disperseNN ***
+    #     with open(args.out + "/pwConv_" + str(args.seed) + "_predictions.txt", "w") as out_f:
+    #         prediction = predictions[0][0]
+    #         prediction = (prediction * sdSig) + meanSig
+    #         prediction = np.exp(prediction)
+    #         prediction = np.round(prediction, 10)
+    #         print(file_names, prediction, file=out_f)
 
     return
+
 
 
 
