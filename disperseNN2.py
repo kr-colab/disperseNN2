@@ -641,11 +641,7 @@ def prep_preprocessed_and_pred():
     load_dl_modules()
     model, checkpointer, earlystop, reducelr = load_network()
     for b in range(int(np.ceil(args.num_pred/args.batch_size))): # loop to alleviate memory
-        print("\n")
-        print(b)
-        print(b*args.batch_size,(b+1)*args.batch_size)
         simids_batch = simids[b*args.batch_size:(b+1)*args.batch_size]
-        print(simids_batch)
         partition["prediction"] = np.array(simids_batch)
         generator = DataGenerator(partition["prediction"], **params)
         predictions = model.predict_generator(generator)
@@ -726,7 +722,6 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
 
                 # process output and read targets
                 if args.preprocessed == True and args.segment == False:
-                    print(i, simids[i], targets[simids[i]])
                     trueval = np.load(targets[simids[i]]) # read in normalized
                     trueval = (trueval * sdSig) + meanSig
                     prediction = predictions[i] # (500x500) 
