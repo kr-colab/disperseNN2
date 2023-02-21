@@ -26,11 +26,11 @@ def check_params(args):
             print("specify max sample size via --max_n")
             exit()
 
-    # arguments for prediction
-    if args.predict == True:
-        if args.training_params == None:
-            print("specify params file via --training_params")
-            exit()
+    # # arguments for prediction
+    # if args.predict == True:
+    #     if args.training_params == None:
+    #         print("specify params file via --training_params")
+    #         exit()
 
     # arguments related to preprocessing
     if args.preprocessed == True:
