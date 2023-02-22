@@ -415,30 +415,40 @@ class DataGenerator(tf.keras.utils.Sequence):
         X1 = np.empty((self.batch_size, self.num_snps, self.max_n))  # genos
         X2 = np.empty((self.batch_size, 2, self.max_n))  # locs             
 
-        if self.preprocessed == False and self.segment == False:  # tree sequences
-            y = np.empty((self.batch_size, self.num_targets, 500, 500), dtype=float)
-            for i, ID in enumerate(list_IDs_temp):
-                y[i] = self.targets[ID]
-                out = self.sample_ts(self.trees[ID], np.random.randint(1e9,size=1))
-                X1[i, :] = out[0]
-                X2[i, :] = out[1]
-            X = [X1, X2]
+        # if self.preprocessed == False and self.segment == False:  # tree sequences
+        #     y = np.empty((self.batch_size, self.num_targets, 500, 500), dtype=float)
+        #     for i, ID in enumerate(list_IDs_temp):
+        #         y[i] = self.targets[ID]
+        #         out = self.sample_ts(self.trees[ID], np.random.randint(1e9,size=1))
+        #         X1[i, :] = out[0]
+        #         X2[i, :] = out[1]
+        #     X = [X1, X2]
 
-        elif self.preprocessed == False and self.segment == True: # tree sequences + image segmentation
-            print("you need to work this out still")
-            exit()
+        # elif self.preprocessed == False and self.segment == True: # tree sequences + image segmentation
+        #     print("you need to work this out still")
+        #     exit()
 
-        elif self.preprocessed == True and self.segment == False: # pre-processed
-            y = np.empty((self.batch_size, self.num_targets, 500, 500), dtype=float)
-            for i, ID in enumerate(list_IDs_temp):
-                y[i] = np.load(self.targets[ID])
-                X1[i, :] = np.load(self.genos[ID])
-                X2[i, :] = np.load(self.locs[ID]) 
-            X = [X1, X2]
+        # elif self.preprocessed == True and self.segment == False: # pre-processed
+        #     y = np.empty((self.batch_size, self.num_targets, 500, 500), dtype=float)
+        #     for i, ID in enumerate(list_IDs_temp):
+        #         y[i] = np.load(self.targets[ID])
+        #         X1[i, :] = np.load(self.genos[ID])
+        #         X2[i, :] = np.load(self.locs[ID]) 
+        #     X = [X1, X2]
 
-        elif self.preprocessed == True and self.segment == True:  # pre-processed + image segmentation
-            print("you need to work this out still")
-            exit()
-            pass
+        # elif self.preprocessed == True and self.segment == True:  # pre-processed + image segmentation
+        #     print("you need to work this out still")
+        #     exit()
+        #     pass
+
+        # (assuming preprocessed into two channels)
+        y = np.empty((self.batch_size, 500, 500, 2), dtype=float)
+        for i, ID in enumerate(list_IDs_temp):
+            y[i] = np.load(self.targets[ID])  
+            X1[i, :] = np.load(self.genos[ID])
+            X2[i, :] = np.load(self.locs[ID]) 
+        X = [X1, X2]                                  
+
+
 
         return (X, y)

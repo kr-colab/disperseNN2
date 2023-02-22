@@ -7,7 +7,7 @@ import tskit
 from sklearn.model_selection import train_test_split
 from check_params import *
 from read_input_dev_twoChannel import *
-from process_input import *
+from process_input_dev_twoChannel import *
 from data_generation_dev_twoChannel import DataGenerator
 import gpustat
 import itertools
@@ -333,10 +333,9 @@ def load_network(num_targets):
             else:
                 h = tf.keras.layers.Dense(upsamples[u], activation="linear")(h)
                 print(h.shape,'dense w/ linear act.')
-                for t in range(num_targets-1): # (target has multiple channels)
-                    h2 = tf.keras.layers.Dense(upsamples[u], activation="linear")(h)
-                    h = tf.stack([h,h2], axis=1)
-                    print(h.shape,'stacked')
+                h2 = tf.keras.layers.Dense(upsamples[u], activation="linear")(h)
+                h = tf.stack([h,h2], axis=3)
+                print(h.shape,'stacked')
 
         # the upsample step
         if u < (len(upsamples)-1):
@@ -555,7 +554,7 @@ def prep_preprocessed_and_train():
     # read targets
     print("reading input paths", flush=True)
     targets,genos,locs = dict_from_preprocessed(args.out, args.segment)
-    num_targets = np.load(targets[0]).shape[0]
+    num_targets = 2
     total_sims = len(targets)
 
     # split into val,train sets
@@ -900,11 +899,10 @@ def unpack_predictions(predictions, mean_sd, targets, simids, file_names, num_ta
 
 
 
-
 def preprocess_trees():
     if args.segment == False:
         trees = read_list(args.tree_list)
-        maps, num_targets = read_list_of_lists(args.target_list)
+        maps = read_list(args.target_list)
         total_sims = len(trees)
 
         # loop through maps to get mean and sd          
@@ -912,15 +910,14 @@ def preprocess_trees():
             stats = np.load(args.out+"/mean_sd.npy")
         else:
             targets = []
-            for t in range(num_targets):
-                targets.append( [] )
-                for i in range(total_sims):
-                    arr = read_map(maps[i][t], args.grid_coarseness, args.segment)
-                    targets[t].append(arr)
+            for i in range(total_sims):
+                arr = read_map(maps[i], args.grid_coarseness, args.segment)
+                targets.append(arr)
+            targets = np.array(targets)
             stats = []
-            for t in range(num_targets):
-                meanSig = np.mean(targets[t])
-                sdSig = np.std(targets[t])
+            for t in range(2):
+                meanSig = np.mean(targets[:,:,:,t])
+                sdSig = np.std(targets[:,:,:,t])
                 stats.append(np.array([meanSig, sdSig]))
             os.makedirs(args.out, exist_ok=True)
             np.save(args.out+"/mean_sd", stats) 
@@ -936,7 +933,7 @@ def preprocess_trees():
             genos=None,
             locs=None,
             sample_widths=None,
-            num_targets=num_targets,
+            num_targets=2,
         )
         training_generator = DataGenerator([None], **params)
 
@@ -946,40 +943,37 @@ def preprocess_trees():
             genofile = os.path.join(args.out,"Genos",str(args.seed),str(i)+".genos")
             locfile = os.path.join(args.out,"Locs",str(args.seed),str(i)+".locs")
             if os.path.isfile(mapfile+".npy") == False:
-                channels = []
-                for t in range(num_targets):
-                    target = read_map(maps[i][t], args.grid_coarseness, args.segment) 
-                    target = (target - stats[t][0]) / stats[t][1]
-                    channels.append(target)
-                channels = np.stack(channels)
-                np.save(mapfile, channels)
+                target = read_map(maps[i], args.grid_coarseness, args.segment) 
+                for t in range(2):
+                    target[:,:,0] = (target[:,:,0] - stats[t][0]) / stats[t][1]
+                np.save(mapfile, target)
             if os.path.isfile(genofile+".npy") == False or os.path.isfile(locfile+".npy") == False:
                 geno_mat, locs = training_generator.sample_ts(trees[i], args.seed) 
                 np.save(genofile, geno_mat)
                 np.save(locfile, locs)
 
-    else: # just do the ordinal maps
-        maps = read_list(args.target_list)
-        total_sims = len(maps)
-        msfile=args.out+"/Maps_ordinal/mean_sd.npy"
-        if os.path.isfile(msfile): # the values in the ordinal maps are different than the above
-            meanSig,sdSig = np.load(msfile)
-        else:
-            targets = []
-            for i in range(total_sims):
-                arr = read_map(maps[i], args.grid_coarseness, args.segment)
-                targets.append(arr[:,:,0])
-            meanSig = np.mean(targets)
-            sdSig = np.std(targets)
-            os.makedirs(args.out, exist_ok=True)
-            np.save(msfile, [meanSig,sdSig])
-        os.makedirs(os.path.join(args.out,"Maps_ordinal",str(args.seed)), exist_ok=True)
-        for i in range(total_sims):
-            mapfile = os.path.join(args.out,"Maps_ordinal",str(args.seed),str(i)+".target")
-            if os.path.isfile(mapfile+".npy") == False:
-                target = read_map(maps[i], args.grid_coarseness, args.segment)
-                target[:,:,0] = (target[:,:,0] - meanSig) / sdSig
-                np.save(mapfile, target)
+    # else: # just do the ordinal maps
+    #     maps = read_list(args.target_list)
+    #     total_sims = len(maps)
+    #     msfile=args.out+"/Maps_ordinal/mean_sd.npy"
+    #     if os.path.isfile(msfile): # the values in the ordinal maps are different than the above
+    #         meanSig,sdSig = np.load(msfile)
+    #     else:
+    #         targets = []
+    #         for i in range(total_sims):
+    #             arr = read_map(maps[i], args.grid_coarseness, args.segment)
+    #             targets.append(arr[:,:,0])
+    #         meanSig = np.mean(targets)
+    #         sdSig = np.std(targets)
+    #         os.makedirs(args.out, exist_ok=True)
+    #         np.save(msfile, [meanSig,sdSig])
+    #     os.makedirs(os.path.join(args.out,"Maps_ordinal",str(args.seed)), exist_ok=True)
+    #     for i in range(total_sims):
+    #         mapfile = os.path.join(args.out,"Maps_ordinal",str(args.seed),str(i)+".target")
+    #         if os.path.isfile(mapfile+".npy") == False:
+    #             target = read_map(maps[i], args.grid_coarseness, args.segment)
+    #             target[:,:,0] = (target[:,:,0] - meanSig) / sdSig
+    #             np.save(mapfile, target)
         
     return
 

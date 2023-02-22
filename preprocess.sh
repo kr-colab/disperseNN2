@@ -3,7 +3,7 @@
 #SBATCH --job-name=prepXX         ### Job Name
 #SBATCH --output=Output/prepXX.out         ### File in which to store job output
 #SBATCH --error=Output/prepXX.err          ### File in which to store job error messages
-#SBATCH --time=7-00:00:00       ### Wall clock time limit in Days-HH:MM:SS
+#SBATCH --time=30-00:00:00       ### Wall clock time limit in Days-HH:MM:SS
 #SBATCH --nodes=1              ### Number of nodes needed for the job
 #SBATCH --account=kernlab       ### Account used for job submission 
 #SBATCH --mem=50gb   # adjust for loading in all maps at once to calc. mean and sd.
@@ -19,11 +19,8 @@ segment=""
 #segment="--segment"
 grid=""
 #grid="--sample_grid 4"
-#trees=/home/chriscs/kernlab/Maps/$box/tree_list.txt
-#targets=/home/chriscs/kernlab//Maps/$box/target_list.txt
-trees=/home/chriscs/kernlab/Maps/$box/tree_list_temp.txt
-targets=/home/chriscs/kernlab//Maps/$box/target_list_temp.txt
-#targets=/home/chriscs/kernlab//Maps/$box/target_list_ordinal.txt
+trees=/home/chriscs/kernlab/Maps/$box/tree_list_500.txt
+targets=/home/chriscs/kernlab//Maps/$box/map_list_500.txt
 
 
 

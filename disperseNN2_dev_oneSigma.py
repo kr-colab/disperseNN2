@@ -386,7 +386,8 @@ def prep_trees_and_train():
             targets.append(target)
     else:
         targets = read_single_value(args.target_list)
-
+        targets = np.log(targets)
+        
 
     # normalize targets
     meanSig = np.mean(targets)
