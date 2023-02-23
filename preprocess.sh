@@ -14,7 +14,7 @@
 
 box=Boxes103
 #box=temp1
-n=100
+n=10
 segment=""       
 #segment="--segment"
 grid=""
