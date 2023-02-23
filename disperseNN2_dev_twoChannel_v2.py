@@ -926,7 +926,7 @@ def preprocess_trees():
             for i in range(total_sims):
                 arr = read_map(maps[i], args.grid_coarseness, args.segment)
                 targets.append(arr)
-            targets = np.array(targets)
+            targets = np.array(targets) # (num_datasets, 500, 500, 2)
             stats = []
             for t in range(2):
                 meanSig = np.mean(targets[:,:,:,t])
@@ -956,9 +956,9 @@ def preprocess_trees():
             genofile = os.path.join(args.out,"Genos",str(args.seed),str(i)+".genos")
             locfile = os.path.join(args.out,"Locs",str(args.seed),str(i)+".locs")
             if os.path.isfile(mapfile+".npy") == False:
-                target = read_map(maps[i], args.grid_coarseness, args.segment) 
+                target = read_map(maps[i], args.grid_coarseness, args.segment) # (500, 500, 2)
                 for t in range(2):
-                    target[:,:,0] = (target[:,:,0] - stats[t][0]) / stats[t][1]
+                    target[:,:,t] = (target[:,:,t] - stats[t][0]) / stats[t][1]
                 np.save(mapfile, target)
             if os.path.isfile(genofile+".npy") == False or os.path.isfile(locfile+".npy") == False:
                 geno_mat, locs = training_generator.sample_ts(trees[i], args.seed) 

@@ -10,7 +10,7 @@
 #SBATCH --cpus-per-task 1
 #SBATCH --exclude=n244
 ##SBATCH --gres=gpu:1
-#SBATCH --gpus=3g.20gb:1 # --gpus=2g.10gb:1 --gpus=3g.20gb:1   
+#SBATCH --gpus=2g.10gb:1 # --gpus=2g.10gb:1 --gpus=3g.20gb:1   
 
 
 
@@ -26,10 +26,10 @@ nvidia-smi
 # - 50gb ram, and 2g.10gb:1 for 45 pairs. 3g.20gb:1 for 450 pairs. (once you go bigger, you run into GPU memory limits, and then RAM limits)
 date=0221
 box=103
-id=3
+id=1
 u=6
-n=100
-pairs=450
+n=10
+pairs=45
 grid=4
 num_pred=1000
 
