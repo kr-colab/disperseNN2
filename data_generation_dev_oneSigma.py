@@ -414,38 +414,28 @@ class DataGenerator(tf.keras.utils.Sequence):
         "Generates data containing batch_size samples"        
         X1 = np.empty((self.batch_size, self.num_snps, self.max_n))  # genos
         X2 = np.empty((self.batch_size, 2, self.max_n))  # locs                                 
-        if self.segment == False:
-            y = np.empty((self.batch_size, ), dtype=float)  # targets      
-        else:
-            y_reg = np.empty((self.batch_size, 500, 500), dtype=float)
-            y_class = np.empty((self.batch_size, 500, 500, 4), dtype=float)
-            targets_reg = self.targets[0] # * this is what I did before and it worked... seem weird that it's outside the loop. *  t
-            targets_class = self.targets[1]
+        y = np.empty((self.batch_size, ), dtype=float)  # targets      
         
-        if self.preprocessed == False:
-            for i, ID in enumerate(list_IDs_temp):
-                if self.segment == False:
-                    y[i] = self.targets[ID]
-                else:
-                    y_reg[i] = targets_reg[ID]
-                    y_class[i] = targets_class[ID]
-                out = self.sample_ts(self.trees[ID], np.random.randint(1e9,size=1))
-                X1[i, :] = out[0]
-                X2[i, :] = out[1]
-                X = [X1, X2]
-        else:
-            for i, ID in enumerate(list_IDs_temp):
-                if self.segment == False:
-                    y[i] = np.load(self.targets[ID])
-                else:
-                    y_both = np.load(self.targets[ID])
-                    y_reg[i] = y_both[:,:,0]
-                    y_class[i] = y_both[:,:,1:5]
-                X1[i, :] = np.load(self.genos[ID])
-                X2[i, :] = np.load(self.locs[ID])
-                X = [X1, X2]
+        # if self.preprocessed == False:
+        #     for i, ID in enumerate(list_IDs_temp):
+        #         if self.segment == False:
+        #             y[i] = self.targets[ID]
+        #         else:
+        #             y_reg[i] = targets_reg[ID]
+        #             y_class[i] = targets_class[ID]
+        #         out = self.sample_ts(self.trees[ID], np.random.randint(1e9,size=1))
+        #         X1[i, :] = out[0]
+        #         X2[i, :] = out[1]
+        #         X = [X1, X2]
+        # else:
 
-        if self.segment == True:
-            y =[y_reg, y_class]
+        for i, ID in enumerate(list_IDs_temp):
+            y[i] = np.load(self.targets[ID])
+            X1[i, :] = np.load(self.genos[ID])
+            X2[i, :] = np.load(self.locs[ID])
+            X = [X1, X2]
+
+        # if self.segment == True:
+        #     y =[y_reg, y_class]
 
         return (X, y)
