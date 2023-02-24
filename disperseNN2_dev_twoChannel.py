@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 from check_params import *
 from read_input_dev_twoChannel import *
 from process_input_dev_twoChannel import *
-from data_generation_dev_twoChannel import DataGenerator
+from data_generation_dev_twoChannel_v2 import DataGenerator
 import gpustat
 import itertools
 import PIL.Image as Image
@@ -289,10 +289,12 @@ def load_network(num_targets):
             if u<(len(upsamples)-1): # if not final layer
                 DENSE = tf.keras.layers.Dense(upsamples[u], activation="relu") # initialize shared layer
             else:
-                DENSE = tf.keras.layers.Dense(upsamples[u], activation="linear")
-                if num_targets > 1:
-                    print("still need to deal with multiple targets, here.")
-                    exit()
+                # DENSE = tf.keras.layers.Dense(upsamples[u], activation="linear")
+                # if num_targets > 1:
+                #     print("still need to deal with multiple targets, here.")
+                #     exit()
+                print("haven't worked on this yet")
+                exit()
             for p in range(num_partitions):
                 part = feature_block[:,row:row+upsamples[u],:]
                 print(part.shape, 'partitioned')
@@ -301,7 +303,14 @@ def load_network(num_targets):
                     paddings = tf.constant([[0,0], [0,upsamples[u]-part.shape[1]], [0,0]]) 
                     part = tf.pad(part, paddings, "CONSTANT")
                     print(part.shape,'padded')
-                if u > 0: # unless first layer, concatenate with current map
+                ### pad in 3rd dimension ###
+                part = tf.keras.layers.Reshape((1, part.shape[1], part.shape[2]))(part) 
+                paddings = tf.constant([[0,0], [0,1], [0,0], [0,0]])
+                part = tf.pad(part, paddings, "CONSTANT")
+                print(part.shape, 'padded in 3rd dim.') 
+                ### 
+                if u > 0: # unless first layer, concatenate with current map                                                  *****
+                    print(h.shape, 'previous dim')
                     part = tf.keras.layers.concatenate([h, part]) # ~~~ skip connection engaged ~~~                    
                     print(part.shape, 'skip connect / concat')
                 h0 = DENSE(part)
@@ -309,12 +318,11 @@ def load_network(num_targets):
                 dense_stack.append(h0)
             h = tf.stack(dense_stack, axis=1)
             print(h.shape,'stacked')
-            h = tf.keras.layers.AveragePooling2D(pool_size=(num_partitions,1))(h)
+            h = tf.keras.layers.AveragePooling3D(pool_size=(num_partitions,1,1))(h)
             print(h.shape,'pooled')
-            if u==(len(upsamples)-1): 
-                h = tf.keras.layers.Reshape((upsamples[u],upsamples[u]))(h) # (necessary if output layer)
-                print(h.shape, 'reshapen')
-
+            # if u==(len(upsamples)-1): # (necessary if output layer)
+            #     h = tf.keras.layers.Reshape((upsamples[u],upsamples[u]))(h)
+            #     print(h.shape, 'reshapen')
 
         # "late" iterations (map dimension >= number of pairs)  
         else: 
@@ -322,6 +330,12 @@ def load_network(num_targets):
             paddings = tf.constant([[0,0], [0,upsamples[u]-args.pairs], [0,0]])
             feature_block_padded = tf.pad(feature_block, paddings, "CONSTANT")
             print(feature_block_padded.shape,'padded feature block')
+            ### pad in 3rd dim ###
+            feature_block_padded = tf.keras.layers.Reshape((1, feature_block_padded.shape[1], feature_block_padded.shape[2]))(feature_block_padded)
+            paddings = tf.constant([[0,0], [0,1], [0,0], [0,0]])
+            feature_block_padded = tf.pad(feature_block_padded, paddings, "CONSTANT")
+            print(feature_block_padded.shape,'padded in 3rd dim')            
+            ###
             if u>0: 
                 h = tf.keras.layers.concatenate([h, feature_block_padded]) # ~~~ skip connection engaged ~~~
                 print(h.shape,'skip connect / concat.')
@@ -333,17 +347,16 @@ def load_network(num_targets):
             else:
                 h = tf.keras.layers.Dense(upsamples[u], activation="linear")(h)
                 print(h.shape,'dense w/ linear act.')
-                h2 = tf.keras.layers.Dense(upsamples[u], activation="linear")(h)
-                h = tf.stack([h,h2], axis=3)
-                print(h.shape,'stacked')
+
 
         # the upsample step
         if u < (len(upsamples)-1):
-            h = tf.keras.layers.Reshape((upsamples[u],upsamples[u],1))(h) 
-            print(h.shape, 'reshapen')                                                              
-            h = tf.keras.layers.Conv2DTranspose(filters=1, kernel_size=(upsamples[u+1]-upsamples[u]+1), activation="relu")(h)
-            print(h.shape,'conv2dTranspose')                                                                
-            h = tf.keras.layers.Reshape((upsamples[u+1],upsamples[u+1]))(h)
+            h = tf.keras.layers.Reshape((2,upsamples[u],upsamples[u],1))(h) 
+            print(h.shape, 'reshapen')                                     
+            k_size = upsamples[u+1]-upsamples[u]+1
+            h = tf.keras.layers.Conv3DTranspose(filters=1, kernel_size=(1,k_size,k_size), activation="relu")(h)
+            print(h.shape,'conv3dTranspose')                                                                
+            h = tf.keras.layers.Reshape((2,upsamples[u+1],upsamples[u+1]))(h)
             print(h.shape,'reshapen')                                                                                
     
     # model overview and hyperparams
@@ -913,7 +926,7 @@ def preprocess_trees():
             for i in range(total_sims):
                 arr = read_map(maps[i], args.grid_coarseness, args.segment)
                 targets.append(arr)
-            targets = np.array(targets)
+            targets = np.array(targets) # (num_datasets, 500, 500, 2)
             stats = []
             for t in range(2):
                 meanSig = np.mean(targets[:,:,:,t])
@@ -943,9 +956,9 @@ def preprocess_trees():
             genofile = os.path.join(args.out,"Genos",str(args.seed),str(i)+".genos")
             locfile = os.path.join(args.out,"Locs",str(args.seed),str(i)+".locs")
             if os.path.isfile(mapfile+".npy") == False:
-                target = read_map(maps[i], args.grid_coarseness, args.segment) 
+                target = read_map(maps[i], args.grid_coarseness, args.segment) # (500, 500, 2)
                 for t in range(2):
-                    target[:,:,0] = (target[:,:,0] - stats[t][0]) / stats[t][1]
+                    target[:,:,t] = (target[:,:,t] - stats[t][0]) / stats[t][1]
                 np.save(mapfile, target)
             if os.path.isfile(genofile+".npy") == False or os.path.isfile(locfile+".npy") == False:
                 geno_mat, locs = training_generator.sample_ts(trees[i], args.seed) 

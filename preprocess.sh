@@ -1,9 +1,9 @@
 #!/bin/bash                                                          
-#SBATCH --partition=kern
+#SBATCH --partition=kern,short
 #SBATCH --job-name=prepXX         ### Job Name
 #SBATCH --output=Output/prepXX.out         ### File in which to store job output
 #SBATCH --error=Output/prepXX.err          ### File in which to store job error messages
-#SBATCH --time=30-00:00:00       ### Wall clock time limit in Days-HH:MM:SS
+#SBATCH --time=1-00:00:00       ### Wall clock time limit in Days-HH:MM:SS
 #SBATCH --nodes=1              ### Number of nodes needed for the job
 #SBATCH --account=kernlab       ### Account used for job submission 
 #SBATCH --mem=50gb   # adjust for loading in all maps at once to calc. mean and sd.
@@ -14,13 +14,13 @@
 
 box=Boxes103
 #box=temp1
-n=10
+n=100
 segment=""       
 #segment="--segment"
 grid=""
 #grid="--sample_grid 4"
-trees=/home/chriscs/kernlab/Maps/$box/tree_list_500.txt
-targets=/home/chriscs/kernlab//Maps/$box/map_list_500.txt
+trees=/home/chriscs/kernlab/Maps/$box/tree_list_700.txt
+targets=/home/chriscs/kernlab//Maps/$box/map_list_700.txt
 
 
 

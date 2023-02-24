@@ -442,9 +442,11 @@ class DataGenerator(tf.keras.utils.Sequence):
         #     pass
 
         # (assuming preprocessed into two channels)
-        y = np.empty((self.batch_size, 500, 500, 2), dtype=float)
+        y = np.empty((self.batch_size, 2, 500, 500), dtype=float)
         for i, ID in enumerate(list_IDs_temp):
-            y[i] = np.load(self.targets[ID])  
+            y0 = np.load(self.targets[ID])
+            y0 = np.reshape(y0, (2,500,500)) # from (500,500,2)        *** is this doing what I expect? it is messing things up? ***  
+            y[i] = y0 
             X1[i, :] = np.load(self.genos[ID])
             X2[i, :] = np.load(self.locs[ID]) 
         X = [X1, X2]                                  
