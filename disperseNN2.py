@@ -898,14 +898,16 @@ def preprocess_trees():
             mapfile = os.path.join(args.out,"Maps",str(args.seed),str(i)+".target")
             genofile = os.path.join(args.out,"Genos",str(args.seed),str(i)+".genos")
             locfile = os.path.join(args.out,"Locs",str(args.seed),str(i)+".locs")
-            if os.path.isfile(mapfile+".npy") == False:
-                target = read_map(maps[i], args.grid_coarseness, args.segment) 
-                target = (target - meanSig) / sdSig
-                np.save(mapfile, target)
             if os.path.isfile(genofile+".npy") == False or os.path.isfile(locfile+".npy") == False:
                 geno_mat, locs = training_generator.sample_ts(trees[i], args.seed) 
                 np.save(genofile, geno_mat)
                 np.save(locfile, locs)
+            if os.path.isfile(genofile+".npy") == True and os.path.isfile(locfile+".npy") == True: # (only add map if inputs successful)
+                if os.path.isfile(mapfile+".npy") == False:
+                    target = read_map(maps[i], args.grid_coarseness, args.segment)
+                    target = (target - meanSig) / sdSig
+                    np.save(mapfile, target)
+
 
     else: # just do the ordinal maps
         maps = read_list(args.target_list)
