@@ -412,8 +412,9 @@ class DataGenerator(tf.keras.utils.Sequence):
 
     def __data_generation(self, list_IDs_temp):
         "Generates data containing batch_size samples"        
-        X1 = np.empty((self.batch_size, self.num_snps, self.max_n))  # genos
-        X2 = np.empty((self.batch_size, 2, self.max_n))  # locs                                 
+                # ******** adding int and float to X's here
+        X1 = np.empty((self.batch_size, self.num_snps, self.max_n), dtype="int8")  # genos
+        X2 = np.empty((self.batch_size, 2, self.max_n), dtype=float)  # locs                                 
         if self.segment == False:
             y = np.empty((self.batch_size, 500,500), dtype=float)  # targets      
         else:
