@@ -412,30 +412,22 @@ class DataGenerator(tf.keras.utils.Sequence):
 
     def __data_generation(self, list_IDs_temp):
         "Generates data containing batch_size samples"        
-        X1 = np.empty((self.batch_size, self.num_snps, self.max_n))  # genos
-        X2 = np.empty((self.batch_size, 2, self.max_n))  # locs                                 
+        X1 = np.empty((self.batch_size, self.num_snps, self.max_n), dtype="int8")  # genos       
+        X2 = np.empty((self.batch_size, 2, self.max_n), dtype=float)  # locs                  
         y = np.empty((self.batch_size, ), dtype=float)  # targets      
         
-        # if self.preprocessed == False:
-        #     for i, ID in enumerate(list_IDs_temp):
-        #         if self.segment == False:
-        #             y[i] = self.targets[ID]
-        #         else:
-        #             y_reg[i] = targets_reg[ID]
-        #             y_class[i] = targets_class[ID]
-        #         out = self.sample_ts(self.trees[ID], np.random.randint(1e9,size=1))
-        #         X1[i, :] = out[0]
-        #         X2[i, :] = out[1]
-        #         X = [X1, X2]
-        # else:
-
-        for i, ID in enumerate(list_IDs_temp):
-            y[i] = np.load(self.targets[ID])
-            X1[i, :] = np.load(self.genos[ID])
-            X2[i, :] = np.load(self.locs[ID])
-            X = [X1, X2]
-
-        # if self.segment == True:
-        #     y =[y_reg, y_class]
+        if self.preprocessed == False:
+            for i, ID in enumerate(list_IDs_temp):
+                y[i] = self.targets[ID]
+                out = self.sample_ts(self.trees[ID], np.random.randint(1e9,size=1))
+                X1[i, :] = out[0]
+                X2[i, :] = out[1]
+                X = [X1, X2]
+        else:
+            for i, ID in enumerate(list_IDs_temp):
+                y[i] = np.load(self.targets[ID])
+                X1[i, :] = np.load(self.genos[ID])
+                X2[i, :] = np.load(self.locs[ID])
+                X = [X1, X2]
 
         return (X, y)

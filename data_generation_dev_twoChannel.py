@@ -412,8 +412,9 @@ class DataGenerator(tf.keras.utils.Sequence):
 
     def __data_generation(self, list_IDs_temp):
         "Generates data containing batch_size samples"        
-        X1 = np.empty((self.batch_size, self.num_snps, self.max_n))  # genos
-        X2 = np.empty((self.batch_size, 2, self.max_n))  # locs             
+            # ********** recently added int and float to these
+        X1 = np.empty((self.batch_size, self.num_snps, self.max_n), dtype="int8")  # genos 
+        X2 = np.empty((self.batch_size, 2, self.max_n), dtype=float)  # locs
 
         # if self.preprocessed == False and self.segment == False:  # tree sequences
         #     y = np.empty((self.batch_size, self.num_targets, 500, 500), dtype=float)
@@ -442,6 +443,11 @@ class DataGenerator(tf.keras.utils.Sequence):
         #     pass
 
         # (assuming preprocessed into two channels)
+        # y = np.empty((self.batch_size, 500, 500), dtype=float)
+        # for i, ID in enumerate(list_IDs_temp):                               
+        #     y0 = np.load(self.targets[ID])
+        #     y0 = y0[:,:,0]
+        #     y0 = np.reshape(y0, (500,500))
         y = np.empty((self.batch_size, 2, 500, 500), dtype=float)
         for i, ID in enumerate(list_IDs_temp):
             y0 = np.load(self.targets[ID])

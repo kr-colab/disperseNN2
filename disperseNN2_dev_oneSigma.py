@@ -1,4 +1,7 @@
 
+
+# copied from v2: I'm calcualting DISTANCES again
+
 # e.g. python disperseNN2/disperseNN2.py --out temp1 --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 1 --min_n 10 --max_n 10 --mu 1e-15 --seed 12345 --tree_list ../Maps/Boxes84/tree_list.txt --target_list ../Maps/Boxes84/target_list.txt --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --train --learning_rate 1e-4 --grid_coarseness 50 --upsample 6 --pairs 45 --gpu_index any
 
 import os
@@ -226,6 +229,7 @@ def load_network():
     num_conv_iterations = int(np.floor(np.log10(args.num_snps))-1) # was -2...
     if num_conv_iterations < 0:
         num_conv_iterations = 0
+#    num_conv_iterations +=1 
 
     # cnn architecture
     conv_kernal_size = 2
@@ -248,6 +252,7 @@ def load_network():
     # convolutions for each pair
     hs = []
     ls = []
+    ds = []
     for comb in combinations:
         h = tf.gather(geno_input, comb, axis = 2)
         for i in range(num_conv_iterations):                                             
@@ -257,25 +262,33 @@ def load_network():
         h = tf.keras.layers.Flatten()(h)        
         hs.append(h)
         l = tf.gather(loc_input, comb, axis = 2)
+        ###
+        d = l[:,:,0] - l[:,:,1]
+        d = tf.norm(d, ord='euclidean', axis=1) # https://stackoverflow.com/questions/46784648/mean-euclidean-distance-in-tensorflow
+        ds.append(d)
+        ###
         l = tf.keras.layers.Flatten()(l)
         ls.append(l)
 
     # reshape conv. output and locs
     h = tf.stack(hs, axis=1)
     l = tf.stack(ls, axis=1)
-    feature_block =  tf.keras.layers.concatenate([h,l])
+    d = tf.stack(ds, axis=1)
+    d = tf.keras.layers.Reshape(((args.pairs, 1)))(d)
+    feature_block =  tf.keras.layers.concatenate([h,l,d])
     print("\nfeature block:", feature_block.shape)
 
     # compress down to one sigma estimate
-    h = tf.keras.layers.Dense(feature_block.shape[2], activation="relu")(feature_block)
-    print("\nh:", h.shape)
-    h = tf.keras.layers.Dense(args.pairs, activation="relu")(h)
-    print("\nh:", h.shape)
+    h = tf.keras.layers.Dense(args.pairs, activation="relu")(feature_block) # (tons of params for this dense layer)
+    print("\nbig dense:", h.shape)
     h = tf.keras.layers.Flatten()(h)
-    print("\nh:", h.shape)
+    print("\nflatten:", h.shape)
+#    h = tf.keras.layers.Dense(128, activation="relu")(h)
+ #   print("\n128 dense:", h.shape)
+#    h = tf.keras.layers.Flatten()(h)
+ #   print("\nh:", h.shape)
     output = tf.keras.layers.Dense(1, activation="linear")(h)
     print("\noutput:", output.shape)
-
 
 
     model = tf.keras.Model(
@@ -468,30 +481,22 @@ def prep_trees_and_train():
     print("reading targets from tree sequences: this should take several minutes", flush=True)
     targets = []
     maps = read_dict(args.target_list)
-    if args.segment == False:
-        for i in range(total_sims):
-            arr = read_map(maps[i], args.grid_coarseness, args.segment)
-            targets.append(arr)
-            print("finished with " + str(i), flush=True)
-    else:
-        targets_class = []
-        for i in range(total_sims):
-            arr = read_map(maps[i], args.grid_coarseness, args.segment)
-            targets.append(arr[:,:,0])
-            targets_class.append(arr[:,:,1:5])
-            print("finished with " + str(i), flush=True)
-
+    for i in range(total_sims):
+        #arr = read_map(maps[i], args.grid_coarseness, args.segment)
+        with open(maps[i]) as infile:
+            arr = float(infile.readline().strip())
+        targets.append(np.log(arr))
+        print("finished with " + str(i), flush=True)
+        
     # normalize targets                                                               
+    targets = np.array(targets)
     meanSig = np.mean(targets)
     sdSig = np.std(targets)
     np.save(f"{args.out}_training_params", [
             meanSig, sdSig, args.max_n, args.num_snps])
     targets = [(x - meanSig) / sdSig for x in targets]  # center and scale
     targets = dict_from_list(targets)    
-    if args.segment == True:
-        targets_class = dict_from_list(targets_class)
-        targets = [targets, targets_class]
-    
+
     # split into val,train sets
     sim_ids = np.arange(0, total_sims)
     train, val = train_test_split(sim_ids, test_size=args.validation_split)

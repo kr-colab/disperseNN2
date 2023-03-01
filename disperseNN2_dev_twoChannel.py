@@ -1,4 +1,6 @@
 
+# copied from v1: here, carefully splitting up the two channels for pooling and upsampling steps
+
 # e.g. python disperseNN2/disperseNN2.py --out temp1 --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 1 --min_n 10 --max_n 10 --mu 1e-15 --seed 12345 --tree_list ../Maps/Boxes84/tree_list.txt --target_list ../Maps/Boxes84/target_list.txt --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --train --learning_rate 1e-4 --grid_coarseness 50 --upsample 6 --pairs 45 --gpu_index any
 
 import os
@@ -309,7 +311,7 @@ def load_network(num_targets):
                 part = tf.pad(part, paddings, "CONSTANT")
                 print(part.shape, 'padded in 3rd dim.') 
                 ### 
-                if u > 0: # unless first layer, concatenate with current map                                                  *****
+                if u > 0: # unless first layer, concatenate with current map                                                  
                     print(h.shape, 'previous dim')
                     part = tf.keras.layers.concatenate([h, part]) # ~~~ skip connection engaged ~~~                    
                     print(part.shape, 'skip connect / concat')
@@ -318,8 +320,16 @@ def load_network(num_targets):
                 dense_stack.append(h0)
             h = tf.stack(dense_stack, axis=1)
             print(h.shape,'stacked')
-            h = tf.keras.layers.AveragePooling3D(pool_size=(num_partitions,1,1))(h)
-            print(h.shape,'pooled')
+            ### here, carefully splitting up the two channels before pooling (in case it's pooling across the wrong axes)
+            h_1 = h[:,:,0,:,:]       # h: (None, 5, 2, 10, 10)
+            h_2 = h[:,:,1,:,:]
+            print(h_1.shape, h_2.shape, "split channels")
+            h_1 = tf.keras.layers.AveragePooling2D(pool_size=(num_partitions,1))(h_1)
+            h_2 = tf.keras.layers.AveragePooling2D(pool_size=(num_partitions,1))(h_2)
+            print(h_1.shape, h_2.shape, "pooled")
+            h = tf.keras.layers.concatenate([h_1, h_2], axis=1)
+            print(h.shape, "stacked again")            
+            ###
             # if u==(len(upsamples)-1): # (necessary if output layer)
             #     h = tf.keras.layers.Reshape((upsamples[u],upsamples[u]))(h)
             #     print(h.shape, 'reshapen')
@@ -354,8 +364,16 @@ def load_network(num_targets):
             h = tf.keras.layers.Reshape((2,upsamples[u],upsamples[u],1))(h) 
             print(h.shape, 'reshapen')                                     
             k_size = upsamples[u+1]-upsamples[u]+1
-            h = tf.keras.layers.Conv3DTranspose(filters=1, kernel_size=(1,k_size,k_size), activation="relu")(h)
-            print(h.shape,'conv3dTranspose')                                                                
+            ### carefully splitting up layers again for upsample
+            h_1 = h[:,0,:,:,:] # h: (None, 2, 10, 10, 1)
+            h_2 = h[:,1,:,:,:]
+            print(h_1.shape, h_2.shape, "split channels")
+            h_1 = tf.keras.layers.Conv2DTranspose(filters=1, kernel_size=(upsamples[u+1]-upsamples[u]+1), activation="relu")(h_1)
+            h_2 = tf.keras.layers.Conv2DTranspose(filters=1, kernel_size=(upsamples[u+1]-upsamples[u]+1), activation="relu")(h_2)            
+            print(h_1.shape, h_2.shape, "upsampled")
+            h = tf.keras.layers.concatenate([h_1, h_2], axis=3)
+            print(h.shape, "stacked again")
+            ###
             h = tf.keras.layers.Reshape((2,upsamples[u+1],upsamples[u+1]))(h)
             print(h.shape,'reshapen')                                                                                
     
