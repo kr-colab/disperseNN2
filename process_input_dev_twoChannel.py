@@ -174,35 +174,68 @@ def ibd(genos, coords, phase, num_snps):
 
 # read and average-pool a PNG
 def read_map(png, coarseness, segment):
-    if segment == False:
-        data = plt.imread(png)
-        data_b = data[:,:,2] # taking blue channel
-        data_r = data[:,:,0] # taking red channel    
-        data = np.stack([data_b,data_r],axis=2)
-        targets = np.zeros((50,50,2))
-    # else:
-    #     data = np.load(png)
-    #     targets = np.zeros((50,50,5))
+    data = plt.imread(png)
+
+    # ### block to output png
+    # import PIL.Image as Image
+    # rgb = np.concatenate([
+    #     np.reshape(np.round(data[:,:,0] * 255).astype(int), (50,50,1)),
+    #     np.full((50, 50, 1), 0, dtype='uint8'),
+    #     np.reshape(np.round(data[:,:,2] * 255).astype(int), (50,50,1)),
+    #     np.full((50, 50, 1), 255, dtype='uint8'),
+    # ], axis=-1)
+    # im = Image.fromarray(rgb.astype("uint8"))
+    # im.save("POOP.png")
+    # exit()
+    # ###
+    
+    data_b = data[:,:,2] # taking blue channel
+    data_r = data[:,:,0] # taking red channel    
+    data = np.stack([data_b,data_r],axis=2)
+    targets = np.zeros((50,50,2))
     width = data.shape[0]
+
+    # ### block to output png                                              
+    # import PIL.Image as Image                                          
+    # rgb = np.concatenate([                                             
+    #     np.reshape(np.round(data[:,:,1] * 255).astype(int), (50,50,1)),
+    #     np.full((50, 50, 1), 0, dtype='uint8'),                        
+    #     np.reshape(np.round(data[:,:,0] * 255).astype(int), (50,50,1)),
+    #     np.full((50, 50, 1), 255, dtype='uint8'),                      
+    # ], axis=-1)                                                        
+    # im = Image.fromarray(rgb.astype("uint8"))                          
+    # im.save("POOP.png")                                                
+    # exit()                                                             
+    # ###                                                                
+
+    # this loop is... compressing down the map to 50x50? Yes. 
     for m in range(coarseness):
         row_start = int(np.ceil((width/coarseness) * m)) # (combining ceil and floor here, to avoid dealing with fractional-pixels; better to use higher precision)
         row_end = int(np.floor((width/coarseness) * (m+1)))
         for n in range(coarseness):
             col_start = int(np.ceil((width/coarseness) * n))
             col_end = int(np.floor((width/coarseness) * (n+1)))
-            if segment == False:
-                window = data[row_start:row_end, col_start:col_end,:]
-                targets[m,n,0] = np.mean(window[:,:,0])
-                targets[m,n,1] = np.mean(window[:,:,1])
-                #print(row_start,row_end,col_start,col_end, window[:,:,0], window[:,:,1], np.mean(window))
-            # else:
-            #     window = data[row_start:row_end, col_start:col_end, :]
-            #     targets[m,n,:] = window # skipping taking the mean for the ordinal categories
-    #exit()
+            window = data[row_start:row_end, col_start:col_end,:]
+            targets[m,n,0] = np.mean(window[:,:,0])
+            targets[m,n,1] = np.mean(window[:,:,1])
+            #print(row_start,row_end,col_start,col_end, window[:,:,0], window[:,:,1], np.mean(window))
 
     # up-sample to make the target higher-definition                  
     rep_cols = np.repeat(targets, 10, axis=1)
     rep_rows = np.repeat(rep_cols, 10, axis=0)
+
+    # ### block to output png                                              
+    # import PIL.Image as Image
+    # rgb = np.concatenate([
+    #     np.reshape(np.round(rep_rows[:,:,1] * 255).astype(int), (500,500,1)),
+    #     np.full((500, 500, 1), 0, dtype='uint8'),
+    #     np.reshape(np.round(rep_rows[:,:,0] * 255).astype(int), (500,500,1)),
+    #     np.full((500, 500, 1), 255, dtype='uint8'),
+    # ], axis=-1)
+    # im = Image.fromarray(rgb.astype("uint8"))
+    # im.save("POOP.png")
+    # exit()
+    # ###                                                                
 
     return(rep_rows)
 

@@ -1,5 +1,5 @@
 #!/bin/bash                                                          
-#SBATCH --partition=kerngpu
+#SBATCH --partition=kern
 #SBATCH --job-name=pwConv         ### Job Name
 #SBATCH --output=Output/pwConv.out         ### File in which to store job output
 #SBATCH --error=Output/pwConv.err          ### File in which to store job error messages
@@ -11,7 +11,7 @@
 #SBATCH --exclude=n244
 ##SBATCH --gres=gpu:1
 ##SBATCH --gpus=2g.10gb:1 
-#SBATCH --gpus=3g.20gb:1
+##SBATCH --gpus=3g.20gb:1
 
 
 
@@ -61,15 +61,15 @@ DATE=$(date | awk '{print $2,$3}' | sed s/" "//g)
 
                 # PRED 
 ### regular ###
-#python disperseNN2/disperseNN2.py --out Boxes$box"_"n$n"_"preprocess/ --num_snps 5000 --batch_size 10 --threads 1 --min_n $n --max_n $n --mu 1e-15 --seed $id --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --predict --preprocessed --learning_rate 1e-4 --grid_coarseness 50 --upsample $u --pairs $pairs --gpu_index any --training_params Boxes$box"_"n$n"_"preprocess/mean_sd.npy --load_weights Boxes$box"_"n$n"_"preprocess/pwConv_$id"_"model.hdf5 --num_pred $num_pred > Boxes$box"_"n$n"_"preprocess/pwConv.$id.txt_upsample$u"_"pairs$pairs"_"$DATE"_"predict
+#python disperseNN2/disperseNN2.py --out Boxes$box"_"n$n"_"preprocess/ --num_snps 5000 --batch_size 10 --threads 1 --min_n $n --max_n $n --mu 1e-15 --seed $id --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --predict --preprocessed --learning_rate 1e-4 --grid_coarseness 50 --upsample $u --pairs $pairs --gpu_index any --load_weights Boxes$box"_"n$n"_"preprocess/pwConv_$id"_"model.hdf5 --num_pred $num_pred > Boxes$box"_"n$n"_"preprocess/pwConv.$id.txt_upsample$u"_"pairs$pairs"_"$DATE"_"predict
 
 ### grid sample ###
-#python disperseNN2/disperseNN2.py --out Boxes$box"_"n$n"_"preprocess_grid/ --num_snps 5000 --batch_size 10 --threads 1 --min_n $n --max_n $n --mu 1e-15 --seed $id --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --predict --preprocessed --learning_rate 1e-4 --grid_coarseness 50 --upsample $u --pairs $pairs --gpu_index any --training_params Boxes$box"_"n$n"_"preprocess/mean_sd.npy --load_weights Boxes$box"_"n$n"_"preprocess/pwConv_$id"_"model.hdf5 --num_pred $num_pred > Boxes$box"_"n$n"_"preprocess_grid/pwConv.$id.txt_upsample$u"_"pairs$pairs"_grid"$grid"_date"$DATE"_"predict
+#python disperseNN2/disperseNN2.py --out Boxes$box"_"n$n"_"preprocess_grid/ --num_snps 5000 --batch_size 10 --threads 1 --min_n $n --max_n $n --mu 1e-15 --seed $id --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --predict --preprocessed --learning_rate 1e-4 --grid_coarseness 50 --upsample $u --pairs $pairs --gpu_index any --load_weights Boxes$box"_"n$n"_"preprocess/pwConv_$id"_"model.hdf5 --num_pred $num_pred > Boxes$box"_"n$n"_"preprocess_grid/pwConv.$id.txt_upsample$u"_"pairs$pairs"_grid"$grid"_date"$DATE"_"predict
 
 ### image_segmentation ###
-#python disperseNN2/disperseNN2.py --out Boxes$box"_"n$n"_"preprocess/ --num_snps 5000 --batch_size 10 --threads 1 --min_n $n --max_n $n --mu 1e-15 --seed $id --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --predict --preprocessed --learning_rate 1e-4 --grid_coarseness 50 --upsample $u --pairs $pairs --gpu_index any --training_params Boxes$box"_"n$n"_"preprocess/mean_sd.npy --load_weights Boxes$box"_"n$n"_"preprocess/pwConv_$id"_"model.hdf5 --num_pred $num_pred --segment > Boxes$box"_"n$n"_"preprocess/pwConv.$id.txt_upsample$u"_"pairs$pairs"_"$DATE"_"predict
+#python disperseNN2/disperseNN2.py --out Boxes$box"_"n$n"_"preprocess/ --num_snps 5000 --batch_size 10 --threads 1 --min_n $n --max_n $n --mu 1e-15 --seed $id --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --predict --preprocessed --learning_rate 1e-4 --grid_coarseness 50 --upsample $u --pairs $pairs --gpu_index any --load_weights Boxes$box"_"n$n"_"preprocess/pwConv_$id"_"model.hdf5 --num_pred $num_pred --segment > Boxes$box"_"n$n"_"preprocess/pwConv.$id.txt_upsample$u"_"pairs$pairs"_"$DATE"_"predict
 
 ### 2-channel ###
-python disperseNN2/disperseNN2_dev_twoChannel.py --out Boxes$box"_"n$n"_"preprocess/ --num_snps 5000 --batch_size 10 --threads 1 --min_n $n --max_n $n --mu 1e-15 --seed $id --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --predict --preprocessed --learning_rate 1e-4 --grid_coarseness 50 --upsample $u --pairs $pairs --gpu_index any --training_params Boxes$box"_"n$n"_"preprocess/mean_sd.npy --load_weights Boxes$box"_"n$n"_"preprocess/pwConv_$id"_"model.hdf5 > Boxes$box"_"n$n"_"preprocess/pwConv.$id.txt_upsample$u"_"pairs$pairs"_"$DATE"_"predict
+python disperseNN2/disperseNN2_dev_twoChannel.py --out Boxes$box"_"n$n"_"preprocess/ --num_snps 5000 --batch_size 10 --threads 1 --min_n $n --max_n $n --mu 1e-15 --seed $id --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --predict --preprocessed --learning_rate 1e-4 --grid_coarseness 50 --upsample $u --pairs $pairs --load_weights Boxes$box"_"n$n"_"preprocess/pwConv_$id"_"model.hdf5 --num_pred $num_pred > Boxes$box"_"n$n"_"preprocess/pwConv.$id.txt_upsample$u"_"pairs$pairs"_"$DATE"_"predict
 
 

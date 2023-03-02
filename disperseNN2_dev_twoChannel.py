@@ -668,17 +668,13 @@ def prep_empirical_and_pred(): # *** ths hasn't been updated since disperseNN **
 
 def prep_preprocessed_and_pred(): 
 
-    if args.num_pred == None or args.num_pred > 100:
-        print("use num_pred <= 100 to avoid OOM")
-        exit()
-
     # grab mean and sd from training distribution
     mean_sd = np.load(args.out + "/mean_sd.npy")
 
     # load inputs
     targets,genos,locs = dict_from_preprocessed(args.out, args.segment)
     total_sims = len(targets)
-    num_targets = np.load(targets[0]).shape[0]
+    num_targets = np.load(targets[0]).shape[2]
 
     # organize "partition" to hand to data generator
     partition = {}
@@ -686,7 +682,6 @@ def prep_preprocessed_and_pred():
         args.num_pred = int(total_sims)
     simids = np.random.choice(np.arange(total_sims),
                               args.num_pred, replace=False)
-    partition["prediction"] = simids
 
     # get generator ready
     params = make_generator_params_dict(
@@ -698,15 +693,21 @@ def prep_preprocessed_and_pred():
         sample_widths=None,
         num_targets=num_targets,
     )
-    generator = DataGenerator(partition["prediction"], **params)
 
     # predict
+    print("predicting")
+    os.makedirs(args.out + "/Test_" + str(args.seed), exist_ok=True)
+    if os.path.isfile(args.out + "/Test_" + str(args.seed) + "/pwConv_" + str(args.seed) + "_predictions.txt"):
+        print("pred output exists; overwriting...")
+        os.remove(args.out + "/Test_" + str(args.seed) + "/pwConv_" + str(args.seed) + "_predictions.txt")
     load_dl_modules()
     model, checkpointer, earlystop, reducelr = load_network(num_targets)
-    print("predicting")
-    predictions = model.predict_generator(generator)
-    unpack_predictions(predictions, mean_sd,
-                       targets, simids, targets, num_targets)
+    for b in range(int(np.ceil(args.num_pred/args.batch_size))): # loop to alleviate memory                    
+        simids_batch = simids[b*args.batch_size:(b+1)*args.batch_size]
+        partition["prediction"] = np.array(simids_batch)
+        generator = DataGenerator(partition["prediction"], **params)
+        predictions = model.predict_generator(generator)
+        unpack_predictions(predictions, mean_sd, targets, simids_batch, targets, num_targets)
 
     return
 
@@ -779,151 +780,84 @@ def prep_trees_and_pred(): # *** never tested ***
 def unpack_predictions(predictions, mean_sd, targets, simids, file_names, num_targets): 
 
     if args.empirical == None:
-        with open(args.out + "/pwConv_" + str(args.seed) + "_predictions.txt", "w") as out_f:
+        with open(args.out + "/Test_" + str(args.seed) + "/pwConv_" + str(args.seed) + "_predictions.txt", "a") as out_f:
             raes = []
-            for i in range(args.num_pred):
-                for r in range(args.num_reps):
+            for i in range(len(predictions)):
 
-                    # process output and read targets
-                    pred_index = r + (i*args.num_reps) # predicted in "normalized space" (old comment)
-                    if args.preprocessed == True and args.segment == False:
-                        trueval = np.load(targets[simids[i]]) # read in normalized
-                        prediction = predictions[pred_index] # (500x500)                                                               
-                        for t in range(num_targets):
-                            trueval[t,:,:] = (trueval[t,:,:] * mean_sd[t][1]) + mean_sd[t][0]
-                            prediction[t,:,:] = (prediction[t,:,:] * mean_sd[t][1]) +mean_sd[t][0]
-                    # elif args.preprocessed == True and args.segment == True:
-                    #     trues = np.load(targets[simids[i]]) # read in normalized                
-                    #     trueval = trues[:,:,0] # continuous channel
-                    #     true_class = trues[:,:,1:5] # ordinal channels
-                    #     trueval = (trueval * sdSig) + meanSig
-                    #     prediction = predictions[0][pred_index] #  regression output
-                    #     predict_class = predictions[1][pred_index] # classification output
-                    #     prediction = (prediction * sdSig) + meanSig
-                    else:
-                        print("TO DO: predict starting with with tree sequences")
-                        exit()
-
-                    # # text output - one row per test dataset
-                    # outline = ""
-                    # outline += file_names[simids[i]]
-                    # outline += "\t"
-                    # outline += str(500)
-                    # outline += "\t"
-                    # outline += "\t".join(list(map(str,trueval.flatten())))
-                    # outline += "\t"
-                    # outline += "\t".join(list(map(str,prediction.flatten())))
-                    # if args.segment == True:
-                    #     outline += "\t"
-                    #     outline += "\t".join(list(map(str,true_class.flatten()))) # another 250000*4channels=1mil fields for true classes
-                    #     outline += "\t"
-                    #     outline += "\t".join(list(map(str,predict_class.flatten()))) # another 1mil fields for predicted class
-                    # print(outline, file=out_f)
-
-                    # PNG
-                    trueval *= 255 
-                    trueval = np.round(trueval)
-                    trueval = np.clip(trueval, 0, 255) # (not sure if this is necessary with true maps, but can't hurt I gues)
-                    trueval = trueval.astype(int)
-                    trueval = np.reshape(trueval, (2,500,500,1))
-                    prediction *= 255         
-                    prediction = np.round(prediction)
-                    prediction = np.clip(prediction, 0, 255) # truncates off the negative numbers, which were causing a splotch. Also truncating other end at 255.
-                    prediction = prediction.astype(int)
-                    prediction = np.reshape(prediction, (2,500,500,1))
+                # process output and read targets
+                if args.preprocessed == True:
+                    trueval = np.load(targets[simids[i]]) # read in normalized
+                    prediction = predictions[i]
+                    prediction = np.reshape(prediction, (500,500,2)) # from (2,500,500)
                     for t in range(num_targets):
-                        rgb = np.concatenate([
-                            np.full((500, 500, 1), 0, dtype='uint8'),
-                            np.full((500, 500, 1), 0, dtype='uint8'),
-                            trueval[t],
-                            trueval[t],
-                        ], axis=-1)
-                        im = Image.fromarray(rgb.astype("uint8"))
-                        im.save(args.out + "/pwConv_" + str(args.seed) + "_" + str(i) + "_" + str(t) + "_true.png")
-                        rgb = np.concatenate([
-                            np.full((500, 500, 1), 0, dtype='uint8'),
-                            np.full((500, 500, 1), 0, dtype='uint8'),
-                            prediction[t],
-                            prediction[t],
-                        ], axis=-1)
-                        im = Image.fromarray(rgb.astype("uint8"))
-                        im.save(args.out + "/pwConv_" + str(args.seed) + "_" + str(i) + "_" + str(t) + "_pred.png")
+                        trueval[:,:,t] = (trueval[:,:,t] * mean_sd[t][1]) + mean_sd[t][0]
+                        prediction[:,:,t] = (prediction[:,:,t] * mean_sd[t][1]) +mean_sd[t][0]
+                else:
+                    print("TO DO: predict starting with with tree sequences")
+                    exit()
+                
+                # ### block to output png - aha! It's messing up RIGHT here.
+                # import PIL.Image as Image                                              
+                # rgb = np.concatenate([                                                 
+                #     np.reshape(np.clip(np.round(trueval[:,:,1] * 255), 0, 255).astype(int), (500,500,1)),
+                #     np.full((500, 500, 1), 0, dtype='uint8'),                          
+                #     np.reshape(np.clip(np.round(trueval[:,:,0] * 255), 0, 255).astype(int), (500,500,1)),
+                #     np.full((500, 500, 1), 255, dtype='uint8'),                        
+                # ], axis=-1)                                                            
+                # im = Image.fromarray(rgb.astype("uint8"))                              
+                # im.save("POOP.png")                                                    
+                # ###                                                                    
 
-                    # if args.segment == True:
-                    #     # convert ordinal classification output to segmentation                                                                         
-                    #     # so what is this going to look like                                                                                        
-                    #     # at least for the current training set, the sigma range is always the same, 0 to 255 on the blue scale                     
-                    #     # so, at least for now, I want to divide that up based on the number identified segments                                    
-                    #     # so, first, I'll want to loop through ALL the pixels and find the largest identified class (maybe it's always 4? we'll see)
-                    #     # then go back and assign shades of blue based on the number of different surfaces                                          
-                    #     class_map = {
-                    #         1: [255],
-                    #         2: [0,255],
-                    #         3: [0,128,255],
-                    #         4: [0,85,190,255],
-                    #     }
+                # # text output - one row per test dataset — why wuold I need this?
+                # outline = ""
+                # outline += file_names[simids[i]]
+                # outline += "\t"
+                # outline += str(500)
+                # outline += "\t"
+                # outline += "\t".join(list(map(str,trueval.flatten())))
+                # outline += "\t"
+                # outline += "\t".join(list(map(str,prediction.flatten())))
+                # print(outline, file=out_f)
 
-                    #     # find the number of different surfaces                                         
-                    #     predict_class = np.reshape(predict_class, (500,500,4))
-                    #     number_of_surfaces_true = 1
-                    #     number_of_surfaces_pred = 1
-                    #     for k_ in range(1,4):
-                    #         for i_ in range(500):
-                    #             for j_ in range(500):
-                    #                 c = float(true_class[i_,j_,k_])
-                    #                 if c == 1.0:
-                    #                     number_of_surfaces_true = int(k_)+1
-                    #                 c = round(float(predict_class[i_,j_,k_])) # rounding to nearest integer   
-                    #                 if c == 1.0:
-                    #                     number_of_surfaces_pred = int(k_)+1
+                # PNG
+                trueval *= 255 
+                trueval = np.round(trueval)
+                trueval = np.clip(trueval, 0, 255) # (not sure if this is necessary with true maps, but can't hurt I gues)
+                trueval = trueval.astype(int)
+                prediction *= 255         
+                prediction = np.round(prediction)
+                prediction = np.clip(prediction, 0, 255) # truncates off the negative numbers, which were causing a splotch. Also truncating other end at 255.
+                prediction = prediction.astype(int)
+                for t in range(num_targets):
+                    rgb = np.concatenate([
+                        np.full((500, 500, 1), 0, dtype='uint8'),
+                        np.full((500, 500, 1), 0, dtype='uint8'),
+                        np.reshape(trueval[:,:,t], (500,500,1)),
+                        np.reshape(trueval[:,:,t], (500,500,1)),
+                    ], axis=-1)
+                    im = Image.fromarray(rgb.astype("uint8"))
+                    im.save(args.out + "/Test_" + str(args.seed) + "/pwConv_" + str(args.seed) + "_" + str(simids[i]) + "_" + str(t) + "_true.png")
+                    rgb = np.concatenate([
+                        np.full((500, 500, 1), 0, dtype='uint8'),
+                        np.full((500, 500, 1), 0, dtype='uint8'),
+                        np.reshape(prediction[:,:,t], (500,500,1)),
+                        np.reshape(prediction[:,:,t], (500,500,1)),
+                    ], axis=-1)
+                    im = Image.fromarray(rgb.astype("uint8"))
+                    im.save(args.out + "/Test_" + str(args.seed) + "/pwConv_" + str(args.seed) + "_" + str(simids[i]) + "_" + str(t) + "_pred.png")
 
-                    #     # loop back through and assign surfaces                                         
-                    #     true_class_out = np.zeros((500,500))
-                    #     pred_class_out = np.zeros((500,500))
-                    #     for i_ in range(500):
-                    #         for j_ in range(500):
-                    #             current_class = 0
-                    #             for k_ in range(1,4):
-                    #                 c = float(true_class[i_,j_,k_])
-                    #                 if c == 1:
-                    #                     current_class = int(k_)
-                    #             true_class_out[i_,j_] = class_map[number_of_surfaces_true][current_class]
-                    #             current_class = 0
-                    #             for k_ in range(1,4):
-                    #                 c = round(float(predict_class[i_,j_,k_]))
-                    #                 if c == 1:
-                    #                     current_class =int(k_)
-                    #             pred_class_out[i_,j_] = class_map[number_of_surfaces_pred][current_class]
-                    #     true_class_out = np.reshape(true_class_out, (500,500,1))
-                    #     pred_class_out = np.reshape(pred_class_out, (500,500,1))
-
-                    #     # save
-                    #     rgb = np.concatenate([
-                    #         np.full((500, 500, 1), 0, dtype='uint8'),
-                    #         np.full((500, 500, 1), 0, dtype='uint8'),
-                    #         true_class_out,
-                    #         true_class_out,
-                    #     ], axis=-1)
-                    #     im = Image.fromarray(rgb.astype("uint8"))
-                    #     im.save(args.out + "/pwConv_" + str(args.seed) + "_" + str(i) + "_trueclass.png")
-                    #     im.save(args.out + "/pwConv_" + str(args.seed) + "_" + str(i) + "_true.png")
-
-                    #     rgb = np.concatenate([
-                    #         np.full((500, 500, 1), 0, dtype='uint8'),
-                    #         np.full((500, 500, 1), 0, dtype='uint8'),
-                    #         pred_class_out,
-                    #         pred_class_out,
-                    #     ], axis=-1)
-                    #     im = Image.fromarray(rgb.astype("uint8"))
-                    #     im.save(args.out + "/pwConv_" + str(args.seed) + "_" + str(i) + "_predclass.png")
-
-    # else: # *** not updated since disperseNN ***
-    #     with open(args.out + "/pwConv_" + str(args.seed) + "_predictions.txt", "w") as out_f:
-    #         prediction = predictions[0][0]
-    #         prediction = (prediction * sdSig) + meanSig
-    #         prediction = np.exp(prediction)
-    #         prediction = np.round(prediction, 10)
-    #         print(file_names, prediction, file=out_f)
+                # ### block to output png - aha! It's messing up RIGHT here.              
+                # import PIL.Image as Image
+                # rgb = np.concatenate([
+                #     np.reshape(trueval[:,:,1], (500,500,1)),
+                #     np.full((500, 500, 1), 0, dtype='uint8'),
+                #     np.reshape(trueval[:,:,0], (500,500,1)),
+                #     np.full((500, 500, 1), 255, dtype='uint8'),
+                # ], axis=-1)
+                # im = Image.fromarray(rgb.astype("uint8"))
+                # im.save("POOP2.png")
+                # exit()
+                # ###                                                                     
 
     return
 
@@ -931,82 +865,73 @@ def unpack_predictions(predictions, mean_sd, targets, simids, file_names, num_ta
 
 
 def preprocess_trees():
-    if args.segment == False:
-        trees = read_list(args.tree_list)
-        maps = read_list(args.target_list)
-        total_sims = len(trees)
+    trees = read_list(args.tree_list)
+    maps = read_list(args.target_list)
+    total_sims = len(trees)
+    num_targets = 2 # dispersal + density channels
 
-        # loop through maps to get mean and sd          
-        if os.path.isfile(args.out+"/mean_sd.npy"):
-            stats = np.load(args.out+"/mean_sd.npy")
-        else:
-            targets = []
-            for i in range(total_sims):
-                arr = read_map(maps[i], args.grid_coarseness, args.segment)
-                targets.append(arr)
-            targets = np.array(targets) # (num_datasets, 500, 500, 2)
-            stats = []
-            for t in range(2):
-                meanSig = np.mean(targets[:,:,:,t])
-                sdSig = np.std(targets[:,:,:,t])
-                stats.append(np.array([meanSig, sdSig]))
-            os.makedirs(args.out, exist_ok=True)
-            np.save(args.out+"/mean_sd", stats) 
-
-        # initialize generator and some things
-        os.makedirs(os.path.join(args.out,"Maps",str(args.seed)), exist_ok=True)
-        os.makedirs(os.path.join(args.out,"Genos",str(args.seed)), exist_ok=True)
-        os.makedirs(os.path.join(args.out,"Locs",str(args.seed)), exist_ok=True)
-        params = make_generator_params_dict(
-            targets=None,
-            trees=None,
-            shuffle=None,
-            genos=None,
-            locs=None,
-            sample_widths=None,
-            num_targets=2,
-        )
-        training_generator = DataGenerator([None], **params)
-
-        # preprocess
+    # loop through maps to get mean and sd          
+    if os.path.isfile(args.out+"/mean_sd.npy"):
+        stats = np.load(args.out+"/mean_sd.npy")
+    else:
+        targets = []
         for i in range(total_sims):
-            mapfile = os.path.join(args.out,"Maps",str(args.seed),str(i)+".target")
-            genofile = os.path.join(args.out,"Genos",str(args.seed),str(i)+".genos")
-            locfile = os.path.join(args.out,"Locs",str(args.seed),str(i)+".locs")
-            if os.path.isfile(genofile+".npy") == False or os.path.isfile(locfile+".npy") == False:
-                geno_mat, locs = training_generator.sample_ts(trees[i], args.seed) 
-                np.save(genofile, geno_mat)
-                np.save(locfile, locs)
-            if os.path.isfile(genofile+".npy") == True and os.path.isfile(locfile+".npy") == True: # (only add map if inputs successful)
-                if os.path.isfile(mapfile+".npy") == False:
-                    target = read_map(maps[i], args.grid_coarseness, args.segment) # (500, 500, 2)
-                    for t in range(2):
-                        target[:,:,t] = (target[:,:,t] - stats[t][0]) / stats[t][1]
-                    np.save(mapfile, target)
+            arr = read_map(maps[i], args.grid_coarseness, args.segment)
+            targets.append(arr)
+        targets = np.array(targets) # (num_datasets, 500, 500, 2)
+        stats = []
+        for t in range(num_targets):
+            meanSig = np.mean(targets[:,:,:,t])
+            sdSig = np.std(targets[:,:,:,t])
+            stats.append(np.array([meanSig, sdSig]))
+        os.makedirs(args.out, exist_ok=True)
+        np.save(args.out+"/mean_sd", stats) 
 
-    # else: # just do the ordinal maps
-    #     maps = read_list(args.target_list)
-    #     total_sims = len(maps)
-    #     msfile=args.out+"/Maps_ordinal/mean_sd.npy"
-    #     if os.path.isfile(msfile): # the values in the ordinal maps are different than the above
-    #         meanSig,sdSig = np.load(msfile)
-    #     else:
-    #         targets = []
-    #         for i in range(total_sims):
-    #             arr = read_map(maps[i], args.grid_coarseness, args.segment)
-    #             targets.append(arr[:,:,0])
-    #         meanSig = np.mean(targets)
-    #         sdSig = np.std(targets)
-    #         os.makedirs(args.out, exist_ok=True)
-    #         np.save(msfile, [meanSig,sdSig])
-    #     os.makedirs(os.path.join(args.out,"Maps_ordinal",str(args.seed)), exist_ok=True)
-    #     for i in range(total_sims):
-    #         mapfile = os.path.join(args.out,"Maps_ordinal",str(args.seed),str(i)+".target")
-    #         if os.path.isfile(mapfile+".npy") == False:
-    #             target = read_map(maps[i], args.grid_coarseness, args.segment)
-    #             target[:,:,0] = (target[:,:,0] - meanSig) / sdSig
-    #             np.save(mapfile, target)
-        
+    # initialize generator and some things
+    os.makedirs(os.path.join(args.out,"Maps",str(args.seed)), exist_ok=True)
+    os.makedirs(os.path.join(args.out,"Genos",str(args.seed)), exist_ok=True)
+    os.makedirs(os.path.join(args.out,"Locs",str(args.seed)), exist_ok=True)
+    params = make_generator_params_dict(
+        targets=None,
+        trees=None,
+        shuffle=None,
+        genos=None,
+        locs=None,
+        sample_widths=None,
+        num_targets=num_targets,
+    )
+    training_generator = DataGenerator([None], **params)
+
+    # preprocess
+    for i in range(total_sims):
+        mapfile = os.path.join(args.out,"Maps",str(args.seed),str(i)+".target")
+        genofile = os.path.join(args.out,"Genos",str(args.seed),str(i)+".genos")
+        locfile = os.path.join(args.out,"Locs",str(args.seed),str(i)+".locs")
+        if os.path.isfile(genofile+".npy") == False or os.path.isfile(locfile+".npy") == False:
+            geno_mat, locs = training_generator.sample_ts(trees[i], args.seed) 
+            np.save(genofile, geno_mat)
+            np.save(locfile, locs)
+        if os.path.isfile(genofile+".npy") == True and os.path.isfile(locfile+".npy") == True: # (only add map if inputs successful)
+            if os.path.isfile(mapfile+".npy") == False:
+                target = read_map(maps[i], args.grid_coarseness, args.segment) # (500, 500, 2)
+                for t in range(num_targets):
+                    target[:,:,t] = (target[:,:,t] - stats[t][0]) / stats[t][1]
+                np.save(mapfile, target)
+
+                # ### block to output png (at this point the image is a bit 'off' from the original color, due to normalizaiton)         
+                # import PIL.Image as Image                                                
+                # rgb = np.concatenate([                                                   
+                #     np.reshape(np.round(target[:,:,1] * 255).astype(int), (500,500,1)),
+                #     np.full((500, 500, 1), 0, dtype='uint8'),                            
+                #     np.reshape(np.round(target[:,:,0] * 255).astype(int), (500,500,1)),
+                #     np.full((500, 500, 1), 255, dtype='uint8'),                          
+                # ], axis=-1)                                                              
+                # im = Image.fromarray(rgb.astype("uint8"))                                
+                # im.save("POOP.png")                                                      
+                # exit()                                                                   
+                # ###                                                                      
+
+
     return
 
 
