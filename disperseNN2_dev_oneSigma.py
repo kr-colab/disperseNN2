@@ -3,7 +3,7 @@
 
 # notes:
 #     - learning rate 1e-3 doesn't work at all, for one sigma. Neither does 5e-4. 1e-4 does work.
-
+#     - 250 pairs (n=23) runs on the 10Gb GPUs; 450 pairs seems to work on the 20Gb GPU
 import os
 import argparse
 import tskit
