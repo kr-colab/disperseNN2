@@ -1,8 +1,8 @@
 
-
-# copied from v2: I'm calcualting DISTANCES again
-
 # e.g. python disperseNN2/disperseNN2.py --out temp1 --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 1 --min_n 10 --max_n 10 --mu 1e-15 --seed 12345 --tree_list ../Maps/Boxes84/tree_list.txt --target_list ../Maps/Boxes84/target_list.txt --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --train --learning_rate 1e-4 --grid_coarseness 50 --upsample 6 --pairs 45 --gpu_index any
+
+# notes:
+#     - learning rate 1e-3 doesn't work at all, for one sigma. Neither does 5e-4. 1e-4 does work.
 
 import os
 import argparse
@@ -203,9 +203,7 @@ parser.add_argument("--pairs", help="number of pairs to subsample", default=45, 
 args = parser.parse_args()
 check_params(args)
 
-#config = tf.ConfigProto(device_count={"CPU": 40})
-#from keras import backend
-#backend.tensorflow_backend.set_session(tf.Session(config=config))
+
 
 
 
@@ -226,10 +224,9 @@ def load_network():
     tf.config.threading.set_intra_op_parallelism_threads(args.threads)
 
     # update conv+pool iterations based on number of SNPs
-    num_conv_iterations = int(np.floor(np.log10(args.num_snps))-1) # was -2...
+    num_conv_iterations = int(np.floor(np.log10(args.num_snps))-1)
     if num_conv_iterations < 0:
         num_conv_iterations = 0
-#    num_conv_iterations +=1 
 
     # cnn architecture
     conv_kernal_size = 2
@@ -251,7 +248,7 @@ def load_network():
 
     # convolutions for each pair
     hs = []
-    ls = []
+    #ls = []
     ds = []
     for comb in combinations:
         h = tf.gather(geno_input, comb, axis = 2)
@@ -262,41 +259,30 @@ def load_network():
         h = tf.keras.layers.Flatten()(h)        
         hs.append(h)
         l = tf.gather(loc_input, comb, axis = 2)
-        ###
+        ###                                    
         d = l[:,:,0] - l[:,:,1]
-        d = tf.norm(d, ord='euclidean', axis=1) # https://stackoverflow.com/questions/46784648/mean-euclidean-distance-in-tensorflow
+        d = tf.norm(d, ord='euclidean', axis=1)
         ds.append(d)
         ###
-        l = tf.keras.layers.Flatten()(l)
-        ls.append(l)
+        #l = tf.keras.layers.Flatten()(l)
+        #ls.append(l)
 
     # reshape conv. output and locs
     h = tf.stack(hs, axis=1)
-    l = tf.stack(ls, axis=1)
-    d = tf.stack(ds, axis=1)
-    d = tf.keras.layers.Reshape(((args.pairs, 1)))(d)
-    feature_block =  tf.keras.layers.concatenate([h,l,d])
+    #l = tf.stack(ls, axis=1)
+    d = tf.stack(ds, axis=1)                          
+    d = tf.keras.layers.Reshape(((args.pairs, 1)))(d) 
+    #feature_block = tf.keras.layers.concatenate([h,l,d])
+    feature_block = tf.keras.layers.concatenate([h,d])
     print("\nfeature block:", feature_block.shape)
 
-    # compress down to one sigma estimate
+    # compress down to one sigma estimate                                                                          
     h = tf.keras.layers.Dense(args.pairs, activation="relu")(feature_block) # (tons of params for this dense layer)
     print("\nbig dense:", h.shape)
     h = tf.keras.layers.Flatten()(h)
     print("\nflatten:", h.shape)
-#    h = tf.keras.layers.Dense(128, activation="relu")(h)
- #   print("\n128 dense:", h.shape)
-#    h = tf.keras.layers.Flatten()(h)
- #   print("\nh:", h.shape)
     output = tf.keras.layers.Dense(1, activation="linear")(h)
     print("\noutput:", output.shape)
-
-
-    model = tf.keras.Model(
-        inputs=[geno_input, loc_input], outputs=[output]
-    )
-    opt = tf.keras.optimizers.Adam(learning_rate=args.learning_rate)
-    model.compile(loss="mse", optimizer=opt)
-    model.summary()
 
     # # upsampling params
     # minTensor = 10 # (theoretical min would be 5, because locs = 4 pieces of data)
@@ -375,25 +361,14 @@ def load_network():
     #         h = tf.keras.layers.Reshape((upsamples[u+1],upsamples[u+1]))(h)
     #         print(h.shape,'reshapen')                                                                                
     
-    # # model overview and hyperparams
-    # opt = tf.keras.optimizers.Adam(learning_rate=args.learning_rate)
-    # if args.segment == False:
-    #     model = tf.keras.Model(
-    #         inputs = [geno_input, loc_input],                                                                                                      
-    #         outputs = [h],
-    #     )
-    #     model.compile(loss="mse", optimizer=opt)
-    # else:
-    #     output_reg = h
-    #     h = tf.keras.layers.Dense(sizeOut*4, activation='sigmoid')(h) 
-    #     output_class = tf.keras.layers.Reshape((sizeOut,sizeOut,4), input_shape=(sizeOut,sizeOut*4))(h)
-    #     model = tf.keras.Model(
-    #         inputs = [geno_input, loc_input],
-    #         outputs = [output_reg, output_class],
-    #     )
-    #     model.compile(loss=['mse','BinaryCrossentropy'], optimizer=opt) # note: ordinal* data. Apparently this was the correct loss.
-
-    #model.summary()
+    # model overview and hyperparams
+    opt = tf.keras.optimizers.Adam(learning_rate=args.learning_rate)
+    model = tf.keras.Model(
+        inputs = [geno_input, loc_input],                                                                                                      
+        outputs = [output],
+    )
+    model.compile(loss="mse", optimizer=opt)
+    model.summary()
     print("total params:", np.sum([np.prod(v.shape) for v in model.trainable_variables]), "\n")
 
     # load weights
@@ -482,21 +457,19 @@ def prep_trees_and_train():
     targets = []
     maps = read_dict(args.target_list)
     for i in range(total_sims):
-        #arr = read_map(maps[i], args.grid_coarseness, args.segment)
         with open(maps[i]) as infile:
             arr = float(infile.readline().strip())
         targets.append(np.log(arr))
-        print("finished with " + str(i), flush=True)
-        
+
     # normalize targets                                                               
-    targets = np.array(targets)
+#    targets = np.array(targets)
     meanSig = np.mean(targets)
     sdSig = np.std(targets)
     np.save(f"{args.out}_training_params", [
             meanSig, sdSig, args.max_n, args.num_snps])
     targets = [(x - meanSig) / sdSig for x in targets]  # center and scale
     targets = dict_from_list(targets)    
-
+    
     # split into val,train sets
     sim_ids = np.arange(0, total_sims)
     train, val = train_test_split(sim_ids, test_size=args.validation_split)
@@ -531,6 +504,9 @@ def prep_trees_and_train():
 
     # train
     load_dl_modules()
+#    gpus = tf.config.experimental.list_physical_devices('GPU')
+ #   for gpu in gpus:
+  #      tf.config.experimental.set_memory_growth(gpu, True)
     model, checkpointer, earlystop, reducelr = load_network()
     print("training!")
     history = model.fit(
@@ -543,6 +519,16 @@ def prep_trees_and_train():
         validation_data=validation_generator,
         callbacks=[checkpointer, earlystop, reducelr],
     )
+
+    # history = model.fit_generator(
+    #     generator=training_generator,
+    #     use_multiprocessing=False,
+    #     epochs=args.max_epochs,
+    #     shuffle=False,  # (redundant with shuffling inside the generator) 
+    #     verbose=args.keras_verbose,
+    #     validation_data=validation_generator,
+    #     callbacks=[checkpointer, earlystop, reducelr],
+    # )
 
     return
 
@@ -897,9 +883,7 @@ def preprocess_trees():
         else:
             targets = []
             for i in range(total_sims):
-                #arr = read_map(maps[i], args.grid_coarseness, args.segment)
-                with open(maps[i]) as infile:                
-                    arr = np.log(float(infile.readline().strip()))
+                arr = read_map(maps[i], args.grid_coarseness, args.segment)
                 targets.append(arr)
             meanSig = np.mean(targets)
             sdSig = np.std(targets)
@@ -931,36 +915,34 @@ def preprocess_trees():
                 np.save(locfile, locs)
             if os.path.isfile(genofile+".npy") == True and os.path.isfile(locfile+".npy") == True: # (only add map if inputs successful)
                 if os.path.isfile(mapfile+".npy") == False:
-                    #target = read_map(maps[i], args.grid_coarseness, args.segment)
-                    with open(maps[i]) as infile:
-                        target = np.log(float(infile.readline().strip()))
+                    target = read_map(maps[i], args.grid_coarseness, args.segment)
                     target = (target - meanSig) / sdSig
                     np.save(mapfile, target)
 
 
-    # else: # just do the ordinal maps
-    #     maps = read_list(args.target_list)
-    #     total_sims = len(maps)
-    #     msfile=args.out+"/Maps_ordinal/mean_sd.npy"
-    #     if os.path.isfile(msfile): # the values in the ordinal maps are different than the above
-    #         meanSig,sdSig = np.load(msfile)
-    #     else:
-    #         targets = []
-    #         for i in range(total_sims):
-    #             arr = read_map(maps[i], args.grid_coarseness, args.segment)
-    #             targets.append(arr[:,:,0])
-    #         meanSig = np.mean(targets)
-    #         sdSig = np.std(targets)
-    #         os.makedirs(args.out, exist_ok=True)
-    #         np.save(msfile, [meanSig,sdSig])
-    #     # 
-    #     os.makedirs(os.path.join(args.out,"Maps_ordinal",str(args.seed)), exist_ok=True)
-    #     for i in range(total_sims):
-    #         mapfile = os.path.join(args.out,"Maps_ordinal",str(args.seed),str(i)+".target")
-    #         if os.path.isfile(mapfile+".npy") == False:
-    #             target = read_map(maps[i], args.grid_coarseness, args.segment)
-    #             target[:,:,0] = (target[:,:,0] - meanSig) / sdSig
-    #             np.save(mapfile, target)
+    else: # just do the ordinal maps
+        maps = read_list(args.target_list)
+        total_sims = len(maps)
+        msfile=args.out+"/Maps_ordinal/mean_sd.npy"
+        if os.path.isfile(msfile): # the values in the ordinal maps are different than the above
+            meanSig,sdSig = np.load(msfile)
+        else:
+            targets = []
+            for i in range(total_sims):
+                arr = read_map(maps[i], args.grid_coarseness, args.segment)
+                targets.append(arr[:,:,0])
+            meanSig = np.mean(targets)
+            sdSig = np.std(targets)
+            os.makedirs(args.out, exist_ok=True)
+            np.save(msfile, [meanSig,sdSig])
+        # 
+        os.makedirs(os.path.join(args.out,"Maps_ordinal",str(args.seed)), exist_ok=True)
+        for i in range(total_sims):
+            mapfile = os.path.join(args.out,"Maps_ordinal",str(args.seed),str(i)+".target")
+            if os.path.isfile(mapfile+".npy") == False:
+                target = read_map(maps[i], args.grid_coarseness, args.segment)
+                target[:,:,0] = (target[:,:,0] - meanSig) / sdSig
+                np.save(mapfile, target)
         
     return
 

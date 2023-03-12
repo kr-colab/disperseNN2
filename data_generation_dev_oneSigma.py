@@ -429,5 +429,6 @@ class DataGenerator(tf.keras.utils.Sequence):
                 X1[i, :] = np.load(self.genos[ID])
                 X2[i, :] = np.load(self.locs[ID])
                 X = [X1, X2]
+        print(X1, X2, X1.shape, X2.shape)
 
         return (X, y)
