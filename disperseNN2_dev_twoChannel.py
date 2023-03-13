@@ -222,7 +222,7 @@ def load_network(num_targets):
     tf.config.threading.set_intra_op_parallelism_threads(args.threads)
 
     # update conv+pool iterations based on number of SNPs
-    num_conv_iterations = int(np.floor(np.log10(args.num_snps))-1) # was -2...
+    num_conv_iterations = int(np.floor(np.log10(args.num_snps))-1)
     if num_conv_iterations < 0:
         num_conv_iterations = 0
 

@@ -400,16 +400,6 @@ class DataGenerator(tf.keras.utils.Sequence):
 
 
 
-    # def preprocessed_sample_ts(self, geno_path): 
-    #     "Seperate function for loading in pre-processed data"
-        
-    #     # read input
-    #     geno_mat = np.load(geno_path)
-    #     loc_mat = np.load(_path)
-    #     target_mat = np.load(geno_path)
-
-    #     return geno_mat
-
     def __data_generation(self, list_IDs_temp):
         "Generates data containing batch_size samples"        
         X1 = np.empty((self.batch_size, self.num_snps, self.max_n), dtype="int8")  # genos       
@@ -418,6 +408,7 @@ class DataGenerator(tf.keras.utils.Sequence):
         
         if self.preprocessed == False:
             for i, ID in enumerate(list_IDs_temp):
+                #print(self.trees[ID], flush=True)
                 y[i] = self.targets[ID]
                 out = self.sample_ts(self.trees[ID], np.random.randint(1e9,size=1))
                 X1[i, :] = out[0]
@@ -429,6 +420,5 @@ class DataGenerator(tf.keras.utils.Sequence):
                 X1[i, :] = np.load(self.genos[ID])
                 X2[i, :] = np.load(self.locs[ID])
                 X = [X1, X2]
-        print(X1, X2, X1.shape, X2.shape)
 
         return (X, y)

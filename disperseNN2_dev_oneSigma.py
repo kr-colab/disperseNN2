@@ -248,7 +248,6 @@ def load_network():
 
     # convolutions for each pair
     hs = []
-    #ls = []
     ds = []
     for comb in combinations:
         h = tf.gather(geno_input, comb, axis = 2)
@@ -259,20 +258,14 @@ def load_network():
         h = tf.keras.layers.Flatten()(h)        
         hs.append(h)
         l = tf.gather(loc_input, comb, axis = 2)
-        ###                                    
         d = l[:,:,0] - l[:,:,1]
         d = tf.norm(d, ord='euclidean', axis=1)
         ds.append(d)
-        ###
-        #l = tf.keras.layers.Flatten()(l)
-        #ls.append(l)
 
     # reshape conv. output and locs
     h = tf.stack(hs, axis=1)
-    #l = tf.stack(ls, axis=1)
     d = tf.stack(ds, axis=1)                          
     d = tf.keras.layers.Reshape(((args.pairs, 1)))(d) 
-    #feature_block = tf.keras.layers.concatenate([h,l,d])
     feature_block = tf.keras.layers.concatenate([h,d])
     print("\nfeature block:", feature_block.shape)
 
@@ -284,83 +277,6 @@ def load_network():
     output = tf.keras.layers.Dense(1, activation="linear")(h)
     print("\noutput:", output.shape)
 
-    # # upsampling params
-    # minTensor = 10 # (theoretical min would be 5, because locs = 4 pieces of data)
-    # sizeOut = 500
-    # num_layers = int(args.upsample) # num dense layers to apply post-convolutions; includes the base map, and the output layer too, so at least 2.
-    # diff = np.log(sizeOut) - np.log(minTensor)
-    # bin_size = diff / (num_layers-1)   
-    # upsamples = []
-    # for i in range(num_layers):
-    #     current_break = np.log(minTensor) + (bin_size * i)
-    #     current_break = np.exp(current_break)                    
-    #     current_break = np.round(current_break)                  
-    #     upsamples.append(int(current_break))                        
-    # print("map sizes:", upsamples)
-
-    # # loop through intermediate map sizes
-    # for u in range(len(upsamples)):                                                                                       
-    #     num_partitions = int(np.ceil(args.pairs / float(upsamples[u])))
-    #     print("\n upsample #"+str(u+1), "(index", str(u)+"), partitions:", num_partitions)
-
-    #     # "early" iterations (map dimension is smaller than number of pairs) 
-    #     if num_partitions > 1:
-    #         row = 0
-    #         dense_stack = []
-    #         if u<(len(upsamples)-1): # if not final layer
-    #             DENSE = tf.keras.layers.Dense(upsamples[u], activation="relu") # initialize shared layer
-    #         else:
-    #             DENSE = tf.keras.layers.Dense(upsamples[u], activation="linear")
-    #         for p in range(num_partitions):
-    #             part = feature_block[:,row:row+upsamples[u],:]
-    #             print(part.shape, 'partitioned')
-    #             row += upsamples[u]
-    #             if part.shape[1] < upsamples[u]: # if map dimension isn't divisible by # pairs, then pad the final partition
-    #                 paddings = tf.constant([[0,0], [0,upsamples[u]-part.shape[1]], [0,0]]) 
-    #                 part = tf.pad(part, paddings, "CONSTANT")
-    #                 print(part.shape,'padded')
-    #             if u > 0: # unless first layer, concatenate with current map
-    #                 part = tf.keras.layers.concatenate([h, part]) # ~~~ skip connection engaged ~~~                    
-    #                 print(part.shape, 'skip connect / concat')
-    #             h0 = DENSE(part)
-    #             print(h0.shape,'densified')
-    #             dense_stack.append(h0)
-    #         h = tf.stack(dense_stack, axis=1)
-    #         print(h.shape,'stacked')
-    #         h = tf.keras.layers.AveragePooling2D(pool_size=(num_partitions,1))(h)
-    #         print(h.shape,'pooled')
-    #         if u==(len(upsamples)-1): 
-    #             h = tf.keras.layers.Reshape((upsamples[u],upsamples[u]))(h) # (necessary if output layer)
-    #             print(h.shape, 'reshapen')
-
-
-    #     # "late" iterations (map dimension >= number of pairs)  
-    #     else: 
-    #         print(feature_block.shape,'feature block (for reference)')
-    #         paddings = tf.constant([[0,0], [0,upsamples[u]-args.pairs], [0,0]])
-    #         feature_block_padded = tf.pad(feature_block, paddings, "CONSTANT")
-    #         print(feature_block_padded.shape,'padded feature block')
-    #         if u>0: 
-    #             h = tf.keras.layers.concatenate([h, feature_block_padded]) # ~~~ skip connection engaged ~~~
-    #             print(h.shape,'skip connect / concat.')
-    #         else:
-    #             h = feature_block_padded
-    #         if u<(len(upsamples)-1): 
-    #             h = tf.keras.layers.Dense(upsamples[u], activation="relu")(h)
-    #             print(h.shape,'dense w/ linear act')
-    #         else: 
-    #             h = tf.keras.layers.Dense(upsamples[u], activation="linear")(h)
-    #             print(h.shape,'dense')
-
-    #     # the upsample step
-    #     if u < (len(upsamples)-1):
-    #         h = tf.keras.layers.Reshape((upsamples[u],upsamples[u],1))(h) 
-    #         print(h.shape, 'reshapen')                                                              
-    #         h = tf.keras.layers.Conv2DTranspose(filters=1, kernel_size=(upsamples[u+1]-upsamples[u]+1), activation="relu")(h)
-    #         print(h.shape,'conv2dTranspose')                                                                
-    #         h = tf.keras.layers.Reshape((upsamples[u+1],upsamples[u+1]))(h)
-    #         print(h.shape,'reshapen')                                                                                
-    
     # model overview and hyperparams
     opt = tf.keras.optimizers.Adam(learning_rate=args.learning_rate)
     model = tf.keras.Model(
@@ -872,76 +788,52 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
 
 
 def preprocess_trees():
-    if args.segment == False:
-        trees = read_list(args.tree_list)
-        maps = read_list(args.target_list)
-        total_sims = len(trees)
+    trees = read_list(args.tree_list)
+    maps = read_list(args.target_list)
+    total_sims = len(trees)
 
-        # loop through maps to get mean and sd          
-        if os.path.isfile(args.out+"/mean_sd.npy"):
-            meanSig,sdSig = np.load(args.out+"/mean_sd.npy")
-        else:
-            targets = []
-            for i in range(total_sims):
-                arr = read_map(maps[i], args.grid_coarseness, args.segment)
-                targets.append(arr)
-            meanSig = np.mean(targets)
-            sdSig = np.std(targets)
-            os.makedirs(args.out, exist_ok=True)
-            np.save(args.out+"/mean_sd", [meanSig,sdSig])
-
-        # initialize generator and some things
-        os.makedirs(os.path.join(args.out,"Maps",str(args.seed)), exist_ok=True)
-        os.makedirs(os.path.join(args.out,"Genos",str(args.seed)), exist_ok=True)
-        os.makedirs(os.path.join(args.out,"Locs",str(args.seed)), exist_ok=True)
-        params = make_generator_params_dict(
-            targets=None,
-            trees=None,
-            shuffle=None,
-            genos=None,
-            locs=None,
-            sample_widths=None,
-        )
-        training_generator = DataGenerator([None], **params)
-
-        # preprocess
+    # loop through maps to get mean and sd          
+    if os.path.isfile(args.out+"/mean_sd.npy"):
+        meanSig,sdSig = np.load(args.out+"/mean_sd.npy")
+    else:
+        targets = []
         for i in range(total_sims):
-            mapfile = os.path.join(args.out,"Maps",str(args.seed),str(i)+".target")
-            genofile = os.path.join(args.out,"Genos",str(args.seed),str(i)+".genos")
-            locfile = os.path.join(args.out,"Locs",str(args.seed),str(i)+".locs")
-            if os.path.isfile(genofile+".npy") == False or os.path.isfile(locfile+".npy") == False:
-                geno_mat, locs = training_generator.sample_ts(trees[i], args.seed) 
-                np.save(genofile, geno_mat)
-                np.save(locfile, locs)
-            if os.path.isfile(genofile+".npy") == True and os.path.isfile(locfile+".npy") == True: # (only add map if inputs successful)
-                if os.path.isfile(mapfile+".npy") == False:
-                    target = read_map(maps[i], args.grid_coarseness, args.segment)
-                    target = (target - meanSig) / sdSig
-                    np.save(mapfile, target)
+            with open(maps[i]) as infile:                
+                arr = np.log(float(infile.readline().strip()))
+            targets.append(arr)
+        meanSig = np.mean(targets)
+        sdSig = np.std(targets)
+        os.makedirs(args.out, exist_ok=True)
+        np.save(args.out+"/mean_sd", [meanSig,sdSig])
 
+    # initialize generator and some things
+    os.makedirs(os.path.join(args.out,"Maps",str(args.seed)), exist_ok=True)
+    os.makedirs(os.path.join(args.out,"Genos",str(args.seed)), exist_ok=True)
+    os.makedirs(os.path.join(args.out,"Locs",str(args.seed)), exist_ok=True)
+    params = make_generator_params_dict(
+        targets=None,
+        trees=None,
+        shuffle=None,
+        genos=None,
+        locs=None,
+        sample_widths=None,
+    )
+    training_generator = DataGenerator([None], **params)
 
-    else: # just do the ordinal maps
-        maps = read_list(args.target_list)
-        total_sims = len(maps)
-        msfile=args.out+"/Maps_ordinal/mean_sd.npy"
-        if os.path.isfile(msfile): # the values in the ordinal maps are different than the above
-            meanSig,sdSig = np.load(msfile)
-        else:
-            targets = []
-            for i in range(total_sims):
-                arr = read_map(maps[i], args.grid_coarseness, args.segment)
-                targets.append(arr[:,:,0])
-            meanSig = np.mean(targets)
-            sdSig = np.std(targets)
-            os.makedirs(args.out, exist_ok=True)
-            np.save(msfile, [meanSig,sdSig])
-        # 
-        os.makedirs(os.path.join(args.out,"Maps_ordinal",str(args.seed)), exist_ok=True)
-        for i in range(total_sims):
-            mapfile = os.path.join(args.out,"Maps_ordinal",str(args.seed),str(i)+".target")
+    # preprocess
+    for i in range(total_sims):
+        mapfile = os.path.join(args.out,"Maps",str(args.seed),str(i)+".target")
+        genofile = os.path.join(args.out,"Genos",str(args.seed),str(i)+".genos")
+        locfile = os.path.join(args.out,"Locs",str(args.seed),str(i)+".locs")
+        if os.path.isfile(genofile+".npy") == False or os.path.isfile(locfile+".npy") == False:
+            geno_mat, locs = training_generator.sample_ts(trees[i], args.seed) 
+            np.save(genofile, geno_mat)
+            np.save(locfile, locs)
+        if os.path.isfile(genofile+".npy") == True and os.path.isfile(locfile+".npy") == True: # (only add map if inputs successful)
             if os.path.isfile(mapfile+".npy") == False:
-                target = read_map(maps[i], args.grid_coarseness, args.segment)
-                target[:,:,0] = (target[:,:,0] - meanSig) / sdSig
+                with open(maps[i]) as infile:
+                    target = np.log(float(infile.readline().strip()))
+                target = (target - meanSig) / sdSig
                 np.save(mapfile, target)
         
     return
