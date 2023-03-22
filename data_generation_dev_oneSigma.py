@@ -408,7 +408,6 @@ class DataGenerator(tf.keras.utils.Sequence):
         
         if self.preprocessed == False:
             for i, ID in enumerate(list_IDs_temp):
-                #print(self.trees[ID], flush=True)
                 y[i] = self.targets[ID]
                 out = self.sample_ts(self.trees[ID], np.random.randint(1e9,size=1))
                 X1[i, :] = out[0]

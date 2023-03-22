@@ -220,6 +220,7 @@ def load_network(num_targets):
         bestGPU = min(zip(ids, ratios), key=lambda x: x[1])[0]
         os.environ['CUDA_VISIBLE_DEVICES'] = str(bestGPU)
     tf.config.threading.set_intra_op_parallelism_threads(args.threads)
+    tf.config.threading.set_inter_op_parallelism_threads(args.threads)
 
     # update conv+pool iterations based on number of SNPs
     num_conv_iterations = int(np.floor(np.log10(args.num_snps))-1)

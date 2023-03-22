@@ -222,6 +222,7 @@ def load_network():
         bestGPU = min(zip(ids, ratios), key=lambda x: x[1])[0]
         os.environ['CUDA_VISIBLE_DEVICES'] = str(bestGPU)
     tf.config.threading.set_intra_op_parallelism_threads(args.threads)
+    tf.config.threading.set_inter_op_parallelism_threads(args.threads)
 
     # update conv+pool iterations based on number of SNPs
     num_conv_iterations = int(np.floor(np.log10(args.num_snps))-1)
@@ -648,141 +649,12 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
             for i in range(len(predictions)):
 
                 # process output and read targets
-                if args.preprocessed == True and args.segment == False:
-                    trueval = np.load(targets[simids[i]]) # read in normalized
-                    trueval = (trueval * sdSig) + meanSig
-                    prediction = predictions[i] # (500x500) 
-                    prediction = (prediction * sdSig) + meanSig 
-                elif args.preprocessed == True and args.segment == True:
-                    trues = np.load(targets[simids[i]]) # read in normalized                
-                    trueval = trues[:,:,0] # continuous channel
-                    true_class = trues[:,:,1:5] # ordinal channels
-                    trueval = (trueval * sdSig) + meanSig
-                    prediction = predictions[0][i] #  regression output
-                    predict_class = predictions[1][i] # classification output
-                    prediction = (prediction * sdSig) + meanSig
-                else:
-                    print("TO DO: predict starting with with tree sequences")
-                    exit()
-
-                # text output - one row per test dataset
-                outline = ""
-                outline += file_names[simids[i]]
-                outline += "\t"
-                outline += str(500)
-                outline += "\t"
-                outline += "\t".join(list(map(str,trueval.flatten())))
-                outline += "\t"
-                outline += "\t".join(list(map(str,prediction.flatten())))
-                if args.segment == True:
-                    outline += "\t"
-                    outline += "\t".join(list(map(str,true_class.flatten()))) # another 250000*4channels=1mil fields for true classes
-                    outline += "\t"
-                    outline += "\t".join(list(map(str,predict_class.flatten()))) # another 1mil fields for predicted class
+                trueval = np.load(targets[simids[i]]) # read in normalized
+                trueval = (trueval * sdSig) + meanSig
+                prediction = predictions[i][0] # (500x500) 
+                prediction = (prediction * sdSig) + meanSig 
+                outline = "\t".join(map(str,[trueval, prediction]))
                 print(outline, file=out_f)
-
-                # PNG
-                trueval *= 255 
-                trueval = np.round(trueval)
-                trueval = np.clip(trueval, 0, 255) # (not sure if this is necessary with true maps, but can't hurt I gues)
-                trueval = trueval.astype(int)
-                trueval = np.reshape(trueval, (500,500,1))
-                prediction *= 255         
-                prediction = np.round(prediction)
-                prediction = np.clip(prediction, 0, 255) # truncates off the negative numbers, which were causing a splotch. Also truncating other end at 255.
-                prediction = prediction.astype(int)
-                prediction = np.reshape(prediction, (500,500,1))
-                rgb = np.concatenate([
-                    np.full((500, 500, 1), 0, dtype='uint8'),
-                    np.full((500, 500, 1), 0, dtype='uint8'),
-                    trueval,
-                    trueval,
-                ], axis=-1)
-                im = Image.fromarray(rgb.astype("uint8"))
-                im.save(args.out + "/Test_" + str(args.seed) + "/pwConv_" + str(args.seed) + "_" + str(simids[i]) + "_true.png")
-                rgb = np.concatenate([
-                    np.full((500, 500, 1), 0, dtype='uint8'),
-                    np.full((500, 500, 1), 0, dtype='uint8'),
-                    prediction,
-                    prediction,
-                ], axis=-1)
-                im = Image.fromarray(rgb.astype("uint8"))
-                im.save(args.out + "/Test_" + str(args.seed) + "/pwConv_" + str(args.seed) + "_" + str(simids[i]) + "_pred.png")
-
-                if args.segment == True:
-                    # convert ordinal classification output to segmentation                                                                         
-                    # so what is this going to look like                                                                                        
-                    # at least for the current training set, the sigma range is always the same, 0 to 255 on the blue scale                     
-                    # so, at least for now, I want to divide that up based on the number identified segments                                    
-                    # so, first, I'll want to loop through ALL the pixels and find the largest identified class (maybe it's always 4? we'll see)
-                    # then go back and assign shades of blue based on the number of different surfaces                                          
-                    class_map = {
-                        1: [255],
-                        2: [0,255],
-                        3: [0,128,255],
-                        4: [0,85,190,255],
-                    }
-
-                    # find the number of different surfaces                                         
-                    predict_class = np.reshape(predict_class, (500,500,4))
-                    number_of_surfaces_true = 1
-                    number_of_surfaces_pred = 1
-                    for k_ in range(1,4):
-                        for i_ in range(500):
-                            for j_ in range(500):
-                                c = float(true_class[i_,j_,k_])
-                                if c == 1.0:
-                                    number_of_surfaces_true = int(k_)+1
-                                c = round(float(predict_class[i_,j_,k_])) # rounding to nearest integer   
-                                if c == 1.0:
-                                    number_of_surfaces_pred = int(k_)+1
-
-                    # loop back through and assign surfaces                                         
-                    true_class_out = np.zeros((500,500))
-                    pred_class_out = np.zeros((500,500))
-                    for i_ in range(500):
-                        for j_ in range(500):
-                            current_class = 0
-                            for k_ in range(1,4):
-                                c = float(true_class[i_,j_,k_])
-                                if c == 1:
-                                    current_class = int(k_)
-                            true_class_out[i_,j_] = class_map[number_of_surfaces_true][current_class]
-                            current_class = 0
-                            for k_ in range(1,4):
-                                c = round(float(predict_class[i_,j_,k_]))
-                                if c == 1:
-                                    current_class =int(k_)
-                            pred_class_out[i_,j_] = class_map[number_of_surfaces_pred][current_class]
-                    true_class_out = np.reshape(true_class_out, (500,500,1))
-                    pred_class_out = np.reshape(pred_class_out, (500,500,1))
-
-                    # save
-                    rgb = np.concatenate([
-                        np.full((500, 500, 1), 0, dtype='uint8'),
-                        np.full((500, 500, 1), 0, dtype='uint8'),
-                        true_class_out,
-                        true_class_out,
-                    ], axis=-1)
-                    im = Image.fromarray(rgb.astype("uint8"))
-                    im.save(args.out + "/Test_" + str(args.seed) + "/pwConv_" + str(args.seed) + "_" + str(simids[i]) + "_trueclass.png")
-
-                    rgb = np.concatenate([
-                        np.full((500, 500, 1), 0, dtype='uint8'),
-                        np.full((500, 500, 1), 0, dtype='uint8'),
-                        pred_class_out,
-                        pred_class_out,
-                    ], axis=-1)
-                    im = Image.fromarray(rgb.astype("uint8"))
-                    im.save(args.out + "/Test_" + str(args.seed) + "/pwConv_" + str(args.seed) + "_" + str(simids[i]) + "_predclass.png")
-                    
-    # else: # *** not updated since disperseNN ***
-    #     with open(args.out + "/pwConv_" + str(args.seed) + "_predictions.txt", "w") as out_f:
-    #         prediction = predictions[0][0]
-    #         prediction = (prediction * sdSig) + meanSig
-    #         prediction = np.exp(prediction)
-    #         prediction = np.round(prediction, 10)
-    #         print(file_names, prediction, file=out_f)
 
     return
 
