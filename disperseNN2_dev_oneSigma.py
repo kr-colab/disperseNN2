@@ -285,7 +285,7 @@ def load_network():
         outputs = [output],
     )
     model.compile(loss="mse", optimizer=opt)
-    model.summary()
+    #model.summary()
     print("total params:", np.sum([np.prod(v.shape) for v in model.trainable_variables]), "\n")
 
     # load weights

@@ -272,7 +272,7 @@ def load_network():
 
     # initialize shared layer                                                                               
     P = 100 # *** this represents the number of pairs used in the shared dense layer
-    DENSE = tf.keras.layers.Dense(P, activation="relu")
+    DENSE_2 = tf.keras.layers.Dense(P, activation="relu")
 
     # loop through sets of 'P' pairs 
     num_partitions = int(np.ceil(args.pairs / float(P)))
@@ -284,7 +284,7 @@ def load_network():
         if part.shape[1] < P: # if map dimension isn't divisible by # p
             paddings = tf.constant([[0,0], [0,P-part.shape[1]], [0,0]])
             part = tf.pad(part, paddings, "CONSTANT")
-        h0 = DENSE(part)
+        h0 = DENSE_2(part)
         dense_stack.append(h0)
     h = tf.stack(dense_stack, axis=1)
     h = tf.keras.layers.AveragePooling2D(pool_size=(num_partitions,1))(h)
