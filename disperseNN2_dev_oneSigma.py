@@ -197,7 +197,9 @@ parser.add_argument("--combination_size", help="", default=2, type=int)
 parser.add_argument("--grid_coarseness", help="TO DO", default=50, type=int)
 parser.add_argument("--sample_grid", help="coarseness of grid for grid-sampling", default=None, type=int)
 parser.add_argument("--upsample", help="number of upsample layers", default=6, type=int)
-parser.add_argument("--pairs", help="number of pairs to subsample", default=45, type=int)
+#parser.add_argument("--pairsdownsample", help="number of pairs to use for gradient in the first part of the network", required=True, type=int)
+parser.add_argument("--pairs_encode", help="number of pairs to include in the feature block", required=True, type=int)
+parser.add_argument("--pairs_set", help="average the feature block over 'pairs_encode' / 'pairs_set' sets of pairs", required=True, type=int)
 
 
 args = parser.parse_args()
@@ -237,7 +239,7 @@ def load_network():
     pooling_size = 10
     filter_size = 64
     combinations = list(itertools.combinations(range(args.max_n), args.combination_size))
-    combinations = random.sample(combinations, args.pairs)
+    combinations = random.sample(combinations, args.pairs_encode)
 
     # load inputs
     geno_input = tf.keras.layers.Input(shape=(args.num_snps, args.max_n)) 
@@ -246,9 +248,10 @@ def load_network():
     # initialize shared layers
     CONV_LAYERS = []
     for i in range(num_conv_iterations):                                             
-        CONV_LAYERS.append(tf.keras.layers.Conv1D(filter_size, kernel_size=conv_kernal_size, activation="relu"))
+        CONV_LAYERS.append(tf.keras.layers.Conv1D(filter_size, kernel_size=conv_kernal_size, activation="relu", name="CONV_"+str(i)))
         filter_size += 44
-    DENSE = tf.keras.layers.Dense(128, activation="relu")
+    DENSE_0 = tf.keras.layers.Dense(128, activation="relu", name="DENSE_0")
+    DENSE_1 = tf.keras.layers.Dense(args.pairs_set, activation="relu", name="DENSE_1")
 
     # convolutions for each pair
     hs = []
@@ -258,7 +261,7 @@ def load_network():
         for i in range(num_conv_iterations):                                             
             h = CONV_LAYERS[i](h)
             h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)            
-        h = DENSE(h)                             
+        h = DENSE_0(h)                             
         h = tf.keras.layers.Flatten()(h)        
         hs.append(h)
         l = tf.gather(loc_input, comb, axis = 2)
@@ -269,17 +272,28 @@ def load_network():
     # reshape conv. output and locs
     h = tf.stack(hs, axis=1)
     d = tf.stack(ds, axis=1)                          
-    d = tf.keras.layers.Reshape(((args.pairs, 1)))(d) 
+    d = tf.keras.layers.Reshape(((args.pairs_encode, 1)))(d) 
     feature_block = tf.keras.layers.concatenate([h,d])
     print("\nfeature block:", feature_block.shape)
 
+    # loop through sets of 'pairs_set' pairs 
+    num_partitions = int(np.ceil(args.pairs_encode / float(args.pairs_set)))
+    row = 0
+    dense_stack = []
+    for p in range(num_partitions):
+        part = feature_block[:,row:row+args.pairs_set,:]
+        row += args.pairs_set
+        if part.shape[1] < args.pairs_set: # if map dimension isn't divisible by 'size_pair_set'
+            paddings = tf.constant([[0,0], [0,args.pairs_set-part.shape[1]], [0,0]])
+            part = tf.pad(part, paddings, "CONSTANT")
+        h0 = DENSE_1(part)
+        dense_stack.append(h0)
+    h = tf.stack(dense_stack, axis=1)
+    h = tf.keras.layers.AveragePooling2D(pool_size=(num_partitions,1))(h)
+    
     # compress down to one sigma estimate                                                                          
-    h = tf.keras.layers.Dense(args.pairs, activation="relu")(feature_block) # (tons of params for this dense layer)
-    print("\nbig dense:", h.shape)
     h = tf.keras.layers.Flatten()(h)
-    print("\nflatten:", h.shape)
     output = tf.keras.layers.Dense(1, activation="linear")(h)
-    print("\noutput:", output.shape)
 
     # model overview and hyperparams
     opt = tf.keras.optimizers.Adam(learning_rate=args.learning_rate)
