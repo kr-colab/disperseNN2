@@ -79,6 +79,13 @@ def fill_dict_single_value(val, reps):
         collection[i] = val
     return collection
 
+# convert list to keys in a dictionary, values all zero
+def list2dict(mylist):
+    collection = {}
+    for i in range(len(mylist)):
+        collection[mylist[i]] = 0
+    return collection
+
 # convert list to dictionary with ordinal keys
 def dict_from_list(mylist):
     collection = {}
