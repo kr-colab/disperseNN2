@@ -191,9 +191,9 @@ parser.add_argument("--combination_size", help="", default=2, type=int)
 parser.add_argument("--grid_coarseness", help="TO DO", default=50, type=int)
 parser.add_argument("--sample_grid", help="coarseness of grid for grid-sampling", default=None, type=int)
 parser.add_argument("--upsample", help="number of upsample layers", default=6, type=int)
-parser.add_argument("--pairs_encode", help="number of pairs to include in the feature block", required=True, type=int)
-parser.add_argument("--pairs_downsample", help="number of pairs (<= pairs_encode) to use for gradient in the first part of the network", required=True, type=int)
-parser.add_argument("--pairs_set", help="average the feature block over 'pairs_encode' / 'pairs_set' sets of pairs", required=True, type=int)
+parser.add_argument("--pairs_encode", help="number of pairs to include in the feature block", type=int)
+parser.add_argument("--pairs_downsample", help="number of pairs (<= pairs_encode) to use for gradient in the first part of the network", type=int)
+parser.add_argument("--pairs_set", help="average the feature block over 'pairs_encode' / 'pairs_set' sets of pairs", type=int)
 
 
 args = parser.parse_args()
