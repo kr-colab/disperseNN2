@@ -22,8 +22,8 @@ def check_params(args):
         if args.num_snps == None:
             print("specify num snps via --num_snps")
             exit()
-        if args.max_n == None:
-            print("specify max sample size via --max_n")
+        if args.n == None:
+            print("specify max sample size via --n")
             exit()
 
     # # arguments for prediction
@@ -67,8 +67,8 @@ def check_params(args):
         )
         exit()
     if args.predict == True and args.preprocessed == False  and args.empirical == None:
-        if args.min_n == None:
-            print("missing min n, via --min_n")
+        if args.n == None:
+            print("missing sample size, via --n")
             exit()
     if args.preprocessed == False and args.empirical == False:
        if args.mutate == None:

@@ -1,5 +1,5 @@
 
-# e.g. python disperseNN2/disperseNN2.py --out temp1 --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 1 --min_n 10 --max_n 10 --mu 1e-15 --seed 12345 --tree_list ../Maps/Boxes84/tree_list.txt --target_list ../Maps/Boxes84/target_list.txt --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --train --learning_rate 1e-4 --grid_coarseness 50 --upsample 6 --pairs 45 --gpu_index any
+# e.g. python disperseNN2/disperseNN2.py --out temp1 --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 1 --n 10 --mu 1e-15 --seed 12345 --tree_list ../Maps/Boxes84/tree_list.txt --target_list ../Maps/Boxes84/target_list.txt --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --train --learning_rate 1e-4 --grid_coarseness 50 --upsample 6 --pairs 45 --gpu_index any
 
 # notes:
 #     - learning rate 1e-3 doesn't work at all, for one sigma. Neither does 5e-4. 1e-4 does work.
@@ -76,16 +76,10 @@ parser.add_argument(
     "--num_pred", default=None, type=int, help="number of datasets to predict on"
 )
 parser.add_argument(
-    "--min_n",
+    "--n",
     default=None,
     type=int,
-    help="minimum sample size",
-)
-parser.add_argument(
-    "--max_n",
-    default=None,
-    type=int,
-    help="maximum sample size",
+    help="sample size",
 )
 parser.add_argument(
     "--mu",
@@ -185,7 +179,7 @@ parser.add_argument("--samplewidth_list", help="", default=None)
 parser.add_argument("--geno_list", help="", default=None)
 parser.add_argument("--loc_list", help="", default=None)
 parser.add_argument(
-    "--training_params", help="params used in training: sigma mean and sd, max_n, num_snps", default=None
+    "--training_params", help="params used in training: sigma mean and sd, n, num_snps", default=None
 )
 parser.add_argument(
     "--learning_rate",
@@ -235,12 +229,12 @@ def load_network():
     conv_kernal_size = 2
     pooling_size = 10
     filter_size = 64
-    combinations = list(itertools.combinations(range(args.max_n), args.combination_size))
+    combinations = list(itertools.combinations(range(args.n), args.combination_size))
     combinations = random.sample(combinations, args.pairs)
 
     # load inputs
-    geno_input = tf.keras.layers.Input(shape=(args.num_snps, args.max_n)) 
-    loc_input = tf.keras.layers.Input(shape=(2, args.max_n))
+    geno_input = tf.keras.layers.Input(shape=(args.num_snps, args.n)) 
+    loc_input = tf.keras.layers.Input(shape=(2, args.n))
 
     # initialize shared layers
     CONV_LAYERS = []
@@ -413,8 +407,7 @@ def make_generator_params_dict(
         "targets": targets,
         "trees": trees,
         "num_snps": args.num_snps,
-        "min_n": args.min_n,
-        "max_n": args.max_n,
+        "n": args.n,
         "batch_size": args.batch_size,
         "mu": args.mu,
         "threads": args.threads,
@@ -469,7 +462,7 @@ def prep_trees_and_train():
     meanSig = np.mean(targets)
     sdSig = np.std(targets)
     np.save(f"{args.out}_training_params", [
-            meanSig, sdSig, args.max_n, args.num_snps])
+            meanSig, sdSig, args.n, args.num_snps])
     targets = [(x - meanSig) / sdSig for x in targets]  # center and scale
     targets = dict_from_list(targets)    
     if args.segment == True:
@@ -659,7 +652,6 @@ def prep_preprocessed_and_pred():
 
 #     # grab mean and sd from training distribution
 #     meanSig, sdSig = np.load(args.out + "mean_sd.npy")
-#     #args.max_n = int(args.max_n)
 #     #args.num_snps = int(args.num_snps)
 
 #     # tree sequences                                                              

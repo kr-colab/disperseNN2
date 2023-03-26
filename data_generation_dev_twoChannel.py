@@ -22,8 +22,7 @@ class DataGenerator(tf.keras.utils.Sequence):
     targets: dict 
     trees: dict
     num_snps: int
-    min_n: int
-    max_n: int
+    n: int
     batch_size: int
     mu: float
     threads: int
@@ -123,10 +122,10 @@ class DataGenerator(tf.keras.utils.Sequence):
         return output_ind
 
 
-    def unpolarize(self, snp, n):
+    def unpolarize(self, snp):
         "Change 0,1 encoding to major/minor allele. Also filter no-biallelic"
         alleles = {}                                                                          
-        for i in range(n * 2):  
+        for i in range(self.n * 2):  
             a = snp[i]                                                               
             if a not in alleles:                                                              
                 alleles[a] = 0                                                                
@@ -136,7 +135,7 @@ class DataGenerator(tf.keras.utils.Sequence):
             major, minor = list(set(alleles))  # set() gives random order                     
             if alleles[major] < alleles[minor]:                                               
                 major, minor = minor, major                                                   
-            for i in range(n * 2):  # go back through and convert genotypes                   
+            for i in range(self.n * 2):  # go back through and convert genotypes                   
                 a = snp[i]                                                           
                 if a == major:                                                                
                     new_genotype = 0                                                          
@@ -189,21 +188,15 @@ class DataGenerator(tf.keras.utils.Sequence):
             sample_width = np.random.uniform(
                 0, W - (edge_width * 2)
             ) 
-        n = np.random.randint(
-            self.min_n, self.max_n + 1
-        )  # (excludes the max of the range)
         sampled_inds = self.cropper(ts, W, sample_width, edge_width, alive_inds)
         failsafe = 0
         while (
-            len(sampled_inds) < n
+            len(sampled_inds) < self.n
         ):  # keep looping until you get a map with enough samples
             if self.sampling_width != None:
                 sample_width = (float(self.sampling_width) * W) - (edge_width * 2)
             else:
                 sample_width = np.random.uniform(0, W - (edge_width * 2))
-            n = np.random.randint(
-                self.min_n, self.max_n + 1
-            )  # (excludes the max of the range)
             failsafe += 1
             if failsafe > 100:
                 print("\tnot enough samples, killed while-loop after 100 loops")
@@ -213,19 +206,19 @@ class DataGenerator(tf.keras.utils.Sequence):
 
         # sample individuals
         if self.sample_grid == None:
-            keep_indivs = np.random.choice(sampled_inds, n, replace=False)
+            keep_indivs = np.random.choice(sampled_inds, self.n, replace=False)
         else:
-            if n < self.sample_grid**2:
+            if self.n < self.sample_grid**2:
                 print("your sample grid is too fine, not enough samples to fill it")
                 exit()
             keep_indivs = []
-            for r in range(int(np.ceil(self.max_n / self.sample_grid**2))): # sampling from each square multiple times until >= n samples
+            for r in range(int(np.ceil(self.n / self.sample_grid**2))): # sampling from each square multiple times until >= n samples
                 for i in range(self.sample_grid):
                     for j in range(self.sample_grid):
                         new_guy = self.sample_ind(ts,sampled_inds,W,i,j)                    
                         keep_indivs.append(new_guy)
                         sampled_inds.remove(new_guy) # to avoid sampling same guy twice
-            keep_indivs = np.random.choice(keep_indivs, n, replace=False) # taking n from the >=n list            
+            keep_indivs = np.random.choice(keep_indivs, self.n, replace=False) # taking n from the >=n list            
         keep_nodes = []
         for i in keep_indivs:
             ind = ts.individual(i)
@@ -288,7 +281,7 @@ class DataGenerator(tf.keras.utils.Sequence):
                         sampling_width = float(d)
 
         # elif self.combination_size == 3: # this doesn't have the desired affect on pairs, haven't thought about bigger than trios
-        #     combinations = list(itertools.combinations(range(self.max_n), self.combination_size))
+        #     combinations = list(itertools.combinations(range(self.n), self.combination_size))
         #     num_pairs = int( self.combination_size * (self.combination_size-1) / 2)
         #     locs = np.array(locs)
         #     sampling_width = 0
@@ -336,14 +329,14 @@ class DataGenerator(tf.keras.utils.Sequence):
             snp_counter = 0   
             snp_index_map = {}
             for s in range(total_snps): 
-                new_genotypes = self.unpolarize(geno_mat0[shuffled_indices[s]], n)
+                new_genotypes = self.unpolarize(geno_mat0[shuffled_indices[s]])
                 if new_genotypes != False: # if bi-allelic, add in the snp
                     geno_mat1.append(new_genotypes)            
                     snp_index_map[shuffled_indices[s]] = int(snp_counter)
                     snp_counter += 1
             while snp_counter < total_snps: # likely need to replace a few non-biallelic sites
                 s += 1
-                new_genotypes = self.unpolarize(geno_mat0[shuffled_indices[s]], n)
+                new_genotypes = self.unpolarize(geno_mat0[shuffled_indices[s]])
                 if new_genotypes != False:
                     geno_mat1.append(new_genotypes)
                     snp_index_map[shuffled_indices[s]] = int(snp_counter)
@@ -363,7 +356,7 @@ class DataGenerator(tf.keras.utils.Sequence):
 
         # collapse genotypes, change to minor allele dosage (e.g. 0,1,2)
         if self.phase == 1:
-            geno_mat1 = np.zeros((total_snps, n))
+            geno_mat1 = np.zeros((total_snps, self.n))
             for ind in range(n):
                 geno_mat1[:, ind] += geno_mat0[:, ind * 2]
                 geno_mat1[:, ind] += geno_mat0[:, ind * 2 + 1]
@@ -373,23 +366,10 @@ class DataGenerator(tf.keras.utils.Sequence):
         mask = [True] * self.num_snps + [False] * (total_snps - self.num_snps)
         np.random.shuffle(mask)
         geno_mat1 = geno_mat0[mask, :]
-        geno_mat2 = np.zeros((self.num_snps, self.max_n * self.phase)) # pad
-        geno_mat2[:, 0 : n * self.phase] = geno_mat1
+        geno_mat2 = np.zeros((self.num_snps, self.n * self.phase)) # pad
+        geno_mat2[:, 0 : self.n * self.phase] = geno_mat1
         
-        # # garbage collect, print memory
-        # process = psutil.Process(os.getpid())
-        # with open("Boxes75/job201_gc.txt", "a") as f:
-        #     f.write(str(process) + "," + filepath + "\n")
-        #     f.write("before" + "\n")
-        #     f.write(str(process.memory_info().rss / 1024 ** 2) + "\n")
-        #     f.write(str(process.memory_info().vms / 1024 ** 2) + "\n")
-
-        #     gc.collect()
-
-        #     f.write("after" + "\n")
-        #     f.write(str(process.memory_info().rss / 1024 ** 2) + "\n")
-        #     f.write(str(process.memory_info().vms / 1024 ** 2) + "\n")
-            
+        # garbage collect, free memory
         del ts
         del geno_mat0
         del geno_mat1
@@ -413,8 +393,8 @@ class DataGenerator(tf.keras.utils.Sequence):
     def __data_generation(self, list_IDs_temp):
         "Generates data containing batch_size samples"        
             # ********** recently added int and float to these
-        X1 = np.empty((self.batch_size, self.num_snps, self.max_n), dtype="int8")  # genos 
-        X2 = np.empty((self.batch_size, 2, self.max_n), dtype=float)  # locs
+        X1 = np.empty((self.batch_size, self.num_snps, self.n), dtype="int8")  # genos 
+        X2 = np.empty((self.batch_size, 2, self.n), dtype=float)  # locs
 
         # if self.preprocessed == False and self.segment == False:  # tree sequences
         #     y = np.empty((self.batch_size, self.num_targets, 500, 500), dtype=float)
