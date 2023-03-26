@@ -135,7 +135,7 @@ class DataGenerator(tf.keras.utils.Sequence):
             major, minor = list(set(alleles))  # set() gives random order                     
             if alleles[major] < alleles[minor]:                                               
                 major, minor = minor, major                                                   
-            for i in range(n * 2):  # go back through and convert genotypes                   
+            for i in range(self.n * 2):  # go back through and convert genotypes                   
                 a = snp[i]                                                           
                 if a == major:                                                                
                     new_genotype = 0                                                          

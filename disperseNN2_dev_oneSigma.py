@@ -732,6 +732,7 @@ def preprocess_trees():
     return
 
 
+
 def plot_history():
     loss,val_loss = [],[]
     with open(args.plot_history) as infile:
@@ -749,6 +750,7 @@ def plot_history():
     ax1.plot(epochs, loss, color="red", lw=0.5, label='loss')
     ax1.legend()
     fig.savefig(args.plot_history+"_plot.pdf",bbox_inches='tight')
+
 
 
 ### main ###
