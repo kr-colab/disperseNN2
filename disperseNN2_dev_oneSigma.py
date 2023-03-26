@@ -197,8 +197,8 @@ parser.add_argument("--combination_size", help="", default=2, type=int)
 parser.add_argument("--grid_coarseness", help="TO DO", default=50, type=int)
 parser.add_argument("--sample_grid", help="coarseness of grid for grid-sampling", default=None, type=int)
 parser.add_argument("--upsample", help="number of upsample layers", default=6, type=int)
-#parser.add_argument("--pairsdownsample", help="number of pairs to use for gradient in the first part of the network", required=True, type=int)
 parser.add_argument("--pairs_encode", help="number of pairs to include in the feature block", required=True, type=int)
+parser.add_argument("--pairs_downsample", help="number of pairs (<= pairs_encode) to use for gradient in the first part of the network", required=True, type=int)
 parser.add_argument("--pairs_set", help="average the feature block over 'pairs_encode' / 'pairs_set' sets of pairs", required=True, type=int)
 
 
@@ -239,8 +239,11 @@ def load_network():
     pooling_size = 10
     filter_size = 64
     combinations = list(itertools.combinations(range(args.max_n), args.combination_size))
-    combinations = random.sample(combinations, args.pairs_encode)
-
+    combinations_encode = random.sample(combinations, args.pairs_encode)
+    combinations_downsample = random.sample(combinations_encode, args.pairs_downsample)
+    combinations_encode = list2dict(combinations_encode) # (using tuples as dict keys seems to work)
+    combinations_downsample = list2dict(combinations_downsample)    
+    
     # load inputs
     geno_input = tf.keras.layers.Input(shape=(args.num_snps, args.max_n)) 
     loc_input = tf.keras.layers.Input(shape=(2, args.max_n))
@@ -256,12 +259,18 @@ def load_network():
     # convolutions for each pair
     hs = []
     ds = []
-    for comb in combinations:
+    for comb in combinations_encode:
         h = tf.gather(geno_input, comb, axis = 2)
-        for i in range(num_conv_iterations):                                             
-            h = CONV_LAYERS[i](h)
-            h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)            
-        h = DENSE_0(h)                             
+        if comb in combinations_downsample:                                                                                      
+            for i in range(num_conv_iterations):                                             
+                h = CONV_LAYERS[i](h)
+                h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)            
+            h = DENSE_0(h)
+        else: # cut gradient tape on some pairs to save memory
+            for i in range(num_conv_iterations):
+                h = tf.stop_gradient(CONV_LAYERS[i](h))
+                h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)
+            h = tf.stop_gradient(DENSE_0(h))            
         h = tf.keras.layers.Flatten()(h)        
         hs.append(h)
         l = tf.gather(loc_input, comb, axis = 2)
@@ -303,6 +312,8 @@ def load_network():
     )
     model.compile(loss="mse", optimizer=opt)
     #model.summary()
+    for v in model.trainable_variables:
+        print(v.name)
     print("total params:", np.sum([np.prod(v.shape) for v in model.trainable_variables]), "\n")
 
     # load weights

@@ -416,7 +416,7 @@ class DataGenerator(tf.keras.utils.Sequence):
         else:
             for i, ID in enumerate(list_IDs_temp):
                 y[i] = np.load(self.targets[ID])
-                X1[i, :] = np.load(self.genos[ID])
+                X1[i, :] = np.load(self.genos[ID])[0:self.num_snps,:] ### this slice was for testing... but maybe leave it in?
                 X2[i, :] = np.load(self.locs[ID])
                 X = [X1, X2]
 
