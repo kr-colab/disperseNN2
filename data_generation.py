@@ -280,22 +280,6 @@ class DataGenerator(tf.keras.utils.Sequence):
                     if d > sampling_width:
                         sampling_width = float(d)
 
-        # elif self.combination_size == 3: # this doesn't have the desired affect on pairs, haven't thought about bigger than trios
-        #     combinations = list(itertools.combinations(range(self.n), self.combination_size))
-        #     num_pairs = int( self.combination_size * (self.combination_size-1) / 2)
-        #     locs = np.array(locs)
-        #     sampling_width = 0
-        #     dists = []
-        #     for comb in combinations:
-        #         current_dists = []
-        #         for pair in list(itertools.combinations(range(num_pairs), 2)):
-        #             d = ( (locs[comb[pair[0]],0]-locs[comb[pair[1]],0])**2 + (locs[comb[pair[0]],1]-locs[comb[pair[1]],1])**2 )**(1/2)  
-        #             current_dists.append(d)
-        #             if d > sampling_width:
-        #                 sampling_width = float(d)          
-        #         dists.append(current_dists)
-        # dists = np.array(dists)
-
         # # rescale locs
         # locs0 = np.array(locs)
         # minx = min(locs0[:, 0])
@@ -312,7 +296,7 @@ class DataGenerator(tf.keras.utils.Sequence):
         #     locs0[:, 0] *= x_range / y_range
         # #locs = locs0.T 
 
-        # # grab pairwise locations                                                                                                                                          
+        # # grab pairwise locations                                                             
         # pairwise_locs = []
         # for i in range(0,n-1):
         #     for j in range(i+1,n):
@@ -329,14 +313,14 @@ class DataGenerator(tf.keras.utils.Sequence):
             snp_counter = 0   
             snp_index_map = {}
             for s in range(total_snps): 
-                new_genotypes = self.unpolarize(geno_mat0[shuffled_indices[s]], self.n)
+                new_genotypes = self.unpolarize(geno_mat0[shuffled_indices[s]])
                 if new_genotypes != False: # if bi-allelic, add in the snp
                     geno_mat1.append(new_genotypes)            
                     snp_index_map[shuffled_indices[s]] = int(snp_counter)
                     snp_counter += 1
             while snp_counter < total_snps: # likely need to replace a few non-biallelic sites
                 s += 1
-                new_genotypes = self.unpolarize(geno_mat0[shuffled_indices[s]], self.n)
+                new_genotypes = self.unpolarize(geno_mat0[shuffled_indices[s]])
                 if new_genotypes != False:
                     geno_mat1.append(new_genotypes)
                     snp_index_map[shuffled_indices[s]] = int(snp_counter)
@@ -369,7 +353,20 @@ class DataGenerator(tf.keras.utils.Sequence):
         geno_mat2 = np.zeros((self.num_snps, self.n * self.phase)) # pad
         geno_mat2[:, 0 : self.n * self.phase] = geno_mat1
         
-        # garbage collect, print memory
+        # # garbage collect, print memory
+        # process = psutil.Process(os.getpid())
+        # with open("Boxes75/job201_gc.txt", "a") as f:
+        #     f.write(str(process) + "," + filepath + "\n")
+        #     f.write("before" + "\n")
+        #     f.write(str(process.memory_info().rss / 1024 ** 2) + "\n")
+        #     f.write(str(process.memory_info().vms / 1024 ** 2) + "\n")
+
+        #     gc.collect()
+
+        #     f.write("after" + "\n")
+        #     f.write(str(process.memory_info().rss / 1024 ** 2) + "\n")
+        #     f.write(str(process.memory_info().vms / 1024 ** 2) + "\n")
+            
         del ts
         del geno_mat0
         del geno_mat1
@@ -380,44 +377,24 @@ class DataGenerator(tf.keras.utils.Sequence):
 
 
 
-
     def __data_generation(self, list_IDs_temp):
         "Generates data containing batch_size samples"        
-                # ******** adding int and float to X's here
-        X1 = np.empty((self.batch_size, self.num_snps, self.n), dtype="int8")  # genos
-        X2 = np.empty((self.batch_size, 2, self.n), dtype=float)  # locs                                 
-        if self.segment == False:
-            y = np.empty((self.batch_size, 500,500), dtype=float)  # targets      
-        else:
-            y_reg = np.empty((self.batch_size, 500, 500), dtype=float)
-            y_class = np.empty((self.batch_size, 500, 500, 4), dtype=float)
-            targets_reg = self.targets[0] # * this is what I did before and it worked... seem weird that it's outside the loop. *  t
-            targets_class = self.targets[1]
+        X1 = np.empty((self.batch_size, self.num_snps, self.n), dtype="int8")  # genos       
+        X2 = np.empty((self.batch_size, 2, self.n), dtype=float)  # locs                  
+        y = np.empty((self.batch_size, ), dtype=float)  # targets      
         
         if self.preprocessed == False:
             for i, ID in enumerate(list_IDs_temp):
-                if self.segment == False:
-                    y[i] = self.targets[ID]
-                else:
-                    y_reg[i] = targets_reg[ID]
-                    y_class[i] = targets_class[ID]
+                y[i] = self.targets[ID]
                 out = self.sample_ts(self.trees[ID], np.random.randint(1e9,size=1))
                 X1[i, :] = out[0]
                 X2[i, :] = out[1]
                 X = [X1, X2]
         else:
             for i, ID in enumerate(list_IDs_temp):
-                if self.segment == False:
-                    y[i] = np.load(self.targets[ID])
-                else:
-                    y_both = np.load(self.targets[ID])
-                    y_reg[i] = y_both[:,:,0]
-                    y_class[i] = y_both[:,:,1:5]
-                X1[i, :] = np.load(self.genos[ID])
+                y[i] = np.load(self.targets[ID])
+                X1[i, :] = np.load(self.genos[ID])[0:self.num_snps,:] ### this slice was for testing... but maybe leave it in?
                 X2[i, :] = np.load(self.locs[ID])
                 X = [X1, X2]
-
-        if self.segment == True:
-            y =[y_reg, y_class]
 
         return (X, y)

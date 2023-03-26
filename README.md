@@ -1,2 +1,2 @@
 # disperseNN2
-estimating spatial demographic maps
+new architecture for estimating dispersal rate

@@ -172,32 +172,6 @@ def ibd(genos, coords, phase, num_snps):
     print("IBD r^2, slope, Nw:", r2, b, Nw)
 
 
-# read and average-pool a PNG
-def read_map(png, coarseness, segment):
-    data = plt.imread(png)
-    data = np.log(data[:,:,2]) # taking blue channel
-    #targets = np.zeros((coarseness, coarseness)) 
-    targets = np.zeros((50,50))
-    width = data.shape[0]
-    for m in range(coarseness):
-        row_start = int(np.ceil((width/coarseness) * m)) # (combining ceil and floor here, to avoid dealing with fractional-pixels; better to use higher precision)
-        row_end = int(np.floor((width/coarseness) * (m+1)))
-        for n in range(coarseness):
-            col_start = int(np.ceil((width/coarseness) * n))
-            col_end = int(np.floor((width/coarseness) * (n+1)))
-            if segment == False:
-                window = data[row_start:row_end, col_start:col_end]
-                targets[m,n] = np.mean(window)
-                #print(row_start,row_end,col_start,col_end,  np.mean(window))
-            else:
-                window = data[row_start:row_end, col_start:col_end, :]
-                targets[m,n,:] = window # skipping taking the mean for the ordinal categories
-
-    # up-sample to make the target higher-definition                  
-    rep_cols = np.repeat(targets, 10, axis=1)
-    rep_rows = np.repeat(rep_cols, 10, axis=0)
-
-    return(rep_rows)
 
 
 # main
