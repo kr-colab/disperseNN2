@@ -20,8 +20,8 @@ def project_locs(coords):
 
 
 # pad locations with zeros
-def pad_locs(locs, max_n):
-    padded = np.zeros((2, max_n))
+def pad_locs(locs, n):
+    padded = np.zeros((2, n))
     n = locs.shape[1]
     padded[:, 0:n] = locs
     return padded
@@ -31,7 +31,7 @@ def pad_locs(locs, max_n):
 #     1 biallelic change the alelles to 0 and 1 before inputting.
 #     2. no missing data: filter or impute.
 #     3. ideally no sex chromosomes, and only look at one sex at a time.
-def vcf2genos(vcf_path, max_n, num_snps, phase):
+def vcf2genos(vcf_path, n, num_snps, phase):
     geno_mat = []
     vcf = open(vcf_path, "r")
     current_chrom = None
@@ -40,8 +40,8 @@ def vcf2genos(vcf_path, max_n, num_snps, phase):
             pass
         elif line[0] == "#":
             header = line.strip().split("\t")
-            if max_n == None:  # option for getting sample size from vcf
-                max_n = len(header)-9
+            if n == None:  # option for getting sample size from vcf
+                n = len(header)-9
         else:
             newline = line.strip().split("\t")
             genos = []
@@ -56,7 +56,7 @@ def vcf2genos(vcf_path, max_n, num_snps, phase):
                 else:
                     print("problem")
                     exit()
-            for i in range((max_n * phase) - len(genos)):  # pad with 0s
+            for i in range((n * phase) - len(genos)):  # pad with 0s
                 genos.append(0)
             geno_mat.append(genos)
 
@@ -64,7 +64,7 @@ def vcf2genos(vcf_path, max_n, num_snps, phase):
     if len(geno_mat) < num_snps:
         print("not enough snps")
         exit()
-    if len(geno_mat[0]) < (max_n * phase):
+    if len(geno_mat[0]) < (n * phase):
         print("not enough samples")
         exit()
 
@@ -203,15 +203,15 @@ def read_map(png, coarseness, segment):
 # main
 def main():
     vcf_path = sys.argv[1]
-    max_n = sys.argv[2]
-    if max_n == "None":
-        max_n = None
+    n = sys.argv[2]
+    if n == "None":
+        n = None
     else:
-        max_n = int(max_n)
+        n = int(n)
     num_snps = int(sys.argv[3])
     outname = sys.argv[4]
     phase = int(sys.argv[5])
-    geno_mat = vcf2genos(vcf_path, max_n, num_snps, phase)
+    geno_mat = vcf2genos(vcf_path, n, num_snps, phase)
     np.save(outname + ".genos", geno_mat)
 
 
