@@ -12,20 +12,23 @@
 
 
 
-box=Boxes106
+box=Boxes34
 #box=temp1
-n=23
+n=100
+snps=100000
 segment=""       
 #segment="--segment"
 grid=""
 #grid="--sample_grid 4"
 #trees=/home/chriscs/kernlab/Maps/$box/tree_list.txt
 #trees=/home/chriscs/kernlab/Maps/$box/tree_list_105_106.txt
-trees=/home/chriscs/kernlab/Maps/$box/tree_list_test.txt                                                              
+trees=/home/chriscs/kernlab/Maps/$box/tree_list_train.txt 
+#trees=/home/chriscs/kernlab/Maps/$box/tree_list_test.txt                                                              
 #targets=/home/chriscs/kernlab//Maps/$box/map_list.txt
+targets=/home/chriscs/kernlab//Maps/$box/map_list_train.txt
 #targets=/home/chriscs/kernlab//Maps/$box/target_list.txt
 #targets=/home/chriscs/kernlab//Maps/$box/target_list_105_106.txt
-targets=/home/chriscs/kernlab/Maps/$box/target_list_test.txt
+#targets=/home/chriscs/kernlab/Maps/$box/target_list_test.txt
 
 
 
@@ -55,7 +58,7 @@ conda activate /home/chriscs/Software/miniconda3/envs/disperseNN
 #python disperseNN2/disperseNN2_dev_twoChannel.py --out $box"_"n$n"_"preprocess --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 10 --min_n $n --max_n $n --mu 1e-15 --recapitate False --mutate True --sampling_width 1 --num_samples 50 --edge_width 3 --preprocess --learning_rate 1e-4 --grid_coarseness 50 --seed XX --tree_list $trees --target_list $targets
 
 # one-sigma
-python disperseNN2/disperseNN2_dev_oneSigma.py --out $box"_"n$n"_"preprocess_ONESIG_test --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 1 --threads 1 --min_n $n --max_n $n --mu 1e-15 --seed XX --recapitate False --mutate True --sampling_width 1 --num_samples 50 --edge_width 0 --learning_rate 1e-4 --tree_list $trees --target_list $targets --preprocess
+python disperseNN2/disperseNN2_dev_oneSigma.py --out $box"_"n$n"_"$snps"snps_"preprocess_ONESIG --num_snps $snps --max_epochs 1000 --validation_split 0.2 --batch_size 1 --threads 1 --min_n $n --max_n $n --mu 1e-15 --seed XX --recapitate False --mutate True --sampling_width 1 --num_samples 50 --edge_width 3 --learning_rate 1e-4 --tree_list $trees --target_list $targets --preprocess
 
 
 
