@@ -34,7 +34,7 @@ DATE=$(date | awk '{print $2,$3}' | sed s/" "//g)
 
 
                # TRAIN                                                              
-#python disperseNN2/disperseNN2_dev_oneSigma.py --out Boxes$box"_"n$n"_"preprocess_ONESIG --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 1 --n $n --mu 1e-15 --seed $id --recapitate False --mutate True --num_samples 50 --train --learning_rate 1e-4 --preprocessed --pairs $pairs --gpu_index -1 > Boxes$box"_"n$n"_"preprocess_ONESIG/out_one_sig.$id.txt_n$n"_"$pairs"pair_"$DATE
+#python disperseNN2/disperseNN2.py --out Boxes$box"_"n$n"_"preprocess_ONESIG --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 1 --n $n --mu 1e-15 --seed $id --recapitate False --mutate True --num_samples 50 --train --learning_rate 1e-4 --preprocessed --pairs $pairs --gpu_index -1 > Boxes$box"_"n$n"_"preprocess_ONESIG/out_one_sig.$id.txt_n$n"_"$pairs"pair_"$DATE
 
 
 
@@ -43,7 +43,7 @@ DATE=$(date | awk '{print $2,$3}' | sed s/" "//g)
 
 
                 # PRED 
-#python disperseNN2/disperseNN2_dev_oneSigma.py --out Boxes$box"_"n$n"_"preprocess_ONESIG --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 1 --threads 1 --n $n --mu 1e-15 --seed $id --recapitate False --mutate True --num_samples 50 --predict --learning_rate 1e-4 --preprocessed --pairs $pairs --load_weights Boxes105_106_n23_preprocess_ONESIG/out140_boxes105_noProj_model.hdf5 --num_pred 100 --gpu_index -1
+#python disperseNN2/disperseNN2.py --out Boxes$box"_"n$n"_"preprocess_ONESIG --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 1 --threads 1 --n $n --mu 1e-15 --seed $id --recapitate False --mutate True --num_samples 50 --predict --learning_rate 1e-4 --preprocessed --pairs $pairs --load_weights Boxes105_106_n23_preprocess_ONESIG/out140_boxes105_noProj_model.hdf5 --num_pred 100 --gpu_index -1
 # train 105, test 106
 
 

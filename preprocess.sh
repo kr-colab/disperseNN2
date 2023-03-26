@@ -45,7 +45,7 @@ conda activate /home/chriscs/Software/miniconda3/envs/disperseNN
 
 
 
-python disperseNN2/disperseNN2_dev_oneSigma.py --out $box"_"n$n"_"$snps"snps_"preprocess_ONESIG --num_snps $snps --max_epochs 1000 --validation_split 0.2 --batch_size 1 --threads 1 --n $n --mu 1e-15 --seed XX --recapitate False --mutate True --sampling_width 1 --num_samples 50 --edge_width 3 --learning_rate 1e-4 --tree_list $trees --target_list $targets --preprocess
+python disperseNN2/disperseNN2.py --out $box"_"n$n"_"$snps"snps_"preprocess_ONESIG --num_snps $snps --max_epochs 1000 --validation_split 0.2 --batch_size 1 --threads 1 --n $n --mu 1e-15 --seed XX --recapitate False --mutate True --sampling_width 1 --num_samples 50 --edge_width 3 --learning_rate 1e-4 --tree_list $trees --target_list $targets --preprocess
 
 
 
