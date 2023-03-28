@@ -227,11 +227,8 @@ def load_network():
     num_conv_iterations = int(np.floor(np.log10(args.num_snps))-1)
     if num_conv_iterations < 0:
         num_conv_iterations = 0
-
-    # cnn architecture
-    conv_kernal_size = 2
-    pooling_size = 10
-    filter_size = 64
+        
+    # organize pairs of individuals
     combinations = list(itertools.combinations(range(args.n), args.combination_size))
     combinations_encode = random.sample(combinations, args.pairs_encode)
     combinations_downsample = random.sample(combinations_encode, args.pairs_downsample)
@@ -244,10 +241,12 @@ def load_network():
 
     # initialize shared layers
     CONV_LAYERS = []
+    conv_kernal_size = 2
+    pooling_size = 10
     for i in range(num_conv_iterations):                                             
+        filter_size = 20 + 44*(i+1)
         CONV_LAYERS.append(tf.keras.layers.Conv1D(filter_size, kernel_size=conv_kernal_size, activation="relu", name="CONV_"+str(i)))
-        filter_size += 44
-    DENSE_0 = tf.keras.layers.Dense(128, activation="relu", name="DENSE_0")
+    DENSE_0 = tf.keras.layers.Dense(filter_size, activation="relu", name="DENSE_0")
     DENSE_1 = tf.keras.layers.Dense(args.pairs_set, activation="relu", name="DENSE_1")
 
     # convolutions for each pair
