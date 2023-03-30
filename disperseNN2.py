@@ -133,7 +133,7 @@ parser.add_argument(
     "--out", help="file name stem for output", default=None, required=True
 )
 parser.add_argument("--seed", default=None, type=int, help="random seed.")
-parser.add_argument("--gpu_index", default="-1", type=str,
+parser.add_argument("--gpu", default="-1", type=str,
                     help="index of gpu. To avoid GPUs, skip this flag or say '-1'. To use any available GPU say 'any' ")
 parser.add_argument('--plot_history', default=False, type=str,
                     help="plot training history? default: False")
@@ -208,8 +208,8 @@ def load_network():
     if args.seed is not None:
         np.random.seed(args.seed)
         tf.random.set_seed(args.seed)
-    if args.gpu_index != 'any':  # 'any' will search for any available GPU
-        os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_index
+    if args.gpu != 'any':  # 'any' will search for any available GPU
+        os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     else:
         stats = gpustat.GPUStatCollection.new_query()
         ids = map(lambda gpu: int(gpu.entry['index']), stats)
