@@ -12,7 +12,7 @@
 
 
 
-box=Boxes34
+box=Boxes36
 #box=temp1
 n=100
 snps=100000
@@ -20,12 +20,12 @@ segment=""
 #segment="--segment"
 grid=""
 #grid="--sample_grid 4"
-#trees=/home/chriscs/kernlab/Maps/$box/tree_list.txt
+trees=/home/chriscs/kernlab/Maps/$box/tree_list.txt
 #trees=/home/chriscs/kernlab/Maps/$box/tree_list_105_106.txt
-trees=/home/chriscs/kernlab/Maps/$box/tree_list_train.txt 
+#trees=/home/chriscs/kernlab/Maps/$box/tree_list_train.txt 
 #trees=/home/chriscs/kernlab/Maps/$box/tree_list_test.txt                                                              
-#targets=/home/chriscs/kernlab//Maps/$box/map_list.txt
-targets=/home/chriscs/kernlab//Maps/$box/map_list_train.txt
+targets=/home/chriscs/kernlab//Maps/$box/map_list.txt
+#targets=/home/chriscs/kernlab//Maps/$box/map_list_train.txt
 #targets=/home/chriscs/kernlab//Maps/$box/target_list.txt
 #targets=/home/chriscs/kernlab//Maps/$box/target_list_105_106.txt
 #targets=/home/chriscs/kernlab/Maps/$box/target_list_test.txt
