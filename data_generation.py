@@ -30,7 +30,7 @@ class DataGenerator(tf.keras.utils.Sequence):
     rho: float
     baseseed: int
     recapitate: bool
-    mutate: bool
+    skip_mutate: bool
     crop: float
     sampling_width: float
     edge_width: dict
@@ -182,7 +182,7 @@ class DataGenerator(tf.keras.utils.Sequence):
             )                                                    
         
         # crop map
-        if self.sampling_width != None:
+        if self.sampling_width != "rand":
             sample_width = (float(self.sampling_width) * W) - (edge_width * 2)
         else:
             sample_width = np.random.uniform(
@@ -193,7 +193,7 @@ class DataGenerator(tf.keras.utils.Sequence):
         while (
             len(sampled_inds) < self.n
         ):  # keep looping until you get a map with enough samples
-            if self.sampling_width != None:
+            if self.sampling_width != "rand":
                 sample_width = (float(self.sampling_width) * W) - (edge_width * 2)
             else:
                 sample_width = np.random.uniform(0, W - (edge_width * 2))
@@ -232,7 +232,7 @@ class DataGenerator(tf.keras.utils.Sequence):
             total_snps = self.num_snps
         else:
             total_snps = self.num_snps * 10 # arbitrary size of SNP table for bootstraps
-        if self.mutate == "True":
+        if self.skip_mutate == False:
             mu = float(self.mu)
             ts = msprime.sim_mutations(
                 ts,

@@ -42,7 +42,7 @@ def check_params(args):
     if args.train == False and args.predict == False and args.preprocess == False and args.plot_history == False:
         print("either --train or --predict or --preprocess")
         exit()
-    if args.sampling_width != None:
+    if args.sampling_width != "rand":
         if args.sampling_width > 1 or args.sampling_width <= 0:
             print("sampling width as proportion, (0,1)")
             exit()
@@ -59,7 +59,7 @@ def check_params(args):
             exit()
     if (
         args.edge_width == 'sigma'
-        and args.sampling_width != None
+        and args.sampling_width != "rand"
         and args.map_width != None
     ):
         print(

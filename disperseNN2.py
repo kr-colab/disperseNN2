@@ -64,7 +64,7 @@ parser.add_argument(
     type=str,
 )
 parser.add_argument(
-    "--sampling_width", help="just the sampling area", default=None, type=float
+    "--sampling_width", help="just the sampling area", default=1,
 )
 parser.add_argument(
     "--num_snps",
@@ -123,10 +123,10 @@ parser.add_argument(
     help="proportion of weights to zero at the dropout layer.",
 )
 parser.add_argument(
-    "--recapitate", type=str, help="recapitate on-the-fly; True or False"
+    "--recapitate", action="store_true", help="recapitate tree sequences", default=False,
 )
 parser.add_argument(
-    "--mutate", type=str, help="add mutations on-the-fly; True or False"
+    "--skip_mutate", action="store_true",help="skip adding mutations", default=False,
 )
 parser.add_argument("--crop", default=None, type=float, help="map-crop size")
 parser.add_argument(
@@ -363,7 +363,7 @@ def make_generator_params_dict(
         "rho": args.rho,
         "baseseed": args.seed,
         "recapitate": args.recapitate,
-        "mutate": args.mutate,
+        "skip_mutate": args.skip_mutate,
         "crop": args.crop,
         "sampling_width": args.sampling_width,
         "edge_width": args.edge_width,
