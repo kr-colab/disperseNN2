@@ -252,9 +252,9 @@ def load_network():
     # convolutions for each pair
     hs = []
     ds = []
-    for comb in combinations_encode:
+    for comb in combinations:
         h = tf.gather(geno_input, comb, axis = 2)
-        if comb in combinations_downsample:                                                                                      
+        if comb in combinations_encode:                                                                                      
             for i in range(num_conv_iterations):                                             
                 h = CONV_LAYERS[i](h)
                 h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)            
