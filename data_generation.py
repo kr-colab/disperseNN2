@@ -41,11 +41,9 @@ class DataGenerator(tf.keras.utils.Sequence):
     locs: dict
     preprocessed: bool
     num_reps: int
-    combination_size: int
     grid_coarseness: int
     segment: bool
     sample_grid: int
-
 
     def __attrs_post_init__(self):
         "Initialize a few things"
@@ -269,16 +267,13 @@ class DataGenerator(tf.keras.utils.Sequence):
                 locs.append(loc)
 
         # find width of sampling area and save dists
-        if self.combination_size == 2:
-            locs = np.array(locs)
-            sampling_width = 0
-#            dists = []
-            for i in range(0,self.n-1):
-                for j in range(i+1,self.n):
-                    d = ( (locs[i,0]-locs[j,0])**2 + (locs[i,1]-locs[j,1])**2 )**(1/2)
-#                    dists.append(d)
-                    if d > sampling_width:
-                        sampling_width = float(d)
+        locs = np.array(locs)
+        sampling_width = 0
+        for i in range(0,self.n-1):
+            for j in range(i+1,self.n):
+                d = ( (locs[i,0]-locs[j,0])**2 + (locs[i,1]-locs[j,1])**2 )**(1/2)
+                if d > sampling_width:
+                    sampling_width = float(d)
 
         # # rescale locs
         # locs0 = np.array(locs)
@@ -393,8 +388,8 @@ class DataGenerator(tf.keras.utils.Sequence):
         else:
             for i, ID in enumerate(list_IDs_temp):
                 y[i] = np.load(self.targets[ID])
-                X1[i, :] = np.load(self.genos[ID])[0:self.num_snps,:] ### this slice was for testing... but maybe leave it in?
-                X2[i, :] = np.load(self.locs[ID])
+                X1[i, :] = np.load(self.genos[ID])[0:self.num_snps,0:self.n] ### this slice was for testing... but maybe leave it in?
+                X2[i, :] = np.load(self.locs[ID])[:,0:self.n]
                 X = [X1, X2]
 
         return (X, y)
