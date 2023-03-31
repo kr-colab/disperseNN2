@@ -191,9 +191,9 @@ parser.add_argument("--combination_size", help="", default=2, type=int)
 parser.add_argument("--grid_coarseness", help="TO DO", default=50, type=int)
 parser.add_argument("--sample_grid", help="coarseness of grid for grid-sampling", default=None, type=int)
 parser.add_argument("--upsample", help="number of upsample layers", default=6, type=int)
-parser.add_argument("--pairs_encode", help="number of pairs to include in the feature block", type=int)
-parser.add_argument("--pairs_downsample", help="number of pairs (<= pairs_encode) to use for gradient in the first part of the network", type=int)
-parser.add_argument("--pairs_set", help="average the feature block over 'pairs_encode' / 'pairs_set' sets of pairs", type=int)
+parser.add_argument("--pairs", help="number of pairs to include in the feature block", type=int)
+parser.add_argument("--pairs_encode", help="number of pairs (<= pairs_encode) to use for gradient in the first part of the network", type=int)
+parser.add_argument("--pairs_estimate", help="average the feature block over 'pairs_encode' / 'pairs_set' sets of pairs", type=int)
 
 
 args = parser.parse_args()
@@ -230,10 +230,10 @@ def load_network():
         
     # organize pairs of individuals
     combinations = list(itertools.combinations(range(args.n), args.combination_size))
+    combinations = random.sample(combinations, args.pairs)
     combinations_encode = random.sample(combinations, args.pairs_encode)
-    combinations_downsample = random.sample(combinations_encode, args.pairs_downsample)
-    combinations_encode = list2dict(combinations_encode) # (using tuples as dict keys seems to work)
-    combinations_downsample = list2dict(combinations_downsample)    
+    combinations = list2dict(combinations) # (using tuples as dict keys seems to work)
+    combinations_encode = list2dict(combinations_encode)
     
     # load inputs
     geno_input = tf.keras.layers.Input(shape=(args.num_snps, args.n)) 
@@ -246,8 +246,8 @@ def load_network():
     for i in range(num_conv_iterations):                                             
         filter_size = 20 + 44*(i+1)
         CONV_LAYERS.append(tf.keras.layers.Conv1D(filter_size, kernel_size=conv_kernal_size, activation="relu", name="CONV_"+str(i)))
-    DENSE_0 = tf.keras.layers.Dense(filter_size, activation="relu", name="DENSE_0")
-    DENSE_1 = tf.keras.layers.Dense(args.pairs_set, activation="relu", name="DENSE_1")
+    DENSE_0 = tf.keras.layers.Dense(filter_size, activation="relu", name="DENSE_0") # matching size of final conv layer
+    DENSE_1 = tf.keras.layers.Dense(args.pairs_estimate, activation="relu", name="DENSE_1")
 
     # convolutions for each pair
     hs = []
@@ -274,19 +274,19 @@ def load_network():
     # reshape conv. output and locs
     h = tf.stack(hs, axis=1)
     d = tf.stack(ds, axis=1)                          
-    d = tf.keras.layers.Reshape(((args.pairs_encode, 1)))(d) 
+    d = tf.keras.layers.Reshape(((args.pairs, 1)))(d) 
     feature_block = tf.keras.layers.concatenate([h,d])
     print("\nfeature block:", feature_block.shape)
 
     # loop through sets of 'pairs_set' pairs 
-    num_partitions = int(np.ceil(args.pairs_encode / float(args.pairs_set)))
+    num_partitions = int(np.ceil(args.pairs / float(args.pairs_estimate)))
     row = 0
     dense_stack = []
     for p in range(num_partitions):
-        part = feature_block[:,row:row+args.pairs_set,:]
-        row += args.pairs_set
-        if part.shape[1] < args.pairs_set: # if map dimension isn't divisible by 'size_pair_set'
-            paddings = tf.constant([[0,0], [0,args.pairs_set-part.shape[1]], [0,0]])
+        part = feature_block[:,row:row+args.pairs_estimate,:]
+        row += args.pairs_estimate
+        if part.shape[1] < args.pairs_estimate: # if map dimension isn't divisible by 'size_pair_estimate'
+            paddings = tf.constant([[0,0], [0,args.pairs_estimate-part.shape[1]], [0,0]])
             part = tf.pad(part, paddings, "CONSTANT")
         h0 = DENSE_1(part)
         dense_stack.append(h0)
