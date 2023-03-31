@@ -187,7 +187,6 @@ parser.add_argument(
     type=float,
     help="learning rate.",
 )
-parser.add_argument("--combination_size", help="", default=2, type=int)
 parser.add_argument("--grid_coarseness", help="TO DO", default=50, type=int)
 parser.add_argument("--sample_grid", help="coarseness of grid for grid-sampling", default=None, type=int)
 parser.add_argument("--upsample", help="number of upsample layers", default=6, type=int)
@@ -229,7 +228,7 @@ def load_network():
         num_conv_iterations = 0
         
     # organize pairs of individuals
-    combinations = list(itertools.combinations(range(args.n), args.combination_size))
+    combinations = list(itertools.combinations(range(args.n), 2))
     combinations = random.sample(combinations, args.pairs)
     combinations_encode = random.sample(combinations, args.pairs_encode)
     combinations = list2dict(combinations) # (using tuples as dict keys seems to work)
@@ -374,7 +373,6 @@ def make_generator_params_dict(
         "locs": locs,
         "preprocessed": args.preprocessed,
         "num_reps": args.num_reps,
-        "combination_size": args.combination_size,
         "grid_coarseness": args.grid_coarseness,
         "segment": args.segment,
         "sample_grid": args.sample_grid,
