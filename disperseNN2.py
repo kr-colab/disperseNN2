@@ -2,8 +2,9 @@
 # e.g. python disperseNN2/disperseNN2.py --out temp1 --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 1 --n 10 --mu 1e-15 --seed 12345 --tree_list ../Maps/Boxes84/tree_list.txt --target_list ../Maps/Boxes84/target_list.txt --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --train --learning_rate 1e-4 --grid_coarseness 50 --upsample 6 --pairs 45 --gpu_index any
 
 # notes:
-#     - learning rate 1e-3 doesn't work at all, for one sigma. Neither does 5e-4. 1e-4 does work.
-#     - 250 pairs (n=23) runs on the 10Gb GPUs; 450 pairs seems to work on the 20Gb GPU
+#     - learning rate 1e-3 doesn't work at all, for one sigma. Neither does 5e-4. 1e-4 works.
+#     - 4950 pairs ran for a while on 80-GB ram, with 100 encode 100 estimate.
+
 import os
 import argparse
 import tskit
@@ -364,7 +365,7 @@ def make_generator_params_dict(
         "recapitate": args.recapitate,
         "skip_mutate": args.skip_mutate,
         "crop": args.crop,
-        "sampling_width": args.sampling_width,
+        "sampling_width": float(args.sampling_width),
         "edge_width": args.edge_width,
         "phase": args.phase,
         "polarize": args.polarize,

@@ -43,7 +43,7 @@ def check_params(args):
         print("either --train or --predict or --preprocess")
         exit()
     if args.sampling_width != "rand":
-        if args.sampling_width > 1 or args.sampling_width <= 0:
+        if float(args.sampling_width) > 1 or float(args.sampling_width) <= 0:
             print("sampling width as proportion, (0,1)")
             exit()
     if args.predict == True and args.empirical == None:
