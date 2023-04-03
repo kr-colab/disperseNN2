@@ -32,7 +32,6 @@ DATE=$(date | awk '{print $2,$3}' | sed s/" "//g)
 
 
 
-
                # TRAIN                                                              
 #python disperseNN2/disperseNN2.py --out Boxes$box"_"n$n"_"preprocess_ONESIG --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 1 --n $n --seed $id --num_samples 50 --train --learning_rate 1e-4 --preprocessed --pairs $pairs --gpu -1 > Boxes$box"_"n$n"_"preprocess_ONESIG/out_one_sig.$id.txt_n$n"_"$pairs"pair_"$DATE
 
@@ -52,4 +51,9 @@ python disperseNN2/disperseNN2.py --out out_one_sig --num_snps 5000 --max_epochs
 
 
 
+
+#################################### poppy examples #####################################
+#(disperseNN) chriscs@poppy:~$ python disperseNN2/disperseNN2.py --out Boxes34_n100_5000snps_preprocess_ONESIG --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --n 100  --seed 4 --train --learning_rate 1e-4 --preprocessed --pairs 45 --pairs_encode 45 --pairs_estimate 45 --gpu 1 > Boxes34_n100_5000snps_preprocess_ONESIG/out_45pairs_45set_45downsample.txt
+
+#(disperseNN) chriscs@poppy:~$ python disperseNN2/disperseNN2.py --out Boxes34_n100_5000snps_preprocess_ONESIG --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --n 100  --seed 2 --train --learning_rate 1e-4 --preprocessed --pairs 4725 --pairs_encode 100 --pairs_estimate 100 --gpu 0 --threads 40 > Boxes34_n100_5000snps_preprocess_ONESIG/out_4725pairs_100set_100downsample.txt
 
