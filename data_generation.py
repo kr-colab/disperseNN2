@@ -388,7 +388,12 @@ class DataGenerator(tf.keras.utils.Sequence):
         else:
             for i, ID in enumerate(list_IDs_temp):
                 y[i] = np.load(self.targets[ID])
-                X1[i, :] = np.load(self.genos[ID])[0:self.num_snps,0:self.n] ### this slice was for testing... but maybe leave it in?
+                # sample snps from preprocessed table
+                geno_mat =  np.load(self.genos[ID])
+                total_snps = geno_mat.shape[0]
+                mask = [True] * self.num_snps + [False] * (total_snps - self.num_snps)
+                np.random.shuffle(mask)
+                X1[i, :] = geno_mat[mask, 0:self.n]
                 X2[i, :] = np.load(self.locs[ID])[:,0:self.n]
                 X = [X1, X2]
 
