@@ -1,5 +1,5 @@
 
-# e.g. python disperseNN2/disperseNN2.py --out temp1 --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 1 --n 10 --mu 1e-15 --seed 12345 --tree_list ../Maps/Boxes84/tree_list.txt --target_list ../Maps/Boxes84/target_list.txt --recapitate False --mutate True --phase 1 --polarize 2 --sampling_width 1 --num_samples 50 --edge_width 3 --train --learning_rate 1e-4 --grid_coarseness 50 --upsample 6 --pairs 45 --gpu_index any
+# e.g. python disperseNN2/disperseNN2.py --out temp1 --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 1 --n 10 --mu 1e-15 --seed 12345 --tree_list ../Maps/Boxes84/tree_list.txt --target_list ../Maps/Boxes84/target_list.txt --recapitate False --mutate True --phase 1 --polarize 2 --num_samples 50 --edge_width 3 --train --learning_rate 1e-4 --grid_coarseness 50 --upsample 6 --pairs 45 --gpu_index any
 
 # notes:
 #     - learning rate 1e-3 doesn't work at all, for one sigma. Neither does 5e-4. 1e-4 works.
@@ -65,7 +65,7 @@ parser.add_argument(
     type=str,
 )
 parser.add_argument(
-    "--sampling_width", help="just the sampling area", default=1,
+    "--sampling_width", help="width of sampling area (-1 for random sampling width)", default=1.0, type=float,
 )
 parser.add_argument(
     "--num_snps",
@@ -365,7 +365,7 @@ def make_generator_params_dict(
         "recapitate": args.recapitate,
         "skip_mutate": args.skip_mutate,
         "crop": args.crop,
-        "sampling_width": float(args.sampling_width),
+        "sampling_width": args.sampling_width,
         "edge_width": args.edge_width,
         "phase": args.phase,
         "polarize": args.polarize,
@@ -519,38 +519,6 @@ def prep_preprocessed_and_train():
     return
 
 
-# def prep_empirical_and_pred(): # *** ths hasn't been updated since disperseNN ***
-
-#     # grab mean and sd from training distribution
-#     meanSig, sdSig, args.max_n, args.num_snps = np.load(args.training_params)
-#     args.max_n = int(args.max_n)
-#     args.num_snps = int(args.num_snps)
-
-#     # project locs
-#     locs = read_locs(args.empirical + ".locs")
-#     locs = np.array(locs)
-#     sampling_width = project_locs(locs)
-#     print("sampling_width:", sampling_width)
-#     sampling_width = np.reshape(sampling_width, (1))
-
-#     # load model
-#     load_dl_modules()
-#     model, checkpointer, earlystop, reducelr = load_network()
-
-#     # convert vcf to geno matrix
-#     for i in range(args.num_reps):
-#         test_genos = vcf2genos(
-#             args.empirical + ".vcf", args.max_n, args.num_snps, args.phase
-#         )
-#         ibd(test_genos, locs, args.phase, args.num_snps)
-#         test_genos = np.reshape(
-#             test_genos, (1, test_genos.shape[0], test_genos.shape[1])
-#         )
-#         dataset = args.empirical + "_" + str(i)
-#         prediction = model.predict([test_genos, sampling_width])
-#         unpack_predictions(prediction, meanSig, sdSig, None, None, dataset)
-
-#     return
 
 
 def prep_preprocessed_and_pred():
@@ -786,3 +754,4 @@ if args.predict == True:
     else:
         print("predicting on empirical data")
         prep_empirical_and_pred()
+

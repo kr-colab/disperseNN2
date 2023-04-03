@@ -44,8 +44,9 @@ def check_params(args):
         exit()
     if args.sampling_width != "rand":
         if float(args.sampling_width) > 1 or float(args.sampling_width) <= 0:
-            print("sampling width as proportion, (0,1)")
-            exit()
+            if args.sampling_width != -1.0:
+                print("sampling width as proportion, (0,1); or, say -1 to do random sampling-width")
+                exit()
     if args.predict == True and args.empirical == None:
         if args.num_pred != None:
             if args.num_pred % args.batch_size != 0:

@@ -180,7 +180,7 @@ class DataGenerator(tf.keras.utils.Sequence):
             )                                                    
         
         # crop map
-        if self.sampling_width != "rand":
+        if self.sampling_width != -1.0:
             sample_width = (float(self.sampling_width) * W) - (edge_width * 2)
         else:
             sample_width = np.random.uniform(
@@ -191,7 +191,7 @@ class DataGenerator(tf.keras.utils.Sequence):
         while (
             len(sampled_inds) < self.n
         ):  # keep looping until you get a map with enough samples
-            if self.sampling_width != "rand":
+            if self.sampling_width != -1.0:
                 sample_width = (float(self.sampling_width) * W) - (edge_width * 2)
             else:
                 sample_width = np.random.uniform(0, W - (edge_width * 2))
@@ -265,15 +265,16 @@ class DataGenerator(tf.keras.utils.Sequence):
                 sample_dict[indID] = 0
                 loc = ts.individual(indID).location[0:2]
                 locs.append(loc)
-
-        # find width of sampling area and save dists
         locs = np.array(locs)
-        sampling_width = 0
-        for i in range(0,self.n-1):
-            for j in range(i+1,self.n):
-                d = ( (locs[i,0]-locs[j,0])**2 + (locs[i,1]-locs[j,1])**2 )**(1/2)
-                if d > sampling_width:
-                    sampling_width = float(d)
+
+        # # find width of sampling area and save dists
+        # locs = np.array(locs)
+        # sampling_width = 0
+        # for i in range(0,self.n-1):
+        #     for j in range(i+1,self.n):
+        #         d = ( (locs[i,0]-locs[j,0])**2 + (locs[i,1]-locs[j,1])**2 )**(1/2)
+        #         if d > sampling_width:
+        #             sampling_width = float(d)
 
         # # rescale locs
         # locs0 = np.array(locs)
