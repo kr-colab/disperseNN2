@@ -45,8 +45,8 @@ conda activate /home/chriscs/Software/miniconda3/envs/disperseNN
 
 
 # regular
-python disperseNN2/disperseNN2.py --out $box"_"n$n"_"$snps"snps_"preprocess_ONESIG --num_snps $snps --max_epochs 1000 --validation_split 0.2 --batch_size 1 --threads 1 --n $n --seed XX --num_samples 50 --edge_width 3 --learning_rate 1e-4 --tree_list $trees --target_list $targets --preprocess
+#python disperseNN2/disperseNN2.py --out $box"_"n$n"_"$snps"snps_"preprocess_ONESIG --num_snps $snps --max_epochs 1000 --validation_split 0.2 --batch_size 1 --threads 1 --n $n --seed XX --num_samples 50 --edge_width 3 --learning_rate 1e-4 --tree_list $trees --target_list $targets --preprocess
 
 # random sampling width
-#python disperseNN2/disperseNN2.py --out $box"_"n$n"_"$snps"snps_"preprocess_ONESIG_randS --num_snps $snps --max_epochs 1000 --validation_split 0.2 --batch_size 1 --threads 1 --n $n --seed XX --num_samples 50 --edge_width 3 --learning_rate 1e-4 --tree_list $trees --target_list $targets --sampling_width -1 --preprocess
+python disperseNN2/disperseNN2.py --out $box"_"n$n"_"$snps"snps_"preprocess_ONESIG_randS_v2 --num_snps $snps --max_epochs 1000 --validation_split 0.2 --batch_size 1 --threads 1 --n $n --seed XX --num_samples 50 --edge_width 3 --learning_rate 1e-4 --tree_list $trees --target_list $targets --sampling_width -1 --preprocess
 
