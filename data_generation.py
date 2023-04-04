@@ -36,7 +36,6 @@ class DataGenerator(tf.keras.utils.Sequence):
     edge_width: dict
     phase: int
     polarize: int
-    sample_widths: dict
     genos: dict
     locs: dict
     preprocessed: bool
@@ -348,21 +347,8 @@ class DataGenerator(tf.keras.utils.Sequence):
         geno_mat1 = geno_mat0[mask, :]
         geno_mat2 = np.zeros((self.num_snps, self.n * self.phase)) # pad
         geno_mat2[:, 0 : self.n * self.phase] = geno_mat1
-        
-        # # garbage collect, print memory
-        # process = psutil.Process(os.getpid())
-        # with open("Boxes75/job201_gc.txt", "a") as f:
-        #     f.write(str(process) + "," + filepath + "\n")
-        #     f.write("before" + "\n")
-        #     f.write(str(process.memory_info().rss / 1024 ** 2) + "\n")
-        #     f.write(str(process.memory_info().vms / 1024 ** 2) + "\n")
 
-        #     gc.collect()
-
-        #     f.write("after" + "\n")
-        #     f.write(str(process.memory_info().rss / 1024 ** 2) + "\n")
-        #     f.write(str(process.memory_info().vms / 1024 ** 2) + "\n")
-            
+        # free memory
         del ts
         del geno_mat0
         del geno_mat1

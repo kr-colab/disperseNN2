@@ -349,7 +349,7 @@ def load_network():
 
 
 def make_generator_params_dict(
-    targets, trees, shuffle, genos, locs, sample_widths
+    targets, trees, shuffle, genos, locs
 ):
     params = {
         "targets": targets,
@@ -369,7 +369,6 @@ def make_generator_params_dict(
         "edge_width": args.edge_width,
         "phase": args.phase,
         "polarize": args.polarize,
-        "sample_widths": sample_widths,
         "genos": genos,
         "locs": locs,
         "preprocessed": args.preprocessed,
@@ -384,21 +383,20 @@ def make_generator_params_dict(
 def prep_trees_and_train():
 
     # tree sequences
-    print(args.tree_list, flush=True)
+    print("reading trees from:", args.tree_list, flush=True)
     trees = read_dict(args.tree_list)
     total_sims = len(trees)
 
     # read targets                                                                 
-    print("reading targets from tree sequences: this should take several minutes", flush=True)
+    print("reading targets from:", args.target_list, flush=True)
     targets = []
-    maps = read_dict(args.target_list)
+    target_files = read_dict(args.target_list)
     for i in range(total_sims):
-        with open(maps[i]) as infile:
+        with open(target_files[i]) as infile:
             arr = float(infile.readline().strip())
         targets.append(np.log(arr))
 
     # normalize targets                                                               
-#    targets = np.array(targets)
     meanSig = np.mean(targets)
     sdSig = np.std(targets)
     np.save(f"{args.out}_training_params", [
@@ -433,18 +431,21 @@ def prep_trees_and_train():
         shuffle=True,
         genos=None,
         locs=None,
-        sample_widths=None,
     )
     training_generator = DataGenerator(partition["train"], **params)
     validation_generator = DataGenerator(partition["validation"], **params)
 
     # train
     load_dl_modules()
-#    gpus = tf.config.experimental.list_physical_devices('GPU')
- #   for gpu in gpus:
-  #      tf.config.experimental.set_memory_growth(gpu, True)
     model, checkpointer, earlystop, reducelr = load_network()
     print("training!")
+
+
+
+
+
+    ######################## not sure which one of these is ideal? I was trying to address it using too much memory when I messed with it.
+    # # option A
     history = model.fit(
         x=training_generator,
         use_multiprocessing=True,
@@ -456,6 +457,7 @@ def prep_trees_and_train():
         callbacks=[checkpointer, earlystop, reducelr],
     )
 
+    # # option B
     # history = model.fit_generator(
     #     generator=training_generator,
     #     use_multiprocessing=False,
@@ -497,7 +499,6 @@ def prep_preprocessed_and_train():
         shuffle=True,
         genos=genos,
         locs=locs,
-        sample_widths=None,
     )
     training_generator = DataGenerator(partition["train"], **params)
     validation_generator = DataGenerator(partition["validation"], **params)
@@ -544,7 +545,6 @@ def prep_preprocessed_and_pred():
         shuffle=False,
         genos=genos,
         locs=locs,
-        sample_widths=None,
     )
 
     # predict
@@ -566,66 +566,53 @@ def prep_preprocessed_and_pred():
     return
 
 
-# def prep_trees_and_pred(): # *** never tested ***
+def prep_trees_and_pred(): 
 
-#     # grab mean and sd from training distribution
-#     meanSig, sdSig = np.load(args.out + "mean_sd.npy")
-#     #args.n = int(args.n) # * what does this do?
-#     #args.num_snps = int(args.num_snps)
+    # grab mean and sd from training distribution
+    meanSig, sdSig = np.load(args.out + "/mean_sd.npy")
 
-#     # tree sequences                                                              
-#     print(args.tree_list, flush=True)
-#     trees = read_dict(args.tree_list)
-#     total_sims = len(trees)
+    # tree sequences                                                              
+    print("reading trees from:", args.tree_list, flush=True)
+    trees = read_dict(args.tree_list)
+    total_sims = len(trees)
 
-#     # read targets                                                                
-#     print("reading targets from tree sequences: this should take several minutes")
-#     targets = []
-#     maps = read_dict(args.target_list)
-#     if args.segment == False:
-#         for i in range(total_sims):
-#             arr = read_map(maps[i], args.grid_coarseness, args.segment)
-#             targets.append(arr)
-#     else:
-#         targets_class = []
-#         for i in range(total_sims):
-#             arr = read_map(maps[i], args.grid_coarseness, args.segment)
-#             targets.append(arr[:,:,0])
-#             targets_class.append(arr[:,:,1:5])
-#             print("finished with " + str(i), flush=True)
-#     targets = dict_from_list(targets) # (unindent)
-#     if args.segment == True:
-#         targets_class = dict_from_list(targets_class)
-#         targets = [targets, targets_class]
+    # read targets                                                                
+    print("reading targets from tree sequences: this should take several minutes")
+    targets = []
+    target_files = read_dict(args.target_list)
+    for i in range(total_sims):
+        with open(target_files[i]) as infile:
+            arr = float(infile.readline().strip())
+        targets.append(np.log(arr))
 
-#     # organize "partition" to hand to data generator
-#     partition = {}
-#     if args.num_pred == None:
-#         args.num_pred = int(total_sims)
+    # (don't need to normalize targets, or split train/val, because predicting)
 
-#     simids = np.random.choice(np.arange(total_sims),
-#                               args.num_pred, replace=False)
-#     partition["prediction"] = simids
+    # organize "partition" to hand to data generator
+    partition = {}
+    if args.num_pred == None:
+        args.num_pred = int(total_sims)
+    simids = np.random.choice(np.arange(total_sims),
+                              args.num_pred, replace=False)
+    partition["prediction"] = list(simids)
 
-#     # get generator ready
-#     params = make_generator_params_dict(
-#         targets=[None]*total_sims,
-#         trees=trees,
-#         shuffle=False,
-#         genos=None,
-#         locs=None,
-#         sample_widths=None,
-#     )
-#     generator = DataGenerator(partition["prediction"], **params)
+    # get generator ready
+    params = make_generator_params_dict(
+        targets=[None]*total_sims,
+        trees=trees,
+        shuffle=False,
+        genos=None,
+        locs=None,
+    )
+    generator = DataGenerator(partition["prediction"], **params)
 
-#     # predict
-#     load_dl_modules()
-#     model, checkpointer, earlystop, reducelr = load_network()
-#     print("predicting")
-#     predictions = model.predict_generator(generator)
-#     unpack_predictions(predictions, meanSig, sdSig, targets, simids, trees)
+    # predict
+    load_dl_modules()
+    model, checkpointer, earlystop, reducelr = load_network()
+    print("predicting")
+    predictions = model.predict_generator(generator)
+    unpack_predictions(predictions, meanSig, sdSig, targets, simids, trees)
 
-#     return
+    return
 
 
 def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names): 
@@ -675,7 +662,6 @@ def preprocess_trees():
         shuffle=None,
         genos=None,
         locs=None,
-        sample_widths=None,
     )
     training_generator = DataGenerator([None], **params)
 
