@@ -3,7 +3,7 @@
 
 # notes:
 #     - learning rate 1e-3 doesn't work at all, for one sigma. Neither does 5e-4. 1e-4 works.
-#     - 4950 pairs ran for a while on 80-GB ram, with 100 encode 100 estimate.
+#     - 4950 pairs ran for a while on 80-GB ram, with 100 encode 100 estimate, as did 4725—but they oomed eventually. Trying 4000.
 
 import os
 import argparse
