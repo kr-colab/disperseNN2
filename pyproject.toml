@@ -1,0 +1,5 @@
+[project]
+name = "disperseNN2"
+authors = [{name = "Chris Smith", email = "chriscs@uoregon.edu"}, 
+    {name = "Andrew Kern", email = "adkern@uoregon.edu"}]
+dynamic = ["version", "description"]
