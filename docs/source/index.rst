@@ -17,4 +17,5 @@ Contents
 .. toctree::
 
    usage
-   api
+   Vignette: example workflow
+   Snakemake pipeline
