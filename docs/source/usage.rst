@@ -123,7 +123,7 @@ A basic preprocessing command looks like:
 .. code-block:: bash
 		
 		python disperseNN2.py \
-		--out temp_wd/preprocessed_dir \
+		--out temp_wd/output_dir \
 		--num_snps 5000 \
 		--threads 1 \
 		--n 10 \
@@ -145,13 +145,26 @@ A basic preprocessing command looks like:
 ***********
 
 Below is an example command for the training step.
-This example uses tree sequences as input (again, feel free to kill this command).
+This example uses tree sequences as input.
 
 .. code-block:: bash
 
-		python disperseNN2/disperseNN2.py --out Boxes$box"_"n$n"_"$num_snps"snps_"preprocess_ONESIG --num_snps $num_snps --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads $threads --n $n --seed $id --train --learning_rate 1e-4 --preprocessed --pairs $pairs --pairs_encode $pairs2 --pairs_estimate $pairs3 --gpu -1 > Boxes$box"_"n$n"_"$num_snps"snps_"preprocess_ONESIG/out_one_sig.$id.txt_n$n"_"$pairs"pair_"$DATE
-
-
+		python disperseNN2.py \
+		--out temp_wd/output_dir \
+                --train \
+                --preprocessed \
+		--num_snps 5000 \
+		--max_epochs 2 \
+		--validation_split 0.2 \
+		--batch_size 1 \
+		--threads 1 \
+		--n 10 \
+		--seed 12345 \
+		--learning_rate 1e-4 \
+		--pairs 45 \
+		--pairs_encode 45 \
+		--pairs_estimate 45 \
+		> output_dir/training_history.txt
 
 - ``tree_list``: list of paths to the tree sequences. &#963; values and habitat widths are extracted directly from the tree sequence.
 - ``mutate``: add mutations to the tree sequence until the specified number of SNPs are obtained (5,000 in this case, specified inside the training params file).
@@ -167,9 +180,8 @@ This example uses tree sequences as input (again, feel free to kill this command
 - ``seed``: random number seed.
 - ``out``: output prefix.
 
-This run will eventually print the training progress to stdout, while the model weights are saved to ``temp_wd/out1_model.hdf5``.
-
-Also, this example command is small-scale; in practice, you will need a training set of maybe 50,000, and you will want to train for longer than 10 epochs.
+This command will print the training progress to stdout. The loss decreases very quickly with this toy example, because the neural network memorizes the training set. The model weights are saved to ``pwConv___.hdf5``.
+In practice, you will need a training set of maybe 50,000, and you will likely want to train for longer than 10 epochs.
 
 
 
@@ -187,7 +199,7 @@ If you want to predict sigma from simulated tree sequences output by ``SLiM``, a
 
 .. code-block:: bash
 
-		python disperseNN2/disperseNN2.py --out Boxes$box"_"n$n"_"preprocess_ONESIG --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 1 --threads 1 --n $n --seed $id --num_samples 50 --predict --learning_rate 1e-4 --preprocessed --pairs $pairs --load_weights Boxes105_106_n23_preprocess_ONESIG/out140_boxes105_noProj_model.hdf5 --num_pred 100 --gpu_index -1                                                                                                                              
+		python disperseNN2.py --out Boxes$box"_"n$n"_"preprocess_ONESIG --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 1 --threads 1 --n $n --seed $id --num_samples 50 --predict --learning_rate 1e-4 --preprocessed --pairs $pairs --load_weights Boxes105_106_n23_preprocess_ONESIG/out140_boxes105_noProj_model.hdf5 --num_pred 100 --gpu_index -1                                                                                                                              
 
 
 Similar to the earlier prediction example, this will generate a file called `temp_wd/out_treeseq_predictions.txt` containing:
@@ -222,5 +234,5 @@ For predicting with empirical data, the command will be slightly different: inst
 
 .. code-block:: bash
 
-                python disperseNN2/disperseNN2.py --out Boxes$box"_"n$n"_"preprocess_ONESIG --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 1 --threads 1 --n $n --seed $id --num_samples 50 --predict --learning_rate 1e-4 --preprocessed --pairs $pairs --load_weights Boxes105_106_n23_preprocess_ONESIG/out140_boxes105_noProj_model.hdf5 --num_pred 100 --gpu_index -1
+                python disperseNN2.py --out Boxes$box"_"n$n"_"preprocess_ONESIG --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 1 --threads 1 --n $n --seed $id --num_samples 50 --predict --learning_rate 1e-4 --preprocessed --pairs $pairs --load_weights Boxes105_106_n23_preprocess_ONESIG/out140_boxes105_noProj_model.hdf5 --num_pred 100 --gpu_index -1
 
