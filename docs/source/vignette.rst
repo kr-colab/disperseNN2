@@ -2,7 +2,7 @@ Vignette: example workflow
 ==========================
 
 
-This vignette shows a typical ``disperseNN2`` workflow. While the :doc:`usage` section was more brief, here we go into more detail for each step of the workflow:
+This vignette shows a complete (but small) ``disperseNN2`` application pipeline. For more details about individual command line flags, see :doc:`usage`.
 
 :ref:`vignette_simulation`
 

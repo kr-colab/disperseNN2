@@ -38,7 +38,8 @@ A typical ``disperseNN2`` workflow involves five steps:
 
 :ref:`empirical`
 
-While it might be possible to run smaller tests on a laptop, it is generally advisable to seek out a high performance computing cluster, particularly for the simulation step.
+
+This section describes the command line flags associated with each step in the workflow; for a complete, worked example with code, see :doc:`vignette`. While it might be possible to run smaller tests on a laptop, it is generally advisable to seek out a high performance computing cluster, particularly for the simulation step.
 
 
 
@@ -122,19 +123,15 @@ A basic preprocessing command looks like:
 .. code-block:: bash
 		
 		python disperseNN2/disperseNN2.py \
-		--out $box"_"n$n"_"$snps"snps_"preprocess_ONESIG \
-		--num_snps $snps \
-		--max_epochs 1000 \
-		--validation_split 0.2 \
-		--batch_size 1 \
+		--out temp_wd/preprocessed_dir \
+		--num_snps 5000 \
 		--threads 1 \
-		--n $n \
-		--seed XX \
-		--num_samples 50 \
+		--n 10 \
+		--seed 12345 \
+		--num_samples 10 \
 		--edge_width 3 \
-		--learning_rate 1e-4 \
-		--tree_list $trees \
-		--target_list $targets \
+		--tree_list Examples/tree_list1.txt \
+		--target_list Examples/target_list1.txt \
 		--preprocess
 
 
