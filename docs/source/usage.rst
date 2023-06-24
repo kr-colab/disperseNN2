@@ -13,7 +13,7 @@ Usage
 .. _install:
 
 Install
--------
+^^^^^^^
 
 To use ``disperseNN2``, first install it using pip:
 
@@ -23,8 +23,8 @@ To use ``disperseNN2``, first install it using pip:
 
 
 
-Contents
---------
+Workflow
+^^^^^^^^
 A typical ``disperseNN2`` workflow involves five steps:
 
 
@@ -51,14 +51,28 @@ While it might be possible to run smaller tests on a laptop, it is generally adv
 
 Although ``disperseNN2`` does not actually have any simulation-related capabilities, it relies on simulated training data. Therefore, we provide some template code and tips for generating training data using ``SLiM``. However, the ideal analysis will tailor the simulation step to take advantage of realistic information from your study system. For information on how to implement population genetic simulations, check out the extensive ``SLiM`` manual (give link, here).
 
-Our simulations use the script SLiM_recipes/bat20.slim. This simualation model is described in detail in Battey et al., 2020 (https://doi.org/10.1534/genetics.120.303143), but it is a continuous space model where the mother-offspring distance is N(0,sigma)—Gaussian distributed with mean zero and standard deviation sigma—in both the x and y dimensions. As a demonstration, see the below example command (this simulation may run for several minutes, but feel free to kill it; we don't need this output for any downstream steps):
+Our simulations use the script SLiM_recipes/bat20.slim. This simualation model is described in detail in Battey et al., 2020 (https://doi.org/10.1534/genetics.120.303143), but it is a continuous space model where the mother-offspring distance is N(0,sigma)—Gaussian distributed with mean zero and standard deviation sigma—in both the x and y dimensions. As a demonstration, see the below example command.
+
+
+
 
 .. code-block:: bash
+
+		mkdir temp_wd
 		
-		slim -d SEED=12345 -d sigma=0.2 -d K=5 -d mu=0 -d r=1e-8 -d W=50 -d G=1e8 -d maxgens=100000 -d OUTNAME="'temp_wd/output'" SLiM_recipes/bat20.slim
+		slim \
+		-d SEED=12345 \
+		-d sigma=0.2 \
+		-d K=5 \
+		-d mu=0 \
+		-d r=1e-8 \
+		-d W=50 \
+		-d G=1e8 \
+		-d maxgens=100 \
+		-d OUTNAME="'temp_wd/TreeSeqs/my_sequence'" \
+		SLiM_recipes/bat20.slim \
 		# Note the two sets of quotes around the output name
-
-
+		
 Command line arguments are passed to ``SLiM`` using the `-d` flag followed by the variable name as it appears in the recipe file.
 
 - ``SEED`` - a random seed to reproduce the simulation results.
@@ -73,7 +87,16 @@ Command line arguments are passed to ``SLiM`` using the `-d` flag followed by th
 
 After running ``SLiM`` for a fixed number of generations, the simulation is still not complete, as many trees will likely not have coalesced still. Next we will finish, or "recapitate", the tree sequences. We recommend recapitating up front, as training is prohibitively slow if you try to recapitate on-the-fly. Below is an example recapitation command in python:
 
-import tskit; from process_input import *; ts=tskit.load("my_sequence.trees"); ts=recapitate(ts,1e-8,12345); ts.dump("my_sequence_recap.trees")
+.. code-block:: python
+
+		import tskit,msprime
+		ts=tskit.load("temp_wd/TreeSeqs/my_sequence_12345.trees")
+		Ne=len(ts.individuals())
+		demography = msprime.Demography.from_tree_sequence(ts)
+		demography[1].initial_size = Ne
+		ts = msprime.sim_ancestry(initial_state=ts, recombination_rate=1e-8, demography=demography, start_time=ts.metadata["SLiM"]["cycle"],random_seed=12345)
+		ts.dump("temp_wd/TreeSeqs/my_sequence_12345_recap.trees")
+
 
 For planning the total number of simulations, consider the following things. First: you can get away with fewer simulations by taking repeated, pseudo-independent samples from each simulation—--that is, if the simulated populations are sufficiently large relative to the sample size. Second: if the simulatios explore a large parameter space, e.g. more than	one or two free	parameters, then largertraining sets may be required.	In our analysis, we ran 1000 simulations while varying only the dispersal rate parameter, and sample 50	times from each	simulation (see Preprocessing, below).
 
@@ -98,7 +121,21 @@ A basic preprocessing command looks like:
 
 .. code-block:: bash
 		
-		python disperseNN2/disperseNN2.py --out $box"_"n$n"_"$snps"snps_"preprocess_ONESIG --num_snps $snps --max_epochs 1000 --validation_split 0.2 --batch_size 1 --threads 1 --n $n --seed XX --num_samples 50 --edge_width 3 --learning_rate 1e-4 --tree_list $trees --target_list $targets --preprocess                                      
+		python disperseNN2/disperseNN2.py \
+		--out $box"_"n$n"_"$snps"snps_"preprocess_ONESIG \
+		--num_snps $snps \
+		--max_epochs 1000 \
+		--validation_split 0.2 \
+		--batch_size 1 \
+		--threads 1 \
+		--n $n \
+		--seed XX \
+		--num_samples 50 \
+		--edge_width 3 \
+		--learning_rate 1e-4 \
+		--tree_list $trees \
+		--target_list $targets \
+		--preprocess
 
 
 
