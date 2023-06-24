@@ -122,13 +122,12 @@ A basic preprocessing command looks like:
 
 .. code-block:: bash
 		
-		python disperseNN2/disperseNN2.py \
+		python disperseNN2.py \
 		--out temp_wd/preprocessed_dir \
 		--num_snps 5000 \
 		--threads 1 \
 		--n 10 \
-		--seed 12345 \
-		--num_samples 10 \
+		--seed 1 \
 		--edge_width 3 \
 		--tree_list Examples/tree_list1.txt \
 		--target_list Examples/target_list1.txt \
