@@ -1,5 +1,5 @@
-2.051300043274321
-1.184130825626118
-1.8739656258252606
-0.4588403008488625
-0.7618345450937096
+Examples/TreeSeqs/target_98217910.txt
+Examples/TreeSeqs/target_99290585.txt
+Examples/TreeSeqs/target_99284440.txt
+Examples/TreeSeqs/target_98180132.txt
+Examples/TreeSeqs/target_99739498.txt
