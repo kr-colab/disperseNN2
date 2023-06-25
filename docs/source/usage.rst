@@ -52,10 +52,7 @@ This section describes the command line flags associated with each step in the w
 
 Although ``disperseNN2`` does not actually have any simulation-related capabilities, it relies on simulated training data. Therefore, we provide some template code and tips for generating training data using ``SLiM``. However, the ideal analysis will tailor the simulation step to take advantage of realistic information from your study system. For information on how to implement population genetic simulations, check out the extensive ``SLiM`` manual (give link, here).
 
-Our simulations use the script SLiM_recipes/bat20.slim. This simualation model is described in detail in Battey et al., 2020 (https://doi.org/10.1534/genetics.120.303143), but it is a continuous space model where the mother-offspring distance is N(0,sigma)—Gaussian distributed with mean zero and standard deviation sigma—in both the x and y dimensions. As a demonstration, see the below example command.
-
-
-
+Our simulations use the script ``SLiM_recipes/bat20.slim``. This simualation model is described in detail in Battey et al., 2020 (https://doi.org/10.1534/genetics.120.303143), and is a continuous space model where the mother-offspring distance is N(0,sigma)—Gaussian distributed with mean zero and standard deviation sigma—in both the x and y dimensions. Below is an example simulation command:
 
 .. code-block:: bash
 
@@ -86,7 +83,7 @@ Command line arguments are passed to ``SLiM`` using the `-d` flag followed by th
 - ``maxgens`` - number of generations to run simulation.
 - ``OUTNAME`` - prefix to name output files.
 
-After running ``SLiM`` for a fixed number of generations, the simulation is still not complete, as many trees will likely not have coalesced still. Next we will finish, or "recapitate", the tree sequences. We recommend recapitating up front, as training is prohibitively slow if you try to recapitate on-the-fly. Below is an example recapitation command in python:
+After running ``SLiM`` for a fixed number of generations, the simulation is still not complete, as many trees will likely not have coalesced still. Next you will need to finish, or "recapitate", the tree sequences. We recommend recapitating up front, as training is prohibitively slow if you try to recapitate on-the-fly. The below code snippet in python can be used to recapitate a tree sequence:
 
 .. code-block:: python
 
@@ -105,33 +102,48 @@ The only real requirements of ``disperseNN2`` regarding training data are: genot
 
 
 
+
+
+
+
+
+
 .. _preprocessing:
 
 ****************
 2. Preprocessing
 ****************
 
-The preprocessing step converts the tree sequences output by ``SLiM`` into numpy arrays that are faster to read during training.
-
-Side note: The reason ``disperseNN2`` does so much reading "on-the-fly" during training is to avoid loading thousands of tree sequences into memory at once;
-the memory required for this would be significant, and unnecessary since numpy arrays can be read and released from memory sufficiently fast.
-
-The preprocessing step can be parallelized to some extent: a single command preprocesses all simulations serially by taking one sample of genotypes from each dataset, so independent commands can be used with different random number seeds to take multiple, pseudo-independent samples from each simulation.
-
+The preprocessing step involves more simulation, technically: it adds mutations to each tree sequence, takes a sample of individuals, and saves the genotypes and sample locations in numpy arrays.
+This speeds up training.
+In addition, multiple samples can be taken from the same tree sequence to make the training set larger.
 A basic preprocessing command looks like:
 
 .. code-block:: bash
 		
 		python disperseNN2.py \
-		--out temp_wd/output_dir \
+                --out temp_wd/output_dir \
+                --preprocess \
 		--num_snps 5000 \
-		--threads 1 \
 		--n 10 \
 		--seed 1 \
 		--edge_width 3 \
 		--tree_list Examples/tree_list1.txt \
-		--target_list Examples/target_list1.txt \
-		--preprocess
+		--target_list Examples/target_list1.txt
+
+- ``out temp_wd/output_dir``: output directory
+- ``preprocess``: this flag tells ``disperseNN2`` to preprocess the training data
+- ``num_snps 5000``: the number of SNPs to use as input for the CNN
+- ``n 10``: sample size
+- ``seed 1``: random number seed
+- ``edge_width 3``: width of habitat edge to avoid sampling from
+- ``tree_list Examples/tree_list1.txt``: list of filepaths to the tree sequences
+- ``target_list Examples/target_list1.txt``: list of filepaths to .txt files with the target values
+  
+The preprocessing step can be parallelized to some extent: a single command preprocesses all simulations serially by taking one sample of genotypes from each dataset, so independent commands can be used with different random number seeds to take multiple, pseudo-independent samples from each simulation.
+		
+The preprocessed data are saved in the directory specified by ``--out``; Subsequent outputs will also be saved in this folder.
+
 
 
 
@@ -158,7 +170,6 @@ This example uses tree sequences as input.
 		--validation_split 0.2 \
 		--batch_size 1 \
 		--threads 1 \
-		--n 10 \
 		--seed 12345 \
 		--learning_rate 1e-4 \
 		--pairs 45 \
@@ -166,21 +177,19 @@ This example uses tree sequences as input.
 		--pairs_estimate 45 \
 		> output_dir/training_history.txt
 
-- ``tree_list``: list of paths to the tree sequences. &#963; values and habitat widths are extracted directly from the tree sequence.
-- ``mutate``: add mutations to the tree sequence until the specified number of SNPs are obtained (5,000 in this case, specified inside the training params file).
-- ``min_n``: specifies the minimum sample size.
-- ``max_n``: paired with ``min_n`` to describe the range of sample sizes to drawn from. Set ``min_n`` equal to ``max_n`` to use a fixed sample size.
-- ``edge_width``: this is the width of edge to 'crop' from the sides of the habitat. In other words, individuals are sampled ``edge_width`` distance from the sides of the habitat.
-- ``sampling_width``: samples individuals from a restricted sampling window with width between 0 and 1, in proportion to the habitat width, after excluding edges.
-- ``num_snps``: the number of SNPs to use as input for the CNN.
-- ``repeated_samples``: this is the number of repeated draws of ``n`` individuals to take from each tree sequence. This let's us get away with fewer simulations.
-- ``batch_size``: for the data generator. We find that batch_size=40 works well if the training set is larger.
-- ``threads``: number of threads to use for multiprocessing during the data generation step.
+- ``train``: tells ``disperseNN2`` to train a neural network
+- ``preprocessed``: tells ``disperseNN2`` to use already-preprocessed data, which it looks for in the output directory.
 - ``max_epochs``: maximum number of epochs to train for.
-- ``seed``: random number seed.
-- ``out``: output prefix.
+- ``validation_split``: the proportion of training data held out for validation between batches for hyperparameter tuning.
+- ``batch_size``: for the data generator. We find that batch_size=40 works well if the training set is larger.
+- ``threads``: number of threads to use with the multiprocessor
+- ``learning_rate``: learning rate to use during training. It's scheduled to decrease by 2x every 10 epochs with no decrease in validation loss.
+- ``pairs``: the total number of pairs to include in the analysis
+- ``pairs_encode``: the number of pairs to include in the gradient in the encoder portion of the neural network.
+- ``pairs_estimate``: the number of pairs to include in the estimator portion of the neural network.
 
-This command will print the training progress to stdout. The loss decreases very quickly with this toy example, because the neural network memorizes the training set. The model weights are saved to ``pwConv___.hdf5``.
+This command will print the training progress to stdout.
+The model weights are saved to ``pwConv___.hdf5``.
 In practice, you will need a training set of maybe 50,000, and you will likely want to train for longer than 10 epochs.
 
 
@@ -199,8 +208,22 @@ If you want to predict sigma from simulated tree sequences output by ``SLiM``, a
 
 .. code-block:: bash
 
-		python disperseNN2.py --out Boxes$box"_"n$n"_"preprocess_ONESIG --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 1 --threads 1 --n $n --seed $id --num_samples 50 --predict --learning_rate 1e-4 --preprocessed --pairs $pairs --load_weights Boxes105_106_n23_preprocess_ONESIG/out140_boxes105_noProj_model.hdf5 --num_pred 100 --gpu_index -1                                                                                                                              
+		python disperseNN2.py \
+		- ``out temp_wd/output_dir``: output directory
+                --predict
+                --preprocessed
+		--num_snps 5000 \
+		--batch_size 1 \
+		--threads 1 \
+		--n 10 \
+		--seed 12345 \
+		--pairs $pairs
+		--load_weights Boxes105_106_n23_preprocess_ONESIG/out140_boxes105_noProj_model.hdf5
+		--num_pred 100
 
+- ``predict``: tells ``disperseNN2`` to perform predictions
+- ``load_weights``: loads in saved weights from an already-trained model
+- ``num_pred``: number of datasets to predict with.
 
 Similar to the earlier prediction example, this will generate a file called `temp_wd/out_treeseq_predictions.txt` containing:
 
