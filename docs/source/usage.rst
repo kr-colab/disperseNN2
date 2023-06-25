@@ -56,20 +56,19 @@ Our simulations use the script ``SLiM_recipes/bat20.slim``. This simualation mod
 
 .. code-block:: bash
 
-		mkdir temp_wd
+		mkdir -p temp_wd/TreeSeqs
 		
-		slim \
-		-d SEED=12345 \
-		-d sigma=0.2 \
-		-d K=5 \
-		-d mu=0 \
-		-d r=1e-8 \
-		-d W=50 \
-		-d G=1e8 \
-		-d maxgens=100 \
-		-d OUTNAME="'temp_wd/TreeSeqs/my_sequence'" \
-		SLiM_recipes/bat20.slim \
-		# Note the two sets of quotes around the output name
+		slim -d SEED=12345 \
+		     -d sigma=0.2 \
+		     -d K=5 \
+		     -d mu=0 \
+		     -d r=1e-8 \
+		     -d W=50 \
+		     -d G=1e8 \
+		     -d maxgens=100 \
+		     -d OUTNAME="'temp_wd/TreeSeqs/my_sequence'" \
+		     SLiM_recipes/bat20.slim \
+		     # Note the two sets of quotes around the output name
 		
 Command line arguments are passed to ``SLiM`` using the `-d` flag followed by the variable name as it appears in the recipe file.
 
@@ -122,14 +121,14 @@ A basic preprocessing command looks like:
 .. code-block:: bash
 		
 		python disperseNN2.py \
-                --out temp_wd/output_dir \
-                --preprocess \
-		--num_snps 5000 \
-		--n 10 \
-		--seed 1 \
-		--edge_width 3 \
-		--tree_list Examples/tree_list1.txt \
-		--target_list Examples/target_list1.txt
+                       --out temp_wd/output_dir \
+		       --preprocess \
+		       --num_snps 5000 \
+		       --n 10 \
+		       --seed 1 \
+		       --edge_width 3 \
+		       --tree_list Examples/tree_list1.txt \
+		       --target_list Examples/target_list1.txt
 
 - ``out temp_wd/output_dir``: output directory
 - ``preprocess``: this flag tells ``disperseNN2`` to preprocess the training data
@@ -162,20 +161,21 @@ This example uses tree sequences as input.
 .. code-block:: bash
 
 		python disperseNN2.py \
-		--out temp_wd/output_dir \
-                --train \
-                --preprocessed \
-		--num_snps 5000 \
-		--max_epochs 2 \
-		--validation_split 0.2 \
-		--batch_size 1 \
-		--threads 1 \
-		--seed 12345 \
-		--learning_rate 1e-4 \
-		--pairs 45 \
-		--pairs_encode 45 \
-		--pairs_estimate 45 \
-		> output_dir/training_history.txt
+		       --out temp_wd/output_dir \
+		       --train \
+		       --preprocessed \
+		       --num_snps 5000 \
+		       --max_epochs 10 \
+		       --validation_split 0.2 \
+		       --batch_size 1 \
+		       --threads 1 \
+		       --seed 12345 \
+		       --n 10 \
+		       --learning_rate 1e-4 \
+		       --pairs 45 \
+		       --pairs_encode 45 \
+		       --pairs_estimate 45 \
+		       > temp_wd/output_dir/training_history.txt
 
 - ``train``: tells ``disperseNN2`` to train a neural network
 - ``preprocessed``: tells ``disperseNN2`` to use already-preprocessed data, which it looks for in the output directory.
@@ -189,7 +189,7 @@ This example uses tree sequences as input.
 - ``pairs_estimate``: the number of pairs to include in the estimator portion of the neural network.
 
 This command will print the training progress to stdout.
-The model weights are saved to ``pwConv___.hdf5``.
+The model weights are saved to ``temp_wd/output_dir/pwConv___.hdf5``.
 In practice, you will need a training set of maybe 50,000, and you will likely want to train for longer than 10 epochs.
 
 
@@ -209,32 +209,33 @@ If you want to predict sigma from simulated tree sequences output by ``SLiM``, a
 .. code-block:: bash
 
 		python disperseNN2.py \
-		- ``out temp_wd/output_dir``: output directory
-                --predict
-                --preprocessed
-		--num_snps 5000 \
-		--batch_size 1 \
-		--threads 1 \
-		--n 10 \
-		--seed 12345 \
-		--pairs $pairs
-		--load_weights Boxes105_106_n23_preprocess_ONESIG/out140_boxes105_noProj_model.hdf5
-		--num_pred 100
+		       --out temp_wd/output_dir \
+		       --predict \
+		       --preprocessed \
+		       --num_snps 5000 \
+		       --batch_size 1 \
+		       --threads 1 \
+		       --n 10 \
+		       --seed 12345 \
+		       --pairs 45 \
+		       --pairs_encode 45 \
+		       --pairs_estimate 45 \
+		       --load_weights temp_wd/output_dir/pwConv_12345_model.hdf5 \
+		       --num_pred 5
 
 - ``predict``: tells ``disperseNN2`` to perform predictions
 - ``load_weights``: loads in saved weights from an already-trained model
 - ``num_pred``: number of datasets to predict with.
 
-Similar to the earlier prediction example, this will generate a file called `temp_wd/out_treeseq_predictions.txt` containing:
+Similar to the earlier prediction example, this will generate a file called ``temp_wd/output_dir/Test_12345/pwConv_12345_predictions.txt`` containing (TO DO: random number seeds aren't reproducible):
 
 .. code-block:: bash
 
-		Examples/TreeSeqs/output_2_recap.trees 0.5914545564 0.6582331812
-		Examples/TreeSeqs/output_3_recap.trees 0.3218814158 0.3755014635
-		Examples/TreeSeqs/output_1_recap.trees 0.3374337601 0.4073884732
-		Examples/TreeSeqs/output_5_recap.trees 0.2921853737 0.2047981935
-		Examples/TreeSeqs/output_4_recap.trees 0.277020769 0.3208989912
-
+		0.1690090249743872      0.48620286613483377
+		0.6280568409720466      0.4672472252013161
+		0.7184737596020008      0.13608900222161735
+		-0.7790530578965832     0.23677401340070897
+		-0.27202587929510147    -0.01729259869841701
 
 Here, the second and third columns contain the true and predicted sigma; for each simulation.
 
@@ -252,10 +253,24 @@ Here, the second and third columns contain the true and predicted sigma; for eac
 5. Empirical predictions
 ************************
 
-For predicting with empirical data, the command will be slightly different: instead of a list of tree sequences (and targets?), a new flag is given, --empirical, which is a prefix for two files: a VCF and a table of lat and long. The lat and longs get projected onto a flat 2D map using ____.
+For predicting with empirical data, the command will be slightly different: instead of a list of tree sequences (and targets?), a new flag is given, --empirical, which is a prefix for two files: a VCF and a table of lat and long. The lat and longs get projected onto a flat 2D map using ____. (TODO: empirical estimation)
 
 
 .. code-block:: bash
 
-                python disperseNN2.py --out Boxes$box"_"n$n"_"preprocess_ONESIG --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 1 --threads 1 --n $n --seed $id --num_samples 50 --predict --learning_rate 1e-4 --preprocessed --pairs $pairs --load_weights Boxes105_106_n23_preprocess_ONESIG/out140_boxes105_noProj_model.hdf5 --num_pred 100 --gpu_index -1
+                python disperseNN2.py \
+		       --out temp_wd/output_dir \
+		       --predict \
+		       --empirical Examples/VCFs/halibut \
+		       --num_snps 5000 \
+		       --batch_size 1 \
+		       --threads 1 \
+		       --n 10 \
+		       --seed 12345 \
+		       --pairs 45 \
+		       --pairs_encode 45 \
+		       --pairs_estimate 45 \
+		       --load_weights temp_wd/output_dir/pwConv_12345_model.hdf5 \
+		       --num_pred 1
 
+		
