@@ -2,7 +2,7 @@ Vignette: example workflow
 ==========================
 
 
-This vignette shows a complete (but small) ``disperseNN2`` application pipeline. For more details about individual command line flags, see :doc:`usage`.
+This vignette shows a complete pipeline for a small application of ``disperseNN2``. For more details about individual command line flags, see :doc:`usage`.
 
 :ref:`vignette_simulation`
 

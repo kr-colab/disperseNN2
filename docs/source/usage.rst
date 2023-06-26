@@ -25,8 +25,11 @@ To use ``disperseNN2``, first install it using pip:
 
 Workflow
 ^^^^^^^^
+This section describes the command line flags associated with each step in the workflow; for a complete, worked example with code, see :doc:`vignette`.
+
 A typical ``disperseNN2`` workflow involves five steps:
 
+.. While it might be possible to run smaller tests on a laptop, it is generally advisable to seek out a high performance computing cluster, particularly for the simulation step.                                                                                                                                                     
 
 :ref:`simulation`
    
@@ -39,8 +42,8 @@ A typical ``disperseNN2`` workflow involves five steps:
 :ref:`empirical`
 
 
-This section describes the command line flags associated with each step in the workflow; for a complete, worked example with code, see :doc:`vignette`. While it might be possible to run smaller tests on a laptop, it is generally advisable to seek out a high performance computing cluster, particularly for the simulation step.
 
+     
 
 
 
@@ -50,9 +53,9 @@ This section describes the command line flags associated with each step in the w
 1. Simulation
 *************
 
-Although ``disperseNN2`` does not actually have any simulation-related capabilities, it relies on simulated training data. Therefore, we provide some template code and tips for generating training data using ``SLiM``. However, the ideal analysis will tailor the simulation step to take advantage of realistic information from your study system. For information on how to implement population genetic simulations, check out the extensive ``SLiM`` manual (give link, here).
+Although ``disperseNN2`` does not actually run simulations, it relies on simulated training data. Therefore, we provide some template code and tips for generating training data; however, the ideal analysis will tailor the simulation step to take advantage of realistic information from your particular study system. For information on how to implement population genetic simulations, check out the extensive `SLiM manual <http://benhaller.com/slim/SLiM_Manual.pdf>`_.
 
-Our simulations use the script ``SLiM_recipes/bat20.slim``. This simualation model is described in detail in Battey et al., 2020 (https://doi.org/10.1534/genetics.120.303143), and is a continuous space model where the mother-offspring distance is N(0,sigma)—Gaussian distributed with mean zero and standard deviation sigma—in both the x and y dimensions. Below is an example simulation command:
+The simulation script we used for validating ``disperseNN2`` is ``SLiM_recipes/bat20.slim``. This is a continuous space model where the mother-offspring distance is :math:`N(0,\sigma)` in both the x and y dimensions, and is described in detail in `Battey et al. 2020 <https://doi.org/10.1534/genetics.120.303143>`_. Below is an example simulation command:
 
 .. code-block:: bash
 
@@ -70,7 +73,7 @@ Our simulations use the script ``SLiM_recipes/bat20.slim``. This simualation mod
 		     SLiM_recipes/bat20.slim \
 		     # Note the two sets of quotes around the output name
 		
-Command line arguments are passed to ``SLiM`` using the `-d` flag followed by the variable name as it appears in the recipe file.
+Command line arguments are passed to ``SLiM`` using the ``-d`` flag followed by the variable name as it appears in the recipe file.
 
 - ``SEED`` - a random seed to reproduce the simulation results.
 - ``sigma`` - the dispersal parameter.
@@ -130,14 +133,14 @@ A basic preprocessing command looks like:
 		       --tree_list Examples/tree_list1.txt \
 		       --target_list Examples/target_list1.txt
 
-- ``out temp_wd/output_dir``: output directory
-- ``preprocess``: this flag tells ``disperseNN2`` to preprocess the training data
-- ``num_snps 5000``: the number of SNPs to use as input for the CNN
-- ``n 10``: sample size
-- ``seed 1``: random number seed
-- ``edge_width 3``: width of habitat edge to avoid sampling from
-- ``tree_list Examples/tree_list1.txt``: list of filepaths to the tree sequences
-- ``target_list Examples/target_list1.txt``: list of filepaths to .txt files with the target values
+- ``--out``: output directory
+- ``--preprocess``: this flag tells ``disperseNN2`` to preprocess the training data
+- ``--num_snps 5000``: the number of SNPs to use as input for the CNN
+- ``--n 10``: sample size
+- ``--seed 1``: random number seed
+- ``--edge_width 3``: width of habitat edge to avoid sampling from
+- ``--tree_list Examples/tree_list1.txt``: list of filepaths to the tree sequences
+- ``--target_list Examples/target_list1.txt``: list of filepaths to .txt files with the target values
   
 The preprocessing step can be parallelized to some extent: a single command preprocesses all simulations serially by taking one sample of genotypes from each dataset, so independent commands can be used with different random number seeds to take multiple, pseudo-independent samples from each simulation.
 		
@@ -177,20 +180,22 @@ This example uses tree sequences as input.
 		       --pairs_estimate 45 \
 		       > temp_wd/output_dir/training_history.txt
 
-- ``train``: tells ``disperseNN2`` to train a neural network
-- ``preprocessed``: tells ``disperseNN2`` to use already-preprocessed data, which it looks for in the output directory.
-- ``max_epochs``: maximum number of epochs to train for.
-- ``validation_split``: the proportion of training data held out for validation between batches for hyperparameter tuning.
-- ``batch_size``: for the data generator. We find that batch_size=40 works well if the training set is larger.
-- ``threads``: number of threads to use with the multiprocessor
-- ``learning_rate``: learning rate to use during training. It's scheduled to decrease by 2x every 10 epochs with no decrease in validation loss.
-- ``pairs``: the total number of pairs to include in the analysis
-- ``pairs_encode``: the number of pairs to include in the gradient in the encoder portion of the neural network.
-- ``pairs_estimate``: the number of pairs to include in the estimator portion of the neural network.
+- ``--train``: tells ``disperseNN2`` to train a neural network
+- ``--preprocessed``: tells ``disperseNN2`` to use already-preprocessed data, which it looks for in the ``--out`` directory.
+- ``--max_epochs``: maximum number of epochs to train for.
+- ``--validation_split``: the proportion of training data held out for validation between batches for hyperparameter tuning.
+- ``--batch_size``: for the data generator. We find that batch_size=40 works well if the training set is larger.
+- ``--threads``: number of threads to use with the multiprocessor. 
+- ``--learning_rate``: learning rate to use during training. It's scheduled to decrease by 2x every 10 epochs with no decrease in validation loss.
+- ``--pairs``: the total number of pairs to include in the analysis
+- ``--pairs_encode``: the number of pairs to include in the gradient in the encoder portion of the neural network.
+- ``--pairs_estimate``: the number of pairs to include in the estimator portion of the neural network.
 
-This command will print the training progress to stdout.
-The model weights are saved to ``temp_wd/output_dir/pwConv___.hdf5``.
+This command will print the training progress to stdout, which was redirected to ``temp_wd/output_dir/training_history.txt`` in this example.
+The model weights are saved to ``temp_wd/output_dir/pwConv_12345_model.hdf5``.
 In practice, you will need a training set of maybe 50,000, and you will likely want to train for longer than 10 epochs.
+For reading preprocessed training data we recommend trying between 1 and 10 threads. 
+
 
 
 
@@ -203,8 +208,7 @@ In practice, you will need a training set of maybe 50,000, and you will likely w
 4. Validation
 *************
 
-If you want to predict sigma from simulated tree sequences output by ``SLiM``, a predict command like the below one can be used (should take <30s to run). Each command line flag is described in the preceding examples(??)
-
+If you want to predict :math:`\sigma` from simulated tree sequences output by ``SLiM``, a predict command like the below one can be used:
 
 .. code-block:: bash
 
@@ -223,9 +227,9 @@ If you want to predict sigma from simulated tree sequences output by ``SLiM``, a
 		       --load_weights temp_wd/output_dir/pwConv_12345_model.hdf5 \
 		       --num_pred 5
 
-- ``predict``: tells ``disperseNN2`` to perform predictions
-- ``load_weights``: loads in saved weights from an already-trained model
-- ``num_pred``: number of datasets to predict with.
+- ``--predict``: tells ``disperseNN2`` to perform predictions
+- ``--load_weights``: loads in saved weights from an already-trained model
+- ``--num_pred``: number of datasets to predict with.
 
 Similar to the earlier prediction example, this will generate a file called ``temp_wd/output_dir/Test_12345/pwConv_12345_predictions.txt`` containing (TO DO: random number seeds aren't reproducible):
 
@@ -237,7 +241,7 @@ Similar to the earlier prediction example, this will generate a file called ``te
 		-0.7790530578965832     0.23677401340070897
 		-0.27202587929510147    -0.01729259869841701
 
-Here, the second and third columns contain the true and predicted sigma; for each simulation.
+Here, the second and third columns contain the true and predicted :math:`\sigma`; for each simulation.
 
 
 
