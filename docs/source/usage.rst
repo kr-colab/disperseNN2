@@ -77,7 +77,7 @@ Command line arguments are passed to ``SLiM`` using the ``-d`` flag followed by 
 
 - ``SEED`` - a random seed to reproduce the simulation results.
 - ``sigma`` - the dispersal parameter.
-- ``K`` - carrying capacity.
+- ``K`` - carrying capacity. Note: the carrying capacity in this model, K, corresponds roughly to density, but the actual density will vary depending on the model,and will fluctuate a bit over time.
 - ``mu`` - per base per genertation mutation rate.
 - ``r`` -  per base per genertation recombination rate.
 - ``W`` - the height and width of the geographic spatial boundaries.

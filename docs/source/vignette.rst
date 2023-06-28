@@ -2,7 +2,7 @@ Vignette: example workflow
 ==========================
 
 
-This vignette shows a complete pipeline for a small application of ``disperseNN2``. For details about individual command line flags, see :doc:`usage`.
+This vignette shows a complete pipeline for a small application of ``disperseNN2`` including instructions for the intermediate data-organizing steps. For details about individual command line flags, see :doc:`usage`.
 
 
 
@@ -25,7 +25,9 @@ This vignette shows a complete pipeline for a small application of ``disperseNN2
 1. Simulation
 -------------
 
-First, we will simulate training data using ``bat20.slim``:
+For this demonstration we will analyze a population of Internecivus raptus. Let's assume we have independent estimates from previous studies for the size of the species range and the population density: :math:`48 \times 48` km\ :math:`^2`, and 6 individuals per km\ :math:`^2`, respectively. With values for these nuisance parameters in hand we can design custom training simulations for inferring :math:`\sigma`. If our a priori expectation for :math:`\sigma` in this species is somewhere between 0.2 and 1.5, we will simulate dispersal rates in this range.
+
+Below is some bash code to run the simulations using ``bat20.slim``. 
 
 .. code-block:: bash
    :linenos:
@@ -36,7 +38,7 @@ First, we will simulate training data using ``bat20.slim``:
    for i in {1..100}
    do
        sigma=$(echo $sigmas | awk -v var="$i" '{print $var}')
-       echo "slim -d SEED=$i -d sigma=$sigma -d K=6 -d mu=0 -d r=1e-8 -d W=50 -d G=1e8 -d maxgens=100 -d OUTNAME=\"'temp_wd/vignette/TreeSeqs/output'\" SLiM_recipes/bat20.slim" >> temp_wd/vignette/sim_commands.txt
+       echo "slim -d SEED=$i -d sigma=$sigma -d K=6 -d mu=0 -d r=1e-8 -d W=48 -d G=1e8 -d maxgens=100 -d OUTNAME=\"'temp_wd/vignette/TreeSeqs/output'\" SLiM_recipes/bat20.slim" >> temp_wd/vignette/sim_commands.txt
        echo $sigma > temp_wd/vignette/Targets/target_$i.txt
        echo temp_wd/vignette/Targets/target_$i.txt >> temp_wd/vignette/target_list.txt
    done
@@ -74,19 +76,23 @@ And to recapitate the tree sequences output by ``SLiM``:
 2. Preprocessing
 ----------------
 
-Next, we preprocess the input for ``disperseNN2`` (the same as in :doc:`usage`).
+Next, we preprocess the input for ``disperseNN2``. Assume we have a sample of 97 individuals from different locations, and 25,000 SNPs.
 
 .. code-block:: bash
 		
 		python disperseNN2.py \
 		       --out temp_wd/vignette/output_dir \
                        --preprocess \
-                       --num_snps 5000 \
-                       --n 10 \
+                       --num_snps 25000 \
+                       --n 97 \
                        --seed 1 \
-                       --edge_width 3 \
+                       --edge_width 1.5 \
                        --tree_list temp_wd/vignette/tree_list.txt \
                        --target_list temp_wd/vignette/target_list.txt
+
+.. note::
+
+   Here we chose to sample away from the habitat edges by 1.5km. This is because the simulation model artifically reduces survival probability near the edges, within distance :math:`\sigma`, roughly. Since the largest :math:`\sigma` we explored is 1.5, we simply cropped away this width from each edge.
 
 
 
@@ -111,7 +117,7 @@ And the training step:
                        --num_snps 5000 \
                        --max_epochs 10 \
                        --validation_split 0.2 \
-                       --batch_size 1 \
+                       --batch_size 10 \
                        --threads 1 \
                        --seed 12345 \
                        --n 10 \
@@ -119,7 +125,8 @@ And the training step:
                        --pairs 45 \
                        --pairs_encode 45 \
                        --pairs_estimate 45 \
-                       > temp_wd/vignette/output_dir/training_history.txt
+                       > temp_wd/vignette/output_dir/training_history.txt \
+		       # do we need the "n" flag?
 
 
 		       
