@@ -106,7 +106,7 @@ Next, we preprocess the input for ``disperseNN2``. Assume we have a sample of 97
 3. Training
 -----------
 
-And the training step:
+Our training command is:
 
 .. code-block:: bash
 
@@ -114,17 +114,17 @@ And the training step:
                        --out temp_wd/vignette/output_dir \
                        --train \
                        --preprocessed \
-                       --num_snps 5000 \
+                       --num_snps 25000 \
                        --max_epochs 10 \
                        --validation_split 0.2 \
                        --batch_size 10 \
                        --threads 1 \
                        --seed 12345 \
-                       --n 10 \
+                       --n 97 \
                        --learning_rate 1e-4 \
-                       --pairs 45 \
-                       --pairs_encode 45 \
-                       --pairs_estimate 45 \
+                       --pairs 4656 \
+                       --pairs_encode 100 \
+                       --pairs_estimate 100 \
                        > temp_wd/vignette/output_dir/training_history.txt \
 		       # do we need the "n" flag?
 
@@ -136,22 +136,24 @@ And the training step:
 4. Validation
 -------------
 
+Next, we will validate the trained model on simulated test data. In a real application you should hold out datasets from training, but we haven't updated the disperseNN code to do this yet.
+
 .. code-block:: bash
 
                 python disperseNN2.py \
                        --out temp_wd/vignette/output_dir \
                        --predict \
                        --preprocessed \
-                       --num_snps 5000 \
+                       --num_snps 25000 \
                        --batch_size 1 \
                        --threads 1 \
-                       --n 10 \
+                       --n 97 \
                        --seed 12345 \
-                       --pairs 45 \
+                       --pairs 4656 \
                        --pairs_encode 45 \
                        --pairs_estimate 45 \
                        --load_weights temp_wd/vignette/output_dir/out_12345_model.hdf5 \
-                       --num_pred 5
+                       --num_pred 10
 
 
 
@@ -190,3 +192,7 @@ And the training step:
 
 
 
+To Do:
+
+- work on empirical pipeline in disperseNN code
+- separate training and test sims internally, automatically, using disperseNN.
