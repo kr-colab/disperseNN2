@@ -53,7 +53,7 @@ A typical ``disperseNN2`` workflow involves five steps:
 1. Simulation
 *************
 
-Although ``disperseNN2`` does not actually run simulations, it relies on simulated training data. Therefore, we provide some template code and tips for generating training data; however, the ideal analysis will tailor the simulation step to take advantage of realistic information from your particular study system. For information on how to implement population genetic simulations, check out the extensive `SLiM manual <http://benhaller.com/slim/SLiM_Manual.pdf>`_.
+Although ``disperseNN2`` does not actually run simulations, it relies on simulated training data. Therefore, we provide some template code for generating training data; however, the ideal analysis will tailor the simulation step to take advantage of realistic information from your particular study system. For information on how to implement population genetic simulations, check out the extensive `SLiM manual <http://benhaller.com/slim/SLiM_Manual.pdf>`_.
 
 The simulation script we used for validating ``disperseNN2`` is ``SLiM_recipes/bat20.slim``. This is a continuous space model where the mother-offspring distance is :math:`N(0,\sigma)` in both the x and y dimensions, and is described in detail in `Battey et al. 2020 <https://doi.org/10.1534/genetics.120.303143>`_. Below is an example simulation command:
 
@@ -192,7 +192,7 @@ This example uses tree sequences as input.
 - ``--pairs_estimate``: the number of pairs to include in the estimator portion of the neural network.
 
 This command will print the training progress to stdout, which was redirected to ``temp_wd/output_dir/training_history.txt`` in this example.
-The model weights are saved to ``temp_wd/output_dir/pwConv_12345_model.hdf5``.
+The model weights are saved to ``temp_wd/output_dir/out_12345_model.hdf5``.
 In practice, you will need a training set of maybe 50,000, and you will likely want to train for longer than 10 epochs.
 For reading preprocessed training data we recommend trying between 1 and 10 threads. 
 
@@ -224,14 +224,14 @@ If you want to predict :math:`\sigma` from simulated tree sequences output by ``
 		       --pairs 45 \
 		       --pairs_encode 45 \
 		       --pairs_estimate 45 \
-		       --load_weights temp_wd/output_dir/pwConv_12345_model.hdf5 \
+		       --load_weights temp_wd/output_dir/out_12345_model.hdf5 \
 		       --num_pred 5
 
 - ``--predict``: tells ``disperseNN2`` to perform predictions
 - ``--load_weights``: loads in saved weights from an already-trained model
 - ``--num_pred``: number of datasets to predict with.
 
-Similar to the earlier prediction example, this will generate a file called ``temp_wd/output_dir/Test_12345/pwConv_12345_predictions.txt`` containing (TO DO: random number seeds aren't reproducible):
+Similar to the earlier prediction example, this will generate a file called ``temp_wd/output_dir/Test_12345/out_12345_predictions.txt`` containing (TO DO: random number seeds aren't reproducible):
 
 .. code-block:: bash
 
@@ -274,7 +274,7 @@ For predicting with empirical data, the command will be slightly different: inst
 		       --pairs 45 \
 		       --pairs_encode 45 \
 		       --pairs_estimate 45 \
-		       --load_weights temp_wd/output_dir/pwConv_12345_model.hdf5 \
+		       --load_weights temp_wd/output_dir/out_12345_model.hdf5 \
 		       --num_pred 1
 
 		
