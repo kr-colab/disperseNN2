@@ -60,7 +60,14 @@ And to recapitate the tree sequences output by ``SLiM``:
 
 		for i in {1..100}
 		do
-		    echo "python -c 'import tskit,msprime; ts=tskit.load(\"temp_wd/vignette/TreeSeqs/output_$i.trees\"); Ne=len(ts.individuals()); demography = msprime.Demography.from_tree_sequence(ts); demography[1].initial_size = Ne; ts = msprime.sim_ancestry(initial_state=ts, recombination_rate=1e-8, demography=demography, start_time=ts.metadata[\"SLiM\"][\"cycle\"],random_seed=$i,); ts.dump(\"temp_wd/vignette/TreeSeqs/output_$i"_"recap.trees\")'" >> temp_wd/vignette/recap_commands.txt
+		    echo "python -c 'import tskit,msprime; \
+		                     ts=tskit.load(\"temp_wd/vignette/TreeSeqs/output_$i.trees\"); \
+				     Ne=len(ts.individuals()); \
+				     demography = msprime.Demography.from_tree_sequence(ts); \
+				     demography[1].initial_size = Ne; \
+				     ts = msprime.sim_ancestry(initial_state=ts, recombination_rate=1e-8, demography=demography, start_time=ts.metadata[\"SLiM\"][\"cycle\"],random_seed=$i,); \
+				     ts.dump(\"temp_wd/vignette/TreeSeqs/output_$i"_"recap.trees\")'" \
+		    >> temp_wd/vignette/recap_commands.txt
 		    echo temp_wd/vignette/TreeSeqs/output_$i"_"recap.trees >> temp_wd/vignette/tree_list.txt
 		done   
 		parallel -j 2 < temp_wd/vignette/recap_commands.txt
@@ -76,20 +83,27 @@ And to recapitate the tree sequences output by ``SLiM``:
 2. Preprocessing
 ----------------
 
-Next, we preprocess the input for ``disperseNN2``. Assume we have a sample of 97 individuals from different locations, and 25,000 SNPs. And we will take 10 repeated samples from each tree sequences, for a total of 1,000 training datasets (100 tree sequences, 10 samples from each)
+Next, we preprocess the input for ``disperseNN2``. Assume we have a sample of 97 individuals from different locations, and 25,000 SNPs.
+
+We will take 10 repeated samples from each tree sequences, to get a total of 1,000 training datasets (100 tree sequences, 10 samples from each). Our strategy for this is to use 10 different preprocess commands, each with a different random number seed.
 
 .. code-block:: bash
 		
-		python disperseNN2.py \
-		       --out temp_wd/vignette/output_dir \
-                       --preprocess \
-		       --num_samples 10 \
-                       --num_snps 25000 \
-                       --n 97 \
-                       --seed 1 \
-                       --edge_width 1.5 \
-                       --tree_list temp_wd/vignette/tree_list.txt \
-                       --target_list temp_wd/vignette/target_list.txt
+		for i in {1..10}
+		do
+		    echo "python disperseNN2.py \
+		                 --out temp_wd/vignette/output_dir \
+				 --preprocess \
+				 --num_samples 10 \
+				 --num_snps 25000 \
+				 --n 97 \
+				 --seed $i \
+				 --edge_width 1.5 \
+				 --tree_list temp_wd/vignette/tree_list.txt \
+				 --target_list temp_wd/vignette/target_list.txt" \
+		    >> temp_wd/vignette/preprocess_commands.txt
+		done
+		parallel -j 2 < temp_wd/vignette/preprocess_commands.txt
 
 .. note::
 
