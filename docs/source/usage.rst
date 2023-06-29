@@ -126,6 +126,7 @@ A basic preprocessing command looks like:
 		python disperseNN2.py \
                        --out temp_wd/output_dir \
 		       --preprocess \
+                       --num_samples 10 \
 		       --num_snps 5000 \
 		       --n 10 \
 		       --seed 1 \
@@ -135,10 +136,11 @@ A basic preprocessing command looks like:
 
 - ``--out``: output directory
 - ``--preprocess``: this flag tells ``disperseNN2`` to preprocess the training data
-- ``--num_snps 5000``: the number of SNPs to use as input for the CNN
-- ``--n 10``: sample size
-- ``--seed 1``: random number seed
-- ``--edge_width 3``: width of habitat edge to avoid sampling from
+- ``--num_samples``: this is the number of independent samples to take from each tree sequence; the total training set will be the number of simulated tree sequences :math:`\times` the number of samples from each.
+- ``--num_snps``: the number of SNPs to use as input for the CNN
+- ``--n``: sample size
+- ``--seed``: random number seed
+- ``--edge_width``: width of habitat edge to avoid sampling from
 - ``--tree_list Examples/tree_list1.txt``: list of filepaths to the tree sequences
 - ``--target_list Examples/target_list1.txt``: list of filepaths to .txt files with the target values
   
@@ -170,7 +172,7 @@ This example uses tree sequences as input.
 		       --num_snps 5000 \
 		       --max_epochs 10 \
 		       --validation_split 0.2 \
-		       --batch_size 1 \
+		       --batch_size 10 \
 		       --threads 1 \
 		       --seed 12345 \
 		       --n 10 \
@@ -184,7 +186,7 @@ This example uses tree sequences as input.
 - ``--preprocessed``: tells ``disperseNN2`` to use already-preprocessed data, which it looks for in the ``--out`` directory.
 - ``--max_epochs``: maximum number of epochs to train for.
 - ``--validation_split``: the proportion of training data held out for validation between batches for hyperparameter tuning.
-- ``--batch_size``: for the data generator. We find that batch_size=40 works well if the training set is larger.
+- ``--batch_size``: we find that batch_size=10 works well.
 - ``--threads``: number of threads to use with the multiprocessor. 
 - ``--learning_rate``: learning rate to use during training. It's scheduled to decrease by 2x every 10 epochs with no decrease in validation loss.
 - ``--pairs``: the total number of pairs to include in the analysis

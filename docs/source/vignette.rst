@@ -76,13 +76,14 @@ And to recapitate the tree sequences output by ``SLiM``:
 2. Preprocessing
 ----------------
 
-Next, we preprocess the input for ``disperseNN2``. Assume we have a sample of 97 individuals from different locations, and 25,000 SNPs.
+Next, we preprocess the input for ``disperseNN2``. Assume we have a sample of 97 individuals from different locations, and 25,000 SNPs. And we will take 10 repeated samples from each tree sequences, for a total of 1,000 training datasets (100 tree sequences, 10 samples from each)
 
 .. code-block:: bash
 		
 		python disperseNN2.py \
 		       --out temp_wd/vignette/output_dir \
                        --preprocess \
+		       --num_samples 10 \
                        --num_snps 25000 \
                        --n 97 \
                        --seed 1 \
@@ -106,7 +107,9 @@ Next, we preprocess the input for ``disperseNN2``. Assume we have a sample of 97
 3. Training
 -----------
 
-Our training command is:
+In the below ``disperseNN2`` training command, we set the number of pairs to 100; this is the number of pairs of individuals from each training dataset that are included in the analysis. In a real application you would probably want to use more pairs, e.g. with a sample size of 97 the number of available pairs is 4656. However, the value for ``pairs_encode`` might be ok to leave at 100, as this flg controls how many pairs are included in the gradient in the encoder portion of the neural network, and it tends to work well even with a subset of pairs. Likewise, the ``pairs_estimate`` flag might use a subset of pairs. Different values for these hyperparameters should be explored in a real analysis.
+
+While our preprocessing step saved 25,000 SNPs from each tree sequence, we're going to train with only 5,000 SNPs. This will work well for our goals and should be a bit faster and require less memory.
 
 .. code-block:: bash
 
@@ -114,7 +117,7 @@ Our training command is:
                        --out temp_wd/vignette/output_dir \
                        --train \
                        --preprocessed \
-                       --num_snps 25000 \
+                       --num_snps 5000 \
                        --max_epochs 10 \
                        --validation_split 0.2 \
                        --batch_size 10 \
@@ -122,7 +125,7 @@ Our training command is:
                        --seed 12345 \
                        --n 97 \
                        --learning_rate 1e-4 \
-                       --pairs 4656 \
+                       --pairs 100 \
                        --pairs_encode 100 \
                        --pairs_estimate 100 \
                        > temp_wd/vignette/output_dir/training_history.txt \
