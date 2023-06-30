@@ -147,6 +147,9 @@ While our preprocessing step saved 25,000 SNPs from each tree sequence, we're go
 
 
 
+# this command trains! Using the standard disperseNN simulations params
+(disperseNN) chriscs@poppy:~/Testing_disperseNN2/disperseNN2$ python disperseNN2.py        --out temp_wd/vignette/output_dir_1k/        --train        --preprocessed        --num_snps 5000       
+ --max_epochs 10        --validation_split 0.2        --batch_size 10        --threads 1        --seed 12345        --n 40        --learning_rate 1e-4        --pairs 100        --pairs_encode 100        --pairs_estimate 100
 
 
 
