@@ -146,7 +146,13 @@ While our preprocessing step saved 25,000 SNPs from each tree sequence, we're go
 		       # do we need the "n" flag?
 
 
-		       
+
+
+
+
+
+
+
 
 .. _vignette_validation:
 
