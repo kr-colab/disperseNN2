@@ -615,6 +615,53 @@ def prep_trees_and_pred():
     return
 
 
+
+
+
+
+
+
+
+def prep_empirical_and_pred():
+
+    # load mean and sd from training
+    if os.path.isfile(args.out+"/mean_sd.npy"):
+        meanSig,sdSig = np.load(args.out+"/mean_sd.npy")
+    else:
+        print("to get mean and sd from training, give path to training directory with --out")
+        exit()
+
+    # project locs
+    locs = read_locs(args.empirical + ".locs")
+    locs = np.array(locs)
+
+    # load model
+    load_dl_modules()
+    model, checkpointer, earlystop, reducelr = load_network()
+
+    # convert vcf to geno matrix
+    for i in range(args.num_reps):
+        test_genos = vcf2genos(
+            args.empirical + ".vcf", args.max_n, args.num_snps, args.phase
+        )
+        ibd(test_genos, locs, args.phase, args.num_snps)
+        test_genos = np.reshape(
+            test_genos, (1, test_genos.shape[0], test_genos.shape[1])
+        )
+        dataset = args.empirical + "_" + str(i)
+        prediction = model.predict([test_genos, locs])
+        unpack_predictions(prediction, meanSig, sdSig, None, None, dataset)
+
+    return
+
+
+
+
+
+
+
+
+
 def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names): 
 
     if args.empirical == None:
