@@ -642,7 +642,7 @@ def prep_empirical_and_pred():
     # convert vcf to geno matrix
     for i in range(args.num_reps):
         test_genos = vcf2genos(
-            args.empirical + ".vcf", args.max_n, args.num_snps, args.phase
+            args.empirical + ".vcf", args.n, args.num_snps, args.phase
         )
         ibd(test_genos, locs, args.phase, args.num_snps)
         test_genos = np.reshape(

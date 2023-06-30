@@ -178,7 +178,13 @@ Next, we will validate the trained model on simulated test data. In a real appli
                        --load_weights temp_wd/vignette/output_dir/out_12345_model.hdf5 \
                        --num_pred 10
 
+.. figure:: results.png
+   :scale: 50 %
+   :alt: map to buried treasure
 
+   This is the caption of the figure (a simple paragraph).
+		       
+The results show that the training run went well: specifically, the predictions fell close to the expected values, meaning there is some signal coming through.
 
 
 
@@ -191,6 +197,36 @@ Next, we will validate the trained model on simulated test data. In a real appli
 
 5. Empirical application
 ------------------------
+
+If we are satisfied with the performance of the model on the held-out test set, we can run prepare our empirical VCF for inference with disperseNN. This means applying basic filters (e.g. removing indels and non-variants sites) on whatever set of individuals that we want to analyze. Separately, we want a .locs file with the same prefix as the .vcf.
+
+For demonstration purposes, let's say we want to take a subset of individuals from a particular geographic region, the Scotian Shelf region. Furthermore, we want to include only a single individual per sampling location; this is important because individuals did not have identical locations in the training simulations, which might trip up the neural network. Below are some example commands that might be used to parse the metadata, but these steps will certainly be different for other empirical tables.
+
+
+.. code-block:: bash
+
+		# [these commands are gross; but I want to eventually switch over to simulated data, so these steps will change]
+		cat Examples/VCFs/iraptus_meta_full.txt | grep "Scotian Shelf - East" | cut -f 4,5 | sort | uniq > temp_wd/templocs
+		count=$(wc -l temp_wd/templocs | awk '{print $1}')
+		for i in $(seq 1 $count); do locs=$(head -$i temp_wd/templocs | tail -1); lat=$(echo $locs | awk '{print $1}'); long=$(echo $locs | awk '{print $2}'); grep $lat Examples/VCFs/iraptus_meta_full.txt | awk -v coord=$long '$5 == coord' | shuf | head -1; done > temp_wd/iraptus_meta.txt
+		cat temp_wd/iraptus_meta.txt  | sed s/"\t"/,/g > temp_wd/iraptus.csv
+
+We provide a simple python script for subsetting a VCF for a particular set of individuals, which also filters indels and non-variant sites.
+
+.. code-block:: bash
+
+		python Empirical/subset_vcf.py Examples/VCFs/iraptus_full.vcf.gz temp_wd/iraptus.csv temp_wd/iraptus.vcf 0 1
+
+Last, build a .locs file:
+
+.. code-block:: bash
+
+		count=$(zcat temp_wd/iraptus.vcf.gz | grep -v "##" | grep "#" | wc -w)
+		for i in $(seq 10 $count); do id=$(zcat temp_wd/iraptus.vcf.gz | grep -v "##" | grep "#" | cut -f $i); grep -w $id temp_wd/iraptus.csv; done | cut -d "," -f 4,5 | sed s/","/"\t"/g > temp_wd/iraptus.locs
+		gunzip temp_wd/iraptus.vcf.gz
+
+Finally, we can predict predict σ from the subsetted VCF (should take less than 30s to run):
+		
 
 .. code-block:: bash
 
@@ -208,6 +244,23 @@ Next, we will validate the trained model on simulated test data. In a real appli
                        --pairs_estimate 45 \
                        --load_weights temp_wd/vignette/output_dir/out_12345_model.hdf5 \
                        --num_pred 1
+
+
+Note: num_reps, here, specifies how many bootstrap replicates to perform, that is, how many seperate draws of 1000 SNPs to use as inputs for prediction.
+
+The final empirical results are stored in: temp_wd/out3_predictions.txt
+
+temp_wd/iraptus_0 0.4790744392
+temp_wd/iraptus_1 0.4782159438
+temp_wd/iraptus_2 0.4752711311
+temp_wd/iraptus_3 0.4757308299
+temp_wd/iraptus_4 0.4763104592
+temp_wd/iraptus_5 0.4740976943
+temp_wd/iraptus_6 0.4711097443
+temp_wd/iraptus_7 0.4765035801
+temp_wd/iraptus_8 0.4711986949
+temp_wd/iraptus_9 0.4780693254
+
 
 
 
