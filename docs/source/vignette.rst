@@ -218,30 +218,30 @@ For demonstration purposes, let's say we want to take a subset of individuals fr
 
 .. code-block:: bash
 
-		cat Examples/VCFs/iraptus_meta_full.txt | grep "Scotian Shelf - East" | cut -f 4,5 | sort | uniq > temp_wd/templocs
-		count=$(wc -l temp_wd/templocs | awk '{print $1}')
+		cat Examples/VCFs/iraptus_meta_full.txt | grep "Scotian Shelf - East" | cut -f 4,5 | sort | uniq > temp_wd/vignette/templocs
+		count=$(wc -l temp_wd/vignette/templocs | awk '{print $1}')
 		for i in $(seq 1 $count)
 		do
-		    locs=$(head -$i temp_wd/templocs | tail -1); 
+		    locs=$(head -$i temp_wd/vignette/templocs | tail -1); 
 		    lat=$(echo $locs | awk '{print $1}');
 		    long=$(echo $locs | awk '{print $2}');
 		    grep $lat Examples/VCFs/iraptus_meta_full.txt | awk -v coord=$long '$5 == coord' | shuf | head -1;
-		done > temp_wd/iraptus_meta.txt
-		cat temp_wd/iraptus_meta.txt  | sed s/"\t"/,/g > temp_wd/iraptus.csv
+		done > temp_wd/vignette/iraptus_meta.txt
+		cat temp_wd/vignette/iraptus_meta.txt  | sed s/"\t"/,/g > temp_wd/vignette/iraptus.csv
 
 We provide a simple python script for subsetting a VCF for a particular set of individuals, which also filters indels and non-variant sites.
 
 .. code-block:: bash
 
-		python Empirical/subset_vcf.py Examples/VCFs/iraptus_full.vcf.gz temp_wd/iraptus.csv temp_wd/iraptus.vcf 0 1
+		python Empirical/subset_vcf.py Examples/VCFs/iraptus_full.vcf.gz temp_wd/vignette/iraptus.csv temp_wd/vignette/iraptus.vcf 0 1
 
 Last, build a .locs file:
 
 .. code-block:: bash
 
-		count=$(zcat temp_wd/iraptus.vcf.gz | grep -v "##" | grep "#" | wc -w)
-		for i in $(seq 10 $count); do id=$(zcat temp_wd/iraptus.vcf.gz | grep -v "##" | grep "#" | cut -f $i); grep -w $id temp_wd/iraptus.csv; done | cut -d "," -f 4,5 | sed s/","/"\t"/g > temp_wd/iraptus.locs
-		gunzip temp_wd/iraptus.vcf.gz
+		count=$(zcat temp_wd/vignette/iraptus.vcf.gz | grep -v "##" | grep "#" | wc -w)
+		for i in $(seq 10 $count); do id=$(zcat temp_wd/vignette/iraptus.vcf.gz | grep -v "##" | grep "#" | cut -f $i); grep -w $id temp_wd/vignette/iraptus.csv; done | cut -d "," -f 4,5 | sed s/","/"\t"/g > temp_wd/vignette/iraptus.locs
+		gunzip temp_wd/vignette/iraptus.vcf.gz
 
 Finally, we can predict predict σ from the subsetted VCF (should take less than 30s to run):
 		
@@ -251,7 +251,7 @@ Finally, we can predict predict σ from the subsetted VCF (should take less than
 		python disperseNN2.py \
                        --out temp_wd/vignette/output_dir \
 		       --predict \
-		       --empirical Examples/VCFs/halibut \
+		       --empirical temp_wd/vignette/halibut \
 		       --num_snps 5000 \
 		       --batch_size 1 \
 		       --threads 1 \
@@ -266,7 +266,7 @@ Finally, we can predict predict σ from the subsetted VCF (should take less than
 
 Note: num_reps, here, specifies how many bootstrap replicates to perform, that is, how many seperate draws of 1000 SNPs to use as inputs for prediction.
 
-The final empirical results are stored in: temp_wd/out3_predictions.txt
+The final empirical results are stored in: temp_wd/vignette/output_dir/out3_predictions.txt
 
 temp_wd/iraptus_0 0.4790744392
 temp_wd/iraptus_1 0.4782159438
