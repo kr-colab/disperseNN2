@@ -648,8 +648,11 @@ def prep_empirical_and_pred():
         test_genos = np.reshape(
             test_genos, (1, test_genos.shape[0], test_genos.shape[1])
         )
+        test_locs = np.reshape(
+            locs, (1, locs.shape[1], locs.shape[0])
+        )
         dataset = args.empirical + "_" + str(i)
-        prediction = model.predict([test_genos, locs])
+        prediction = model.predict([test_genos, test_locs])
         unpack_predictions(prediction, meanSig, sdSig, None, None, dataset)
 
     return
