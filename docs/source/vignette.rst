@@ -143,7 +143,7 @@ While our preprocessing step saved 25,000 SNPs from each tree sequence, we're go
                        --out temp_wd/vignette/output_dir \
                        --train \
                        --preprocessed \
-                       --num_snps 5000 \
+                       --num_snps 2500 \
                        --max_epochs 10 \
                        --validation_split 0.2 \
                        --batch_size 10 \
@@ -178,14 +178,14 @@ Next, we will validate the trained model on simulated test data. In a real appli
                        --out temp_wd/vignette/output_dir \
                        --predict \
                        --preprocessed \
-                       --num_snps 25000 \
-                       --batch_size 1 \
+                       --num_snps 2500 \
+                       --batch_size 10 \
                        --threads 1 \
-                       --n 97 \
+                       --n 14 \
                        --seed 12345 \
-                       --pairs 4656 \
-                       --pairs_encode 45 \
-                       --pairs_estimate 45 \
+                       --pairs 91 \
+                       --pairs_encode 91 \
+                       --pairs_estimate 91 \
                        --load_weights temp_wd/vignette/output_dir/out_12345_model.hdf5 \
                        --num_pred 10
 
@@ -251,17 +251,17 @@ Finally, we can predict predict σ from the subsetted VCF (should take less than
 		python disperseNN2.py \
                        --out temp_wd/vignette/output_dir \
 		       --predict \
-		       --empirical temp_wd/vignette/halibut \
-		       --num_snps 5000 \
-		       --batch_size 1 \
+		       --empirical temp_wd/vignette/iraptus \
+		       --num_snps 2500 \
+		       --batch_size 10 \
 		       --threads 1 \
-		       --n 10 \
+		       --n 14 \
 		       --seed 12345 \
-                       --pairs 45 \
-		       --pairs_encode 45 \
-                       --pairs_estimate 45 \
-                       --load_weights temp_wd/vignette/output_dir/out_12345_model.hdf5 \
-                       --num_pred 1
+                       --pairs 91 \
+		       --pairs_encode 91 \
+                       --pairs_estimate 91 \
+                       --load_weights temp_wd/vignette/output_dir/pwConv_12345_model.hdf5 \
+                       --num_pred 10
 
 
 Note: num_reps, here, specifies how many bootstrap replicates to perform, that is, how many seperate draws of 1000 SNPs to use as inputs for prediction.
