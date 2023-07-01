@@ -25,7 +25,7 @@ This vignette shows a complete pipeline for a small application of ``disperseNN2
 1. Simulation
 -------------
 
-For this demonstration we will analyze a population of Internecivus raptus. Let's assume we have independent estimates from previous studies for the size of the species range and the population density: :math:`48 \times 48` km\ :math:`^2`, and 6 individuals per km\ :math:`^2`, respectively. With values for these nuisance parameters in hand we can design custom training simulations for inferring :math:`\sigma`. If our a priori expectation for :math:`\sigma` in this species is somewhere between 0.2 and 1.5, we will simulate dispersal rates in this range.
+For this demonstration we will analyze a population of Internecivus raptus. Let's assume we have independent estimates from previous studies for the size of the species range and the population density: :math:`50 \times 50` km\ :math:`^2`, and 5 individuals per km\ :math:`^2`, respectively. With values for these nuisance parameters in hand we can design custom training simulations for inferring :math:`\sigma`. If our a priori expectation for :math:`\sigma` in this species is somewhere between 0.2 and 3, we will simulate dispersal rates in this range.
 
 Below is some bash code to run the simulations using ``bat20.slim``. 
 
@@ -34,15 +34,16 @@ Below is some bash code to run the simulations using ``bat20.slim``.
 
    mkdir -p temp_wd/vignette/TreeSeqs
    mkdir -p temp_wd/vignette/Targets		
-   sigmas=$(python -c 'from scipy.stats import loguniform; print(*loguniform.rvs(0.2,1.5,size=100))')
+   sigmas=$(python -c 'from scipy.stats import loguniform; print(*loguniform.rvs(0.2,3,size=100))')
    for i in {1..100}
    do
        sigma=$(echo $sigmas | awk -v var="$i" '{print $var}')
-       echo "slim -d SEED=$i -d sigma=$sigma -d K=6 -d mu=0 -d r=1e-8 -d W=48 -d G=1e8 -d maxgens=100 -d OUTNAME=\"'temp_wd/vignette/TreeSeqs/output'\" SLiM_recipes/bat20.slim" >> temp_wd/vignette/sim_commands.txt
+       echo "slim -d SEED=$i -d sigma=$sigma -d K=5 -d mu=0 -d r=1e-8 -d W=50 -d G=1e8 -d maxgens=1000 -d OUTNAME=\"'temp_wd/vignette/TreeSeqs/output'\" SLiM_recipes/bat20.slim" >> temp_wd/vignette/sim_commands.txt
        echo $sigma > temp_wd/vignette/Targets/target_$i.txt
        echo temp_wd/vignette/Targets/target_$i.txt >> temp_wd/vignette/target_list.txt
    done
-   parallel -j 2 < temp_wd/vignette/sim_commands.txt
+   num_threads=2 # change to number of available cores
+   parallel -j $num_threads < temp_wd/vignette/sim_commands.txt
 
 Breaking down this pipeline one line at a time:
 
@@ -52,8 +53,12 @@ Breaking down this pipeline one line at a time:
 - L7 builds individual commands for simulations.
 - L8 saves each :math:`\sigma` to it's own file.
 - L9 creates a list of filepaths to the targets.
-- L11 runs the simulation commands. Here, we use GNU ``parallel`` with 2 threads; if multiple cores are available, the number of threads used for this vignette can be increased to speed things up. In a real application, simulations should probably be distributed across many jobs on computing cluster.
+- L11 runs the simulation commands. If multiple cores are available, the number of threads used for this vignette can be increased to speed things up. In a real application, simulations should probably be distributed across many jobs on computing cluster.
 
+.. note::
+
+   Here, we ran only 1,000 spatial generations to speed things up; but this strategy should be used cautiously because isolation-by-distance is usually weaker with fewer spatial generations. In the ``disperseNN2`` analysis we ran 100,000 generations spatial.
+  
 And to recapitate the tree sequences output by ``SLiM``:
 
 .. code-block:: bash
@@ -70,11 +75,19 @@ And to recapitate the tree sequences output by ``SLiM``:
 		    >> temp_wd/vignette/recap_commands.txt
 		    echo temp_wd/vignette/TreeSeqs/output_$i"_"recap.trees >> temp_wd/vignette/tree_list.txt
 		done   
-		parallel -j 2 < temp_wd/vignette/recap_commands.txt
+		parallel -j $num_threads < temp_wd/vignette/recap_commands.txt
+
+
+NOTE: it worked to use normal disperseNN commands, with 100 sims x 10 repeated draws, BUT WITH 10,000 GENS. Try with 100 gens...
+
+NOTE: also, the successful training run used n=40 and 100 pairs. The empirical dataset currently has n=14... so try that.
 
 
 
 
+
+
+		
 
 
 
@@ -83,9 +96,9 @@ And to recapitate the tree sequences output by ``SLiM``:
 2. Preprocessing
 ----------------
 
-Next, we preprocess the input for ``disperseNN2``. Assume we have a sample of 97 individuals from different locations, and 25,000 SNPs.
+Next, we preprocess the input for ``disperseNN2``. Assume we have a sample of 40 individuals from different locations, and 25,000 SNPs.
 
-We will take 10 repeated samples from each tree sequences, to get a total of 1,000 training datasets (100 tree sequences, 10 samples from each). Our strategy for this is to use 10 different preprocess commands, each with a different random number seed.
+We will take 14 repeated samples from each tree sequences, to get a total of 1,000 training datasets (100 tree sequences, 10 samples from each). Our strategy for this is to use 10 different preprocess commands, each with a different random number seed.
 
 .. code-block:: bash
 		
@@ -94,20 +107,19 @@ We will take 10 repeated samples from each tree sequences, to get a total of 1,0
 		    echo "python disperseNN2.py \
 		                 --out temp_wd/vignette/output_dir \
 				 --preprocess \
-				 --num_samples 10 \
 				 --num_snps 25000 \
-				 --n 97 \
+				 --n 14 \
 				 --seed $i \
-				 --edge_width 1.5 \
+				 --edge_width 3 \
 				 --tree_list temp_wd/vignette/tree_list.txt \
 				 --target_list temp_wd/vignette/target_list.txt" \
 		    >> temp_wd/vignette/preprocess_commands.txt
 		done
-		parallel -j 2 < temp_wd/vignette/preprocess_commands.txt
+		parallel -j $num_threads < temp_wd/vignette/preprocess_commands.txt
 
 .. note::
 
-   Here we chose to sample away from the habitat edges by 1.5km. This is because the simulation model artifically reduces survival probability near the edges, within distance :math:`\sigma`, roughly. Since the largest :math:`\sigma` we explored is 1.5, we simply cropped away this width from each edge.
+   Here we chose to sample away from the habitat edges by 3km. This is because the simulation model artifically reduces survival probability near the edges, within distance :math:`\sigma`, roughly. Since the largest :math:`\sigma` we explored is 3, we simply cropped away this width from each edge.
 
 
 
@@ -137,7 +149,7 @@ While our preprocessing step saved 25,000 SNPs from each tree sequence, we're go
                        --batch_size 10 \
                        --threads 1 \
                        --seed 12345 \
-                       --n 97 \
+                       --n 14 \
                        --learning_rate 1e-4 \
                        --pairs 100 \
                        --pairs_encode 100 \
@@ -146,10 +158,6 @@ While our preprocessing step saved 25,000 SNPs from each tree sequence, we're go
 		       # do we need the "n" flag?
 
 
-
-# this command trains! Using the standard disperseNN simulations params
-(disperseNN) chriscs@poppy:~/Testing_disperseNN2/disperseNN2$ python disperseNN2.py        --out temp_wd/vignette/output_dir_1k/        --train        --preprocessed        --num_snps 5000       
- --max_epochs 10        --validation_split 0.2        --batch_size 10        --threads 1        --seed 12345        --n 40        --learning_rate 1e-4        --pairs 100        --pairs_encode 100        --pairs_estimate 100
 
 
 
@@ -201,17 +209,24 @@ The results show that the training run went well: specifically, the predictions 
 5. Empirical application
 ------------------------
 
-If we are satisfied with the performance of the model on the held-out test set, we can run prepare our empirical VCF for inference with disperseNN. This means applying basic filters (e.g. removing indels and non-variants sites) on whatever set of individuals that we want to analyze. Separately, we want a .locs file with the same prefix as the .vcf.
+TODO: find some data that are better than halibut
 
-For demonstration purposes, let's say we want to take a subset of individuals from a particular geographic region, the Scotian Shelf region. Furthermore, we want to include only a single individual per sampling location; this is important because individuals did not have identical locations in the training simulations, which might trip up the neural network. Below are some example commands that might be used to parse the metadata, but these steps will certainly be different for other empirical tables.
+If we are satisfied with the performance of the model on the held-out test set, we can prepare our empirical VCF for inference with ``disperseNN2``. 
+
+For demonstration purposes, let's say we want to take a subset of individuals from a particular geographic region, the Scotian Shelf region. Furthermore, we want to include only a single individual per sampling location; this is important because individuals did not have identical locations in the training simulations which might trip up the neural network. Below are some example commands that might be used to parse the metadata, but these steps will vary depending on the idiosyncracies of your particular dataset.
 
 
 .. code-block:: bash
 
-		# [these commands are gross; but I want to eventually switch over to simulated data, so these steps will change]
 		cat Examples/VCFs/iraptus_meta_full.txt | grep "Scotian Shelf - East" | cut -f 4,5 | sort | uniq > temp_wd/templocs
 		count=$(wc -l temp_wd/templocs | awk '{print $1}')
-		for i in $(seq 1 $count); do locs=$(head -$i temp_wd/templocs | tail -1); lat=$(echo $locs | awk '{print $1}'); long=$(echo $locs | awk '{print $2}'); grep $lat Examples/VCFs/iraptus_meta_full.txt | awk -v coord=$long '$5 == coord' | shuf | head -1; done > temp_wd/iraptus_meta.txt
+		for i in $(seq 1 $count)
+		do
+		    locs=$(head -$i temp_wd/templocs | tail -1); 
+		    lat=$(echo $locs | awk '{print $1}');
+		    long=$(echo $locs | awk '{print $2}');
+		    grep $lat Examples/VCFs/iraptus_meta_full.txt | awk -v coord=$long '$5 == coord' | shuf | head -1;
+		done > temp_wd/iraptus_meta.txt
 		cat temp_wd/iraptus_meta.txt  | sed s/"\t"/,/g > temp_wd/iraptus.csv
 
 We provide a simple python script for subsetting a VCF for a particular set of individuals, which also filters indels and non-variant sites.

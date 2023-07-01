@@ -68,7 +68,7 @@ The simulation script we used for validating ``disperseNN2`` is ``SLiM_recipes/b
 		     -d r=1e-8 \
 		     -d W=50 \
 		     -d G=1e8 \
-		     -d maxgens=100 \
+		     -d maxgens=100000 \
 		     -d OUTNAME="'temp_wd/TreeSeqs/my_sequence'" \
 		     SLiM_recipes/bat20.slim \
 		     # Note the two sets of quotes around the output name
