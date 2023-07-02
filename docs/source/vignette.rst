@@ -57,7 +57,7 @@ Breaking down this pipeline one line at a time:
 
 .. note::
 
-   Here, we ran only 1,000 spatial generations to speed things up; but this strategy should be used cautiously because isolation-by-distance is usually weaker with fewer spatial generations. In the ``disperseNN2`` analysis we ran 100,000 generations spatial.
+   Here, we ran only 1,000 spatial generations to speed things up; this strategy should be used cautiously because isolation-by-distance is usually weaker with fewer spatial generations. In the ``disperseNN2`` analysis we ran 100,000 generations spatial.
   
 And to recapitate the tree sequences output by ``SLiM``:
 
@@ -78,9 +78,6 @@ And to recapitate the tree sequences output by ``SLiM``:
 		parallel -j $num_threads < temp_wd/vignette/recap_commands.txt
 
 
-NOTE: it worked to use normal disperseNN commands, with 100 sims x 10 repeated draws, BUT WITH 10,000 GENS. Try with 100 gens...
-
-NOTE: also, the successful training run used n=40 and 100 pairs. The empirical dataset currently has n=14... so try that.
 
 
 
@@ -98,7 +95,7 @@ NOTE: also, the successful training run used n=40 and 100 pairs. The empirical d
 
 Next, we preprocess the input for ``disperseNN2``. Assume we have a sample of 40 individuals from different locations, and 25,000 SNPs.
 
-We will take 14 repeated samples from each tree sequences, to get a total of 1,000 training datasets (100 tree sequences, 10 samples from each). Our strategy for this is to use 10 different preprocess commands, each with a different random number seed.
+We will take 10 repeated samples from each tree sequences, to get a total of 1,000 training datasets (100 tree sequences, 10 samples from each). Our strategy for this is to use 10 different preprocess commands, each with a different random number seed.
 
 .. code-block:: bash
 		
@@ -125,6 +122,12 @@ We will take 14 repeated samples from each tree sequences, to get a total of 1,0
 
 
 
+
+
+
+   
+
+
 		       
 
 
@@ -133,9 +136,9 @@ We will take 14 repeated samples from each tree sequences, to get a total of 1,0
 3. Training
 -----------
 
-In the below ``disperseNN2`` training command, we set the number of pairs to 100; this is the number of pairs of individuals from each training dataset that are included in the analysis. In a real application you would probably want to use more pairs, e.g. with a sample size of 97 the number of available pairs is 4656. However, the value for ``pairs_encode`` might be ok to leave at 100, as this flg controls how many pairs are included in the gradient in the encoder portion of the neural network, and it tends to work well even with a subset of pairs. Likewise, the ``pairs_estimate`` flag might use a subset of pairs. Different values for these hyperparameters should be explored in a real analysis.
+In the below ``disperseNN2`` training command, we set the number of pairs to 91; this is the number of pairs of individuals from each training dataset that are included in the analysis, and in this case it includes all possible pairs with 14 individuals. In applications with larger sample sizes, you might want to analyze only a subset of pairs to alleviate memory.
 
-While our preprocessing step saved 25,000 SNPs from each tree sequence, we're going to train with only 5,000 SNPs. This will work well for our goals and should be a bit faster and require less memory.
+While our preprocessing step saved 25,000 SNPs from each tree sequence, we're going to train with only 2,500 SNPs. This will work well for our goals and should be a bit faster and require less memory.
 
 .. code-block:: bash
 
@@ -144,21 +147,24 @@ While our preprocessing step saved 25,000 SNPs from each tree sequence, we're go
                        --train \
                        --preprocessed \
                        --num_snps 2500 \
-                       --max_epochs 10 \
+                       --max_epochs 20 \
                        --validation_split 0.2 \
                        --batch_size 10 \
                        --threads 1 \
                        --seed 12345 \
                        --n 14 \
                        --learning_rate 1e-4 \
-                       --pairs 100 \
-                       --pairs_encode 100 \
-                       --pairs_estimate 100 \
+                       --pairs 91 \
+                       --pairs_encode 91 \
+                       --pairs_estimate 91 \
                        > temp_wd/vignette/output_dir/training_history.txt \
 		       # do we need the "n" flag?
 
 
 
+
+
+		       
 
 
 
