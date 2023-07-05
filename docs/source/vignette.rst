@@ -199,9 +199,9 @@ Next, we will validate the trained model on simulated test data. In a real appli
    :scale: 100 %
    :alt: results_plot
 
-   Validation results. True :math:`\sigma` is on the x-axis and predicted values are on the y-axis.
+   Validation results. True :math:`\sigma` is on the x-axis and predicted values are on the y-axis. The dashed line is :math:`x=y`.
 		       
-The results show that the training run went well: specifically, the predictions fell close to the expected values, meaning there is some signal coming through.
+The results show that the training run was successful. Specifically, the predictions are near the expected values, meaning there is some signal for dispersal rate. However, we are currently underestimating towards the larger end of the :math:`\sigma` range. This might be alleviated by using (i) a larger training set, (ii) more generatinos spatial, (iii) larger sample size, or (iv) or more SNPs.
 
 
 
