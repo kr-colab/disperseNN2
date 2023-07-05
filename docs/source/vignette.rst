@@ -267,10 +267,9 @@ Finally, we can predict predict σ from the subsetted VCF (should take less than
 		       --pairs_encode 91 \
                        --pairs_estimate 91 \
                        --load_weights temp_wd/vignette/output_dir/pwConv_12345_model.hdf5 \
-                       --num_pred 10
+                       --num_reps 10
 
-
-Note: num_reps, here, specifies how many bootstrap replicates to perform, that is, how many seperate draws of 1000 SNPs to use as inputs for prediction.
+Note: ``num_reps``, here, specifies how many bootstrap replicates to perform, that is, how many seperate draws of 1000 SNPs to use as inputs for prediction.
 
 The final empirical results are stored in: temp_wd/vignette/output_dir/out3_predictions.txt
 
