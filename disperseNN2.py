@@ -675,8 +675,10 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
                 # process output and read targets
                 trueval = np.load(targets[simids[i]]) # read in normalized
                 trueval = (trueval * sdSig) + meanSig
+                trueval = np.exp(trueval)
                 prediction = predictions[i][0] # (500x500) 
                 prediction = (prediction * sdSig) + meanSig 
+                prediction = np.exp(prediction)
                 outline = "\t".join(map(str,[trueval, prediction]))
                 print(outline, file=out_f)
 
