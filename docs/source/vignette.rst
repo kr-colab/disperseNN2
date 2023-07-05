@@ -215,8 +215,6 @@ The results show that the training run was successful. Specifically, the predict
 5. Empirical application
 ------------------------
 
-TODO: find some data that are better than halibut
-
 If we are satisfied with the performance of the model on the held-out test set, we can prepare our empirical VCF for inference with ``disperseNN2``. 
 
 For demonstration purposes, let's say we want to take a subset of individuals from a particular geographic region, the Scotian Shelf region. Furthermore, we want to include only a single individual per sampling location; this is important because individuals did not have identical locations in the training simulations which might trip up the neural network. Below are some example commands that might be used to parse the metadata, but these steps will vary depending on the idiosyncracies of your particular dataset.
@@ -275,16 +273,16 @@ The final empirical results are stored in: temp_wd/vignette/output_dir/out3_pred
 
 .. code-block:: bash
 
-		temp_wd/iraptus_0 0.4790744392
-		temp_wd/iraptus_1 0.4782159438
-		temp_wd/iraptus_2 0.4752711311
-		temp_wd/iraptus_3 0.4757308299
-		temp_wd/iraptus_4 0.4763104592
-		temp_wd/iraptus_5 0.4740976943
-		temp_wd/iraptus_6 0.4711097443
-		temp_wd/iraptus_7 0.4765035801
-		temp_wd/iraptus_8 0.4711986949
-		temp_wd/iraptus_9 0.4780693254
+		temp_wd/vignette/iraptus_0 29.7039941098
+		temp_wd/vignette/iraptus_1 29.3123016114
+		temp_wd/vignette/iraptus_2 28.9842874711
+		temp_wd/vignette/iraptus_3 28.0469861728
+		temp_wd/vignette/iraptus_4 28.2161462641
+		temp_wd/vignette/iraptus_5 28.3357045262
+		temp_wd/vignette/iraptus_6 27.8283315219
+		temp_wd/vignette/iraptus_7 29.5501918256
+		temp_wd/vignette/iraptus_8 28.8286674831
+		temp_wd/vignette/iraptus_9 27.5537168228
 
 
 
@@ -294,6 +292,6 @@ The final empirical results are stored in: temp_wd/vignette/output_dir/out3_pred
 
 
 To Do:
-
-- work on empirical pipeline in disperseNN code
+- find some data that are better than halibut
+- random number seeds currently not working
 - separate training and test sims internally, automatically, using disperseNN.
