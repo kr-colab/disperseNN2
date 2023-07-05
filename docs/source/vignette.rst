@@ -192,14 +192,14 @@ Next, we will validate the trained model on simulated test data. In a real appli
                        --pairs 91 \
                        --pairs_encode 91 \
                        --pairs_estimate 91 \
-                       --load_weights temp_wd/vignette/output_dir/out_12345_model.hdf5 \
-                       --num_pred 10
+                       --load_weights temp_wd/vignette/output_dir/pwConv_12345_model.hdf5 \
+                       --num_pred 100
 
 .. figure:: results.png
-   :scale: 50 %
-   :alt: map to buried treasure
+   :scale: 100 %
+   :alt: results_plot
 
-   This is the caption of the figure (a simple paragraph).
+   Validation results. True :math:`\sigma` is on the x-axis and predicted values are on the y-axis.
 		       
 The results show that the training run went well: specifically, the predictions fell close to the expected values, meaning there is some signal coming through.
 
