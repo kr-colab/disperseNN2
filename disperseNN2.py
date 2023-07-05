@@ -680,6 +680,16 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
                 outline = "\t".join(map(str,[trueval, prediction]))
                 print(outline, file=out_f)
 
+    else:
+        with open(args.out + "/empirical_" + str(args.seed) + "_predictions.txt", "a") as out_f:
+            prediction = predictions[0][0]
+            prediction = (prediction * sdSig) + meanSig
+            prediction = np.exp(prediction)
+            prediction = np.round(prediction, 10)
+            print(file_names, prediction, file=out_f)
+
+        
+        
     return
 
 
