@@ -53,11 +53,11 @@ Breaking down this pipeline one line at a time:
 - L7 builds individual commands for simulations.
 - L8 saves each :math:`\sigma` to it's own file.
 - L9 creates a list of filepaths to the targets.
-- L11 runs the simulation commands. If multiple cores are available, the number of threads used for this vignette can be increased to speed things up. In a real application, simulations should probably be distributed across many jobs on computing cluster.
+- L12 runs the simulation commands. If multiple cores are available, the number of threads used for this vignette can be increased (L11) to speed things up. In a real application, simulations should probably be distributed across many jobs on a computing cluster.
 
 .. note::
 
-   Here, we ran only 1,000 spatial generations to speed things up; this strategy should be used cautiously because isolation-by-distance is usually weaker with fewer spatial generations. In the ``disperseNN2`` analysis we ran 100,000 generations spatial.
+   Here, we ran only 1,000 spatial generations; this strategy should be used cautiously because this can affect how the output is interpreted. In addition, isolation-by-distance is usually weaker with fewer spatial generations, reducing signal for dispersal rate. In the ``disperseNN2`` analysis we ran 100,000 generations spatial.
   
 And to recapitate the tree sequences output by ``SLiM``:
 
@@ -274,16 +274,18 @@ Note: num_reps, here, specifies how many bootstrap replicates to perform, that i
 
 The final empirical results are stored in: temp_wd/vignette/output_dir/out3_predictions.txt
 
-temp_wd/iraptus_0 0.4790744392
-temp_wd/iraptus_1 0.4782159438
-temp_wd/iraptus_2 0.4752711311
-temp_wd/iraptus_3 0.4757308299
-temp_wd/iraptus_4 0.4763104592
-temp_wd/iraptus_5 0.4740976943
-temp_wd/iraptus_6 0.4711097443
-temp_wd/iraptus_7 0.4765035801
-temp_wd/iraptus_8 0.4711986949
-temp_wd/iraptus_9 0.4780693254
+.. code-block:: bash
+
+		temp_wd/iraptus_0 0.4790744392
+		temp_wd/iraptus_1 0.4782159438
+		temp_wd/iraptus_2 0.4752711311
+		temp_wd/iraptus_3 0.4757308299
+		temp_wd/iraptus_4 0.4763104592
+		temp_wd/iraptus_5 0.4740976943
+		temp_wd/iraptus_6 0.4711097443
+		temp_wd/iraptus_7 0.4765035801
+		temp_wd/iraptus_8 0.4711986949
+		temp_wd/iraptus_9 0.4780693254
 
 
 
