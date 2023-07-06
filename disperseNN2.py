@@ -62,7 +62,7 @@ parser.add_argument(
     "--edge_width",
     help="crop a fixed width from each edge of the map; enter 'sigma' to set edge_width equal to sigma",
     default=0,
-    type=float,
+    type=str,
 )
 parser.add_argument(
     "--sampling_width", help="width of sampling area (-1 for random sampling width)", default=1.0, type=float,

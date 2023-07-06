@@ -33,7 +33,7 @@ class DataGenerator(tf.keras.utils.Sequence):
     skip_mutate: bool
     crop: float
     sampling_width: float
-    edge_width: dict
+    edge_width: str
     phase: int
     polarize: int
     genos: dict
