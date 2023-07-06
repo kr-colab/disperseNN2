@@ -1,5 +1,0 @@
-Snakemake pipeline
-==================
-
-
-
