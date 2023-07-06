@@ -107,16 +107,13 @@ We will take 10 repeated samples from each tree sequences, to get a total of 1,0
 				 --num_snps 25000 \
 				 --n 14 \
 				 --seed $i \
-				 --edge_width 3 \
 				 --tree_list temp_wd/vignette/tree_list.txt \
 				 --target_list temp_wd/vignette/target_list.txt" \
 		    >> temp_wd/vignette/preprocess_commands.txt
 		done
 		parallel -j $num_threads < temp_wd/vignette/preprocess_commands.txt
 
-.. note::
 
-   Here we chose to sample away from the habitat edges by 3km. This is because the simulation model artifically reduces survival probability near the edges, within distance :math:`\sigma`, roughly. Since the largest :math:`\sigma` we explored is 3, we simply cropped away this width from each edge.
 
 
 

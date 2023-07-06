@@ -53,9 +53,9 @@ A typical ``disperseNN2`` workflow involves five steps:
 1. Simulation
 *************
 
-Although ``disperseNN2`` does not actually run simulations, it relies on simulated training data. Therefore, we provide some template code for generating training data; however, the ideal analysis will tailor the simulation step to take advantage of realistic information from your particular study system. For information on how to implement population genetic simulations, check out the extensive `SLiM manual <http://benhaller.com/slim/SLiM_Manual.pdf>`_.
+Although ``disperseNN2`` does not run simulations itself, it relies on simulated training data. Therefore, we provide some template code for generating training data; however, the ideal analysis will tailor the simulation step to take advantage of realistic information from your particular study system. For information on how to implement population genetic simulations, check out the extensive `SLiM manual <http://benhaller.com/slim/SLiM_Manual.pdf>`_.
 
-The simulation script we used for validating ``disperseNN2`` is ``SLiM_recipes/bat20.slim``. This is a continuous space model where the mother-offspring distance is :math:`N(0,\sigma)` in both the x and y dimensions, and is described in detail in `Battey et al. 2020 <https://doi.org/10.1534/genetics.120.303143>`_. Below is an example simulation command:
+The simulation script we use to train ``disperseNN2`` is ``SLiM_recipes/square.slim``. This is a continuous space model where the mother-offspring distance is :math:`N(0,\sigma)` in both the x and y dimensions, and many of the other details are described in `Battey et al. 2020 <https://doi.org/10.1534/genetics.120.303143>`_. Below is an example simulation command:
 
 .. code-block:: bash
 
@@ -130,7 +130,6 @@ A basic preprocessing command looks like:
 		       --num_snps 5000 \
 		       --n 10 \
 		       --seed 1 \
-		       --edge_width 3 \
 		       --tree_list Examples/tree_list1.txt \
 		       --target_list Examples/target_list1.txt
 
@@ -140,7 +139,6 @@ A basic preprocessing command looks like:
 - ``--num_snps``: the number of SNPs to use as input for the CNN
 - ``--n``: sample size
 - ``--seed``: random number seed
-- ``--edge_width``: width of habitat edge to avoid sampling from
 - ``--tree_list Examples/tree_list1.txt``: list of filepaths to the tree sequences
 - ``--target_list Examples/target_list1.txt``: list of filepaths to .txt files with the target values
   
