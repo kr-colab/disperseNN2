@@ -35,7 +35,7 @@ def project_locs(locs, fp):
     locs[:,0] = (1-(locs[:,0]-min(locs[:,0])) / (max(locs[:,0])-min(locs[:,0]))) * lat_range  + bottom_edge # "1-" to orient north-south
     locs[:,1] = (locs[:,1]-min(locs[:,1])) / (max(locs[:,1])-min(locs[:,1])) * long_range + left_edge
 
-    print(W,min(locs[:,0]),max(locs[:,0]),min(locs[:,1]),max(locs[:,1]))
+    #print(W,min(locs[:,0]),max(locs[:,0]),min(locs[:,1]),max(locs[:,1]))
  
     # TODO: could try rotating the samplig locations within the map
     
