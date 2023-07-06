@@ -54,19 +54,6 @@ def check_params(args):
                     "\n\npred sets each need to be divisible by batch_size; otherwise some batches will have missing data\n\n"
                 )
                 exit()
-    if args.empirical == None and args.preprocessed == False:
-        if args.edge_width == None:
-            print("need to specify edge_width (via --edge_width)")
-            exit()
-    if (
-        args.edge_width == 'sigma'
-        and args.sampling_width != "rand"
-        and args.map_width != None
-    ):
-        print(
-            "\n\nIf W and S are fixed, you must also fix the edge_width; otherwise the CNN can see sigma directly in the fourth input\n\n"
-        )
-        exit()
     if args.predict == True and args.preprocessed == False  and args.empirical == None:
         if args.n == None:
             print("missing sample size, via --n")

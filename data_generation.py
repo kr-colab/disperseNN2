@@ -43,6 +43,7 @@ class DataGenerator(tf.keras.utils.Sequence):
     grid_coarseness: int
     segment: bool
     sample_grid: int
+    empirical_locs: list
 
     def __attrs_post_init__(self):
         "Initialize a few things"
@@ -145,6 +146,29 @@ class DataGenerator(tf.keras.utils.Sequence):
         return new_genotypes
 
     
+    def empirical_sample(self, ts, sampled_inds, n, N, W):
+        locs = np.array(self.empirical_locs)
+        np.random.shuffle(locs)
+        indiv_dict = {} # tracking which indivs have been picked up already  
+        for i in sampled_inds:
+            indiv_dict[i] = 0 
+        keep_indivs = []        
+        for pt in range(n): # for each sampling location
+            dists = {}
+            for i in indiv_dict:
+                ind = ts.individual(i)
+                loc = ind.location[0:2]
+                d = ( (loc[0]-locs[pt,0])**2 + (loc[1]-locs[pt,1])**2 )**(1/2)
+                dists[d] = i # see what I did there?
+            nearest = dists[min(dists)]
+            ind = ts.individual(nearest)
+            loc = ind.location[0:2]
+            keep_indivs.append(nearest)
+            del indiv_dict[nearest]
+
+        return keep_indivs
+
+
     def sample_ts(self, filepath, seed):
         "The meat: load in and fully process a tree sequence"
 
@@ -153,8 +177,8 @@ class DataGenerator(tf.keras.utils.Sequence):
         np.random.seed(seed)
 
         # grab map width and sigma from provenance
-        #W = parse_provenance(ts, 'W')
-        W = 50 # ***
+        W = parse_provenance(ts, 'W')
+        #W = 50 #        *********************
         if self.edge_width == 'sigma':
             edge_width = parse_provenance(ts, 'sigma')
         else:
@@ -202,9 +226,7 @@ class DataGenerator(tf.keras.utils.Sequence):
             sampled_inds = self.cropper(ts, W, sample_width, edge_width, alive_inds)
 
         # sample individuals
-        if self.sample_grid == None:
-            keep_indivs = np.random.choice(sampled_inds, self.n, replace=False)
-        else:
+        if self.sample_grid != None:
             if self.n < self.sample_grid**2:
                 print("your sample grid is too fine, not enough samples to fill it")
                 exit()
@@ -212,10 +234,15 @@ class DataGenerator(tf.keras.utils.Sequence):
             for r in range(int(np.ceil(self.n / self.sample_grid**2))): # sampling from each square multiple times until >= n samples
                 for i in range(self.sample_grid):
                     for j in range(self.sample_grid):
-                        new_guy = self.sample_ind(ts,sampled_inds,W,i,j)                    
+                        new_guy = self.sample_ind(ts,sampled_inds,W,i,j)
                         keep_indivs.append(new_guy)
-                        sampled_inds.remove(new_guy) # to avoid sampling same guy twice
-            keep_indivs = np.random.choice(keep_indivs, self.n, replace=False) # taking n from the >=n list            
+                        sampled_inds.remove(new_guy) # to avoid sampling same guy twice                                              
+            keep_indivs = np.random.choice(keep_indivs, self.n, replace=False) # taking n from the >=n list                          
+        elif self.empirical_locs != []:
+            keep_indivs = self.empirical_sample(ts, sampled_inds, self.n, len(sampled_inds), W)
+        else:
+            keep_indivs = np.random.choice(sampled_inds, self.n, replace=False)
+        # (unindent)
         keep_nodes = []
         for i in keep_indivs:
             ind = ts.individual(i)

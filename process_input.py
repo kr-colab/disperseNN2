@@ -4,20 +4,42 @@ import numpy as np
 import sys
 from geopy import distance
 import random
+import utm
 from matplotlib import pyplot as plt
+import tskit
+from read_input import *
 
-# get sampling width
-def project_locs(coords):
-    n = len(coords)
-    sampling_width = 0
-    for i in range(0, n-1):
-        for j in range(i+1, n):
-            # ellipsoid='WGS-84' by default
-            d = distance.distance(coords[i, :], coords[j, :]).km
-            if d > sampling_width:
-                sampling_width = float(d)
-    return sampling_width
+# project sample locations
+def project_locs(locs, fp):
 
+    # projection (plus some code for calculating error)
+    locs = np.array(locs) 
+    locs = np.array(utm.from_latlon(locs[:,0], locs[:,1])[0:2]) / 1000 
+    locs = locs.T
+    
+    # calculate extremes
+    min_lat = min(locs[:,0])
+    min_long = min(locs[:,1])
+    max_lat = max(locs[:,0])
+    max_long = max(locs[:,1])
+    lat_range = max_lat-min_lat
+    long_range = max_long-min_long
+    ts = tskit.load(fp)
+    W = parse_provenance(ts, 'W')
+
+    # move sample locations to random area within the map  
+    left_edge = np.random.uniform(low=0, high=W-long_range) # is this right? do I want to swap lat and long, here? ***
+    bottom_edge = np.random.uniform(low=0, high=W-lat_range)
+
+    # rescale lat and long to each start at 0                                                                      
+    locs[:,0] = (1-(locs[:,0]-min(locs[:,0])) / (max(locs[:,0])-min(locs[:,0]))) * lat_range  + bottom_edge # "1-" to orient north-south
+    locs[:,1] = (locs[:,1]-min(locs[:,1])) / (max(locs[:,1])-min(locs[:,1])) * long_range + left_edge
+
+    print(W,min(locs[:,0]),max(locs[:,0]),min(locs[:,1]),max(locs[:,1]))
+ 
+    # TODO: could try rotating the samplig locations within the map
+    
+    return locs
 
 # pad locations with zeros
 def pad_locs(locs, n):
@@ -25,7 +47,6 @@ def pad_locs(locs, n):
     n = locs.shape[1]
     padded[:, 0:n] = locs
     return padded
-
 
 # pre-processing rules:
 #     1 biallelic change the alelles to 0 and 1 before inputting.

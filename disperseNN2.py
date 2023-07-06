@@ -1,5 +1,5 @@
 
-# e.g. python disperseNN2/disperseNN2.py --out temp1 --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 1 --n 10 --mu 1e-15 --seed 12345 --tree_list ../Maps/Boxes84/tree_list.txt --target_list ../Maps/Boxes84/target_list.txt --recapitate False --mutate True --phase 1 --polarize 2 --num_samples 50 --edge_width 3 --train --learning_rate 1e-4 --grid_coarseness 50 --upsample 6 --pairs 45 --gpu_index any
+# e.g. python disperseNN2/disperseNN2.py --out temp1 --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 1 --n 10 --mu 1e-15 --seed 12345 --tree_list ../Maps/Boxes84/tree_list.txt --target_list ../Maps/Boxes84/target_list.txt --recapitate False --mutate True --phase 1 --polarize 2 --num_samples 50 --train --learning_rate 1e-4 --grid_coarseness 50 --upsample 6 --pairs 45 --gpu_index any
 
 # notes:
 #     - learning rate 1e-3 doesn't work at all, for one sigma. Neither does 5e-4. 1e-4 works.
@@ -60,9 +60,9 @@ parser.add_argument(
     "--tree_list", help="list of tree filepaths.", default=None)
 parser.add_argument(
     "--edge_width",
-    help="crop a fixed width from each edge of the map; enter 'sigma' to set edge_width equal to sigma ",
-    default=None,
-    type=str,
+    help="crop a fixed width from each edge of the map; enter 'sigma' to set edge_width equal to sigma",
+    default=0,
+    type=float,
 )
 parser.add_argument(
     "--sampling_width", help="width of sampling area (-1 for random sampling width)", default=1.0, type=float,
@@ -349,7 +349,7 @@ def load_network():
 
 
 def make_generator_params_dict(
-    targets, trees, shuffle, genos, locs
+    targets, trees, shuffle, genos, locs, empirical_locs,
 ):
     params = {
         "targets": targets,
@@ -376,6 +376,7 @@ def make_generator_params_dict(
         "grid_coarseness": args.grid_coarseness,
         "segment": args.segment,
         "sample_grid": args.sample_grid,
+        "empirical_locs": empirical_locs,
     }
     return params
 
@@ -424,6 +425,16 @@ def prep_trees_and_train():
         for j in range(args.num_samples):
             partition["validation"].append(i)
 
+    # empirical locations
+    if args.empirical != None:
+        locs = read_locs(args.empirical + ".locs")
+        if len(locs) != args.n:
+            print("length of locs file doesn't match n")
+            exit()
+        locs = project_locs(locs, trees[0])
+    else:
+        locs = []
+
     # initialize generators
     params = make_generator_params_dict(
         targets=targets,
@@ -431,6 +442,7 @@ def prep_trees_and_train():
         shuffle=True,
         genos=None,
         locs=None,
+        empirical_locs=locs,
     )
     training_generator = DataGenerator(partition["train"], **params)
     validation_generator = DataGenerator(partition["validation"], **params)
@@ -499,6 +511,7 @@ def prep_preprocessed_and_train():
         shuffle=True,
         genos=genos,
         locs=locs,
+        empirical_locs=[],
     )
     training_generator = DataGenerator(partition["train"], **params)
     validation_generator = DataGenerator(partition["validation"], **params)
@@ -545,6 +558,7 @@ def prep_preprocessed_and_pred():
         shuffle=False,
         genos=genos,
         locs=locs,
+        empirical_locs=[],
     )
 
     # predict
@@ -595,6 +609,16 @@ def prep_trees_and_pred():
                               args.num_pred, replace=False)
     partition["prediction"] = list(simids)
 
+    # empirical locations                                     
+    if args.empirical != None:
+        locs = read_locs(args.empirical + ".locs")
+        if len(locs) != args.n:
+            print("length of locs file doesn't match n")
+            exit()
+        locs = project_locs(locs, trees[0])
+    else:
+        locs = []
+
     # get generator ready
     params = make_generator_params_dict(
         targets=[None]*total_sims,
@@ -602,6 +626,7 @@ def prep_trees_and_pred():
         shuffle=False,
         genos=None,
         locs=None,
+        empirical_locs=locs,
     )
     generator = DataGenerator(partition["prediction"], **params)
 
@@ -714,18 +739,29 @@ def preprocess_trees():
         os.makedirs(args.out, exist_ok=True)
         np.save(args.out+"/mean_sd", [meanSig,sdSig])
 
+    # # empirical locations                                     
+    # if args.empirical != None:
+    #     locs = read_locs(args.empirical + ".locs")
+    #     if len(locs) != args.n:
+    #         print("length of locs file doesn't match n")
+    #         exit()
+    #     locs = project_locs(locs, trees[0])
+    # else:
+    #     locs = []
+
     # initialize generator and some things
     os.makedirs(os.path.join(args.out,"Maps",str(args.seed)), exist_ok=True)
     os.makedirs(os.path.join(args.out,"Genos",str(args.seed)), exist_ok=True)
     os.makedirs(os.path.join(args.out,"Locs",str(args.seed)), exist_ok=True)
-    params = make_generator_params_dict(
-        targets=None,
-        trees=None,
-        shuffle=None,
-        genos=None,
-        locs=None,
-    )
-    training_generator = DataGenerator([None], **params)
+    # params = make_generator_params_dict(
+    #     targets=None,
+    #     trees=None,
+    #     shuffle=None,
+    #     genos=None,
+    #     locs=None,
+    #     empirical_locs=locs,
+    # )
+    # training_generator = DataGenerator([None], **params)
 
     # preprocess
     for i in range(total_sims):
@@ -733,6 +769,23 @@ def preprocess_trees():
         genofile = os.path.join(args.out,"Genos",str(args.seed),str(i)+".genos")
         locfile = os.path.join(args.out,"Locs",str(args.seed),str(i)+".locs")
         if os.path.isfile(genofile+".npy") == False or os.path.isfile(locfile+".npy") == False:
+            if args.empirical != None:
+                locs = read_locs(args.empirical + ".locs")
+                if len(locs) != args.n:
+                    print("length of locs file doesn't match n")
+                    exit()
+                locs = project_locs(locs, trees[i])
+            else:
+                locs = []
+            params = make_generator_params_dict(
+                targets=None,
+                trees=None,
+                shuffle=None,
+                genos=None,
+                locs=None,
+                empirical_locs=locs,
+            )
+            training_generator = DataGenerator([None], **params)                        
             geno_mat, locs = training_generator.sample_ts(trees[i], args.seed) 
             np.save(genofile, geno_mat)
             np.save(locfile, locs)
