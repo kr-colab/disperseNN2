@@ -2,7 +2,7 @@ Vignette: example workflow
 ==========================
 
 
-This vignette shows a complete pipeline for a small application of ``disperseNN2`` including instructions for the intermediate data-organizing steps. Some terminology and details referenced in the current vignette, for example descriptions of command line flags, are explained under :doc:`usage`.
+This vignette shows a complete pipeline for a small application of ``disperseNN2`` including instructions for the intermediate data-organizing steps. Some details referenced in the below vignette, e.g., descriptions of command line flags, are explained under :doc:`usage`.
 
 
 
@@ -25,7 +25,7 @@ This vignette shows a complete pipeline for a small application of ``disperseNN2
 1. Simulation
 -------------
 
-For this demonstration we will analyze a population of *Internecivus raptus*. Let's assume we have independent estimates from previous studies for the size of the species range and the population density: :math:`200 \times 200` km\ :math:`^2`, and 0.75 individuals per km\ :math:`^2`, respectively. With values for these nuisance parameters in hand we can design custom training simulations for inferring :math:`\sigma`. If our a priori expectation for :math:`\sigma` in this species is somewhere between 0.8 and 12, we will simulate dispersal rates in this range.
+For this demonstration we will analyze a population of *Internecivus raptus*. Let's assume we have independent estimates from previous studies for the width of the species range and population density: :math:`78` km, and 2.5 individuals per km\ :math:`^2`, respectively. With values for these nuisance parameters in hand we can design custom training simulations for inferring :math:`\sigma`. If our a priori expectation for :math:`\sigma` in this species is somewhere between 0.4 and 6, we will simulate dispersal rates in this range.
 
 Below is some bash code to run the simulations using ``square.slim``. 
 
@@ -34,11 +34,11 @@ Below is some bash code to run the simulations using ``square.slim``.
 
    mkdir -p temp_wd/vignette/TreeSeqs
    mkdir -p temp_wd/vignette/Targets		
-   sigmas=$(python -c 'from scipy.stats import loguniform; print(*loguniform.rvs(0.8,12,size=100))')
+   sigmas=$(python -c 'from scipy.stats import loguniform; print(*loguniform.rvs(0.4,6,size=100))')
    for i in {1..100}
    do
        sigma=$(echo $sigmas | awk -v var="$i" '{print $var}')
-       echo "slim -d SEED=$i -d sigma=$sigma -d K=0.75 -d r=1e-8 -d W=200 -d G=1e8 -d maxgens=100 -d OUTNAME=\"'temp_wd/vignette/TreeSeqs/output'\" SLiM_recipes/square.slim" >> temp_wd/vignette/sim_commands.txt
+       echo "slim -d SEED=$i -d sigma=$sigma -d K=2.5 -d r=1e-8 -d W=78 -d G=1e8 -d maxgens=1000 -d OUTNAME=\"'temp_wd/vignette/TreeSeqs/output'\" SLiM_recipes/square.slim" >> temp_wd/vignette/sim_commands.txt
        echo $sigma > temp_wd/vignette/Targets/target_$i.txt
        echo temp_wd/vignette/Targets/target_$i.txt >> temp_wd/vignette/target_list.txt
    done
@@ -89,28 +89,20 @@ And to recapitate the tree sequences output by ``SLiM``:
 2. Preprocessing
 ----------------
 
-Next, we preprocess the input for ``disperseNN2``. Assume we have a sample of 14 individuals from different locations, and 25,000 SNPs.
+Next, we need to preprocess the input for ``disperseNN2``. But first we need to clean up our *I. raptus* metadata.
 
-For demonstration purposes, let's say we want to take a subset of individuals from a particular geographic region, the Scotian Shelf region. Furthermore, we want to include only a single individual per sampling location; this is important because individuals did not have identical locations in the training simulations which might trip up the neural network. Below are some example commands that might be used to parse the metadata, but these steps will vary depending on the idiosyncracies of your particular dataset.
+Let's pretend we want to take a subset of individuals from a particular geographic region, the "Scotian Shelf-East" region. Below is an example command that might be used to parse and reformat the metadata, but these steps will vary depending on the idiosyncracies of your particular dataset. 
 
 .. code-block:: bash
 
-		cat Examples/VCFs/iraptus_meta_full.txt | grep "Scotian Shelf - East" | cut -f 4,5 | sort | uniq > temp_wd/vignette/templocs
-		count=$(wc -l temp_wd/vignette/templocs | awk '{print $1}')
-		for i in $(seq 1 $count)
-		do
-		    locs=$(head -$i temp_wd/vignette/templocs | tail -1); 
-		    lat=$(echo $locs | awk '{print $1}');
-		    long=$(echo $locs | awk '{print $2}');
-		    grep $lat Examples/VCFs/iraptus_meta_full.txt | awk -v coord=$long '$5 == coord' | shuf | head -1;
-		done > temp_wd/vignette/iraptus_meta.txt
-		cat temp_wd/vignette/iraptus_meta.txt  | sed s/"\t"/,/g > temp_wd/vignette/iraptus.csv
+		cat Examples/VCFs/iraptus_meta_full.txt | grep "Scotian Shelf - East" | sed s/"\t"/,/g > temp_wd/vignette/iraptus.csv
 
 We provide a simple python script for subsetting a VCF for a particular set of individuals, which also filters indels and non-variant sites.
 
 .. code-block:: bash
 
 		python Empirical/subset_vcf.py Examples/VCFs/iraptus_full.vcf.gz temp_wd/vignette/iraptus.csv temp_wd/vignette/iraptus.vcf 0 1
+		gunzip temp_wd/vignette/iraptus.vcf.gz
 
 Last, build a .locs file:
 
@@ -118,11 +110,8 @@ Last, build a .locs file:
 
 		count=$(zcat temp_wd/vignette/iraptus.vcf.gz | grep -v "##" | grep "#" | wc -w)
 		for i in $(seq 10 $count); do id=$(zcat temp_wd/vignette/iraptus.vcf.gz | grep -v "##" | grep "#" | cut -f $i); grep -w $id temp_wd/vignette/iraptus.csv; done | cut -d "," -f 4,5 | sed s/","/"\t"/g > temp_wd/vignette/iraptus.locs
-		gunzip temp_wd/vignette/iraptus.vcf.gz
 
-
-
-We will take 10 repeated samples from each tree sequences, to get a total of 1,000 training datasets (100 tree sequences, 10 samples from each). Our strategy for this is to use 10 different preprocess commands, each with a different random number seed.
+This filtering results in 1951 SNPs from 95 individuals. We will take 10 repeated samples from each tree sequences, to get a total of 1,000 training datasets (100 tree sequences, 10 samples from each). Our strategy for this is to use 10 different preprocess commands, each with a different random number seed.
 
 .. code-block:: bash
 		
@@ -131,8 +120,8 @@ We will take 10 repeated samples from each tree sequences, to get a total of 1,0
 		    echo "python disperseNN2.py \
 		                 --out temp_wd/vignette/output_dir \
 				 --preprocess \
-				 --num_snps 25000 \
-				 --n 14 \
+				 --num_snps 1951 \
+				 --n 95 \
 				 --seed $i \
 				 --tree_list temp_wd/vignette/tree_list.txt \
 				 --target_list temp_wd/vignette/target_list.txt \
@@ -161,9 +150,7 @@ We will take 10 repeated samples from each tree sequences, to get a total of 1,0
 3. Training
 -----------
 
-In the below ``disperseNN2`` training command, we set the number of pairs to 91; this is the number of pairs of individuals from each training dataset that are included in the analysis, and in this case it includes all possible pairs with 14 individuals. In applications with larger sample sizes, you might want to analyze only a subset of pairs to alleviate memory.
-
-While our preprocessing step saved 25,000 SNPs from each tree sequence, we're going to train with only 2,500 SNPs. This will work well for our goals and should be a bit faster and require less memory.
+In the below ``disperseNN2`` training command, we set the number of pairs to 1000; this is the number of pairs of individuals from each training dataset that are included in the analysis, and we chose 1000 in order to fit within available memory. The maximum number of pairs with 95 individuals would have been 4465. We've found that using 100 for ``--pairs_encode`` and ``--pairs_estimate`` works well, while reducing memory requirements. Don't forget to tack on the ``--gpu`` flag if GPUs are available.
 
 .. code-block:: bash
 
@@ -171,19 +158,18 @@ While our preprocessing step saved 25,000 SNPs from each tree sequence, we're go
                        --out temp_wd/vignette/output_dir \
                        --train \
                        --preprocessed \
-                       --num_snps 2500 \
-                       --max_epochs 20 \
+                       --num_snps 1951 \
+                       --max_epochs 100 \
                        --validation_split 0.2 \
                        --batch_size 10 \
                        --threads 1 \
                        --seed 12345 \
-                       --n 14 \
+                       --n 95 \
                        --learning_rate 1e-4 \
-                       --pairs 91 \
-                       --pairs_encode 91 \
-                       --pairs_estimate 91 \
-                       > temp_wd/vignette/output_dir/training_history.txt \
-		       # do we need the "n" flag?
+                       --pairs 1000 \
+                       --pairs_encode 100 \
+                       --pairs_estimate 100 \
+                       > temp_wd/vignette/output_dir/training_history.txt
 
 
 
@@ -209,14 +195,14 @@ Next, we will validate the trained model on simulated test data. In a real appli
                        --out temp_wd/vignette/output_dir \
                        --predict \
                        --preprocessed \
-                       --num_snps 2500 \
+                       --num_snps 1951 \
                        --batch_size 10 \
                        --threads 1 \
-                       --n 14 \
+                       --n 95 \
                        --seed 12345 \
-                       --pairs 91 \
-                       --pairs_encode 91 \
-                       --pairs_estimate 91 \
+                       --pairs 1000 \
+                       --pairs_encode 100 \
+                       --pairs_estimate 100 \
                        --load_weights temp_wd/vignette/output_dir/pwConv_12345_model.hdf5 \
                        --num_pred 100
 		       
@@ -240,7 +226,7 @@ The results show that the training run was successful. Specifically, the predict
 5. Empirical application
 ------------------------
 
-If we are satisfied with the performance of the model on the held-out test set, we can predict predict σ from the subsetted VCF (should take less than 30s to run):
+If we are satisfied with the performance of the model on the held-out test set, we can predict predict σ from the subsetted VCF.
 
 .. code-block:: bash
 
@@ -248,20 +234,20 @@ If we are satisfied with the performance of the model on the held-out test set, 
                        --out temp_wd/vignette/output_dir \
 		       --predict \
 		       --empirical temp_wd/vignette/iraptus \
-		       --num_snps 2500 \
+		       --num_snps 1951 \
 		       --batch_size 10 \
 		       --threads 1 \
-		       --n 14 \
+		       --n 95 \
 		       --seed 12345 \
-                       --pairs 91 \
-		       --pairs_encode 91 \
-                       --pairs_estimate 91 \
+                       --pairs 1000 \
+		       --pairs_encode 100 \
+                       --pairs_estimate 100 \
                        --load_weights temp_wd/vignette/output_dir/pwConv_12345_model.hdf5 \
                        --num_reps 10
 
-Note: ``num_reps``, here, specifies how many bootstrap replicates to perform, that is, how many seperate draws of 1000 SNPs to use as inputs for prediction.
+Note: ``num_reps``, here, specifies how many bootstrap replicates to perform. Eaach replicate takes a random draw of ``num_snps`` SNPs from the VCF. Replicates also re-position, or-rescale, the sample locations to represent different positions within the map.
 
-The final empirical results are stored in: temp_wd/vignette/output_dir/out3_predictions.txt
+The final empirical results are stored in: temp_wd/vignette/output_dir/empirical_12345_predictions.txt
 
 .. code-block:: bash
 
