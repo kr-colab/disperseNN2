@@ -669,7 +669,7 @@ def prep_empirical_and_pred():
         test_genos = vcf2genos(
             args.empirical + ".vcf", args.n, args.num_snps, args.phase
         )
-        ibd(test_genos, locs, args.phase, args.num_snps)
+        #ibd(test_genos, locs, args.phase, args.num_snps) # (doesn't work if sample locations are repeated)
         test_genos = np.reshape(
             test_genos, (1, test_genos.shape[0], test_genos.shape[1])
         )
