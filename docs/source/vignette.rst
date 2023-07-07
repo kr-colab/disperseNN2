@@ -25,7 +25,7 @@ This vignette shows a complete pipeline for a small application of ``disperseNN2
 1. Simulation
 -------------
 
-For this demonstration we will analyze a population of *Internecivus raptus*. Let's assume we have independent estimates from previous studies for the size of the species range and the population density: :math:`50 \times 50` km\ :math:`^2`, and 5 individuals per km\ :math:`^2`, respectively. With values for these nuisance parameters in hand we can design custom training simulations for inferring :math:`\sigma`. If our a priori expectation for :math:`\sigma` in this species is somewhere between 0.2 and 3, we will simulate dispersal rates in this range.
+For this demonstration we will analyze a population of *Internecivus raptus*. Let's assume we have independent estimates from previous studies for the size of the species range and the population density: :math:`200 \times 200` km\ :math:`^2`, and 0.75 individuals per km\ :math:`^2`, respectively. With values for these nuisance parameters in hand we can design custom training simulations for inferring :math:`\sigma`. If our a priori expectation for :math:`\sigma` in this species is somewhere between 0.8 and 12, we will simulate dispersal rates in this range.
 
 Below is some bash code to run the simulations using ``square.slim``. 
 
@@ -34,11 +34,11 @@ Below is some bash code to run the simulations using ``square.slim``.
 
    mkdir -p temp_wd/vignette/TreeSeqs
    mkdir -p temp_wd/vignette/Targets		
-   sigmas=$(python -c 'from scipy.stats import loguniform; print(*loguniform.rvs(0.2,3,size=100))')
+   sigmas=$(python -c 'from scipy.stats import loguniform; print(*loguniform.rvs(0.8,12,size=100))')
    for i in {1..100}
    do
        sigma=$(echo $sigmas | awk -v var="$i" '{print $var}')
-       echo "slim -d SEED=$i -d sigma=$sigma -d K=5 -d r=1e-8 -d W=50 -d G=1e8 -d maxgens=100 -d OUTNAME=\"'temp_wd/vignette/TreeSeqs/output'\" SLiM_recipes/square.slim" >> temp_wd/vignette/sim_commands.txt
+       echo "slim -d SEED=$i -d sigma=$sigma -d K=0.75 -d r=1e-8 -d W=200 -d G=1e8 -d maxgens=100 -d OUTNAME=\"'temp_wd/vignette/TreeSeqs/output'\" SLiM_recipes/square.slim" >> temp_wd/vignette/sim_commands.txt
        echo $sigma > temp_wd/vignette/Targets/target_$i.txt
        echo temp_wd/vignette/Targets/target_$i.txt >> temp_wd/vignette/target_list.txt
    done
@@ -89,7 +89,38 @@ And to recapitate the tree sequences output by ``SLiM``:
 2. Preprocessing
 ----------------
 
-Next, we preprocess the input for ``disperseNN2``. Assume we have a sample of 40 individuals from different locations, and 25,000 SNPs.
+Next, we preprocess the input for ``disperseNN2``. Assume we have a sample of 14 individuals from different locations, and 25,000 SNPs.
+
+For demonstration purposes, let's say we want to take a subset of individuals from a particular geographic region, the Scotian Shelf region. Furthermore, we want to include only a single individual per sampling location; this is important because individuals did not have identical locations in the training simulations which might trip up the neural network. Below are some example commands that might be used to parse the metadata, but these steps will vary depending on the idiosyncracies of your particular dataset.
+
+.. code-block:: bash
+
+		cat Examples/VCFs/iraptus_meta_full.txt | grep "Scotian Shelf - East" | cut -f 4,5 | sort | uniq > temp_wd/vignette/templocs
+		count=$(wc -l temp_wd/vignette/templocs | awk '{print $1}')
+		for i in $(seq 1 $count)
+		do
+		    locs=$(head -$i temp_wd/vignette/templocs | tail -1); 
+		    lat=$(echo $locs | awk '{print $1}');
+		    long=$(echo $locs | awk '{print $2}');
+		    grep $lat Examples/VCFs/iraptus_meta_full.txt | awk -v coord=$long '$5 == coord' | shuf | head -1;
+		done > temp_wd/vignette/iraptus_meta.txt
+		cat temp_wd/vignette/iraptus_meta.txt  | sed s/"\t"/,/g > temp_wd/vignette/iraptus.csv
+
+We provide a simple python script for subsetting a VCF for a particular set of individuals, which also filters indels and non-variant sites.
+
+.. code-block:: bash
+
+		python Empirical/subset_vcf.py Examples/VCFs/iraptus_full.vcf.gz temp_wd/vignette/iraptus.csv temp_wd/vignette/iraptus.vcf 0 1
+
+Last, build a .locs file:
+
+.. code-block:: bash
+
+		count=$(zcat temp_wd/vignette/iraptus.vcf.gz | grep -v "##" | grep "#" | wc -w)
+		for i in $(seq 10 $count); do id=$(zcat temp_wd/vignette/iraptus.vcf.gz | grep -v "##" | grep "#" | cut -f $i); grep -w $id temp_wd/vignette/iraptus.csv; done | cut -d "," -f 4,5 | sed s/","/"\t"/g > temp_wd/vignette/iraptus.locs
+		gunzip temp_wd/vignette/iraptus.vcf.gz
+
+
 
 We will take 10 repeated samples from each tree sequences, to get a total of 1,000 training datasets (100 tree sequences, 10 samples from each). Our strategy for this is to use 10 different preprocess commands, each with a different random number seed.
 
@@ -188,7 +219,7 @@ Next, we will validate the trained model on simulated test data. In a real appli
                        --pairs_estimate 91 \
                        --load_weights temp_wd/vignette/output_dir/pwConv_12345_model.hdf5 \
                        --num_pred 100
-
+		       
 .. figure:: results.png
    :scale: 100 %
    :alt: results_plot
@@ -209,40 +240,7 @@ The results show that the training run was successful. Specifically, the predict
 5. Empirical application
 ------------------------
 
-If we are satisfied with the performance of the model on the held-out test set, we can prepare our empirical VCF for inference with ``disperseNN2``. 
-
-For demonstration purposes, let's say we want to take a subset of individuals from a particular geographic region, the Scotian Shelf region. Furthermore, we want to include only a single individual per sampling location; this is important because individuals did not have identical locations in the training simulations which might trip up the neural network. Below are some example commands that might be used to parse the metadata, but these steps will vary depending on the idiosyncracies of your particular dataset.
-
-
-.. code-block:: bash
-
-		cat Examples/VCFs/iraptus_meta_full.txt | grep "Scotian Shelf - East" | cut -f 4,5 | sort | uniq > temp_wd/vignette/templocs
-		count=$(wc -l temp_wd/vignette/templocs | awk '{print $1}')
-		for i in $(seq 1 $count)
-		do
-		    locs=$(head -$i temp_wd/vignette/templocs | tail -1); 
-		    lat=$(echo $locs | awk '{print $1}');
-		    long=$(echo $locs | awk '{print $2}');
-		    grep $lat Examples/VCFs/iraptus_meta_full.txt | awk -v coord=$long '$5 == coord' | shuf | head -1;
-		done > temp_wd/vignette/iraptus_meta.txt
-		cat temp_wd/vignette/iraptus_meta.txt  | sed s/"\t"/,/g > temp_wd/vignette/iraptus.csv
-
-We provide a simple python script for subsetting a VCF for a particular set of individuals, which also filters indels and non-variant sites.
-
-.. code-block:: bash
-
-		python Empirical/subset_vcf.py Examples/VCFs/iraptus_full.vcf.gz temp_wd/vignette/iraptus.csv temp_wd/vignette/iraptus.vcf 0 1
-
-Last, build a .locs file:
-
-.. code-block:: bash
-
-		count=$(zcat temp_wd/vignette/iraptus.vcf.gz | grep -v "##" | grep "#" | wc -w)
-		for i in $(seq 10 $count); do id=$(zcat temp_wd/vignette/iraptus.vcf.gz | grep -v "##" | grep "#" | cut -f $i); grep -w $id temp_wd/vignette/iraptus.csv; done | cut -d "," -f 4,5 | sed s/","/"\t"/g > temp_wd/vignette/iraptus.locs
-		gunzip temp_wd/vignette/iraptus.vcf.gz
-
-Finally, we can predict predict σ from the subsetted VCF (should take less than 30s to run):
-		
+If we are satisfied with the performance of the model on the held-out test set, we can predict predict σ from the subsetted VCF (should take less than 30s to run):
 
 .. code-block:: bash
 
@@ -277,6 +275,12 @@ The final empirical results are stored in: temp_wd/vignette/output_dir/out3_pred
 		temp_wd/vignette/iraptus_7 29.5501918256
 		temp_wd/vignette/iraptus_8 28.8286674831
 		temp_wd/vignette/iraptus_9 27.5537168228
+
+**Interpretation**.
+Sigma is the SD of the gaussian dispersal kernel. The distance to a random parent is root-2 * sigma.
+We trained with only 100 generations spatial, hence the estimate reflects demography in the recent past.
+
+
 
 
 
