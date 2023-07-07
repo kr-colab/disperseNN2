@@ -26,6 +26,7 @@ def project_locs(locs, fp):
     long_range = max_long-min_long
     ts = tskit.load(fp)
     W = parse_provenance(ts, 'W')
+    #print(W, lat_range, long_range)
 
     # move sample locations to random area within the map  
     left_edge = np.random.uniform(low=0, high=W-long_range) # is this right? do I want to swap lat and long, here? ***
@@ -34,9 +35,8 @@ def project_locs(locs, fp):
     # rescale lat and long to each start at 0                                                                      
     locs[:,0] = (1-(locs[:,0]-min(locs[:,0])) / (max(locs[:,0])-min(locs[:,0]))) * lat_range  + bottom_edge # "1-" to orient north-south
     locs[:,1] = (locs[:,1]-min(locs[:,1])) / (max(locs[:,1])-min(locs[:,1])) * long_range + left_edge
-
-    #print(W,min(locs[:,0]),max(locs[:,0]),min(locs[:,1]),max(locs[:,1]))
- 
+    #print(min(locs[:,0]),max(locs[:,0]),min(locs[:,1]),max(locs[:,1]))
+    
     # TODO: could try rotating the samplig locations within the map
     
     return locs
