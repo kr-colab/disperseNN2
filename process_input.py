@@ -10,7 +10,7 @@ import tskit
 from read_input import *
 
 # project sample locations
-def project_locs(locs, fp):
+def project_locs(locs, fp=None):
 
     # projection (plus some code for calculating error)
     locs = np.array(locs) 
@@ -24,21 +24,23 @@ def project_locs(locs, fp):
     max_long = max(locs[:,1])
     lat_range = max_lat-min_lat
     long_range = max_long-min_long
-    ts = tskit.load(fp)
-    W = parse_provenance(ts, 'W')
-    #print(W, lat_range, long_range)
 
-    # move sample locations to random area within the map  
-    left_edge = np.random.uniform(low=0, high=W-long_range) # is this right? do I want to swap lat and long, here? ***
-    bottom_edge = np.random.uniform(low=0, high=W-lat_range)
+    # rescale lat and long to each start at 0
+    locs[:,0] = (1-((locs[:,0]-min_lat) / lat_range)) * lat_range # "1-" to orient north-south            
+    locs[:,1] = locs[:,1]-min_long
 
-    # rescale lat and long to each start at 0                                                                      
-    locs[:,0] = (1-(locs[:,0]-min(locs[:,0])) / (max(locs[:,0])-min(locs[:,0]))) * lat_range  + bottom_edge # "1-" to orient north-south
-    locs[:,1] = (locs[:,1]-min(locs[:,1])) / (max(locs[:,1])-min(locs[:,1])) * long_range + left_edge
+    # reposition sample locations to random area within the map
+    if fp:
+        ts = tskit.load(fp)
+        W = parse_provenance(ts, 'W')
+        #print(W, lat_range, long_range)
+        left_edge = np.random.uniform(low=0, high=W-long_range) # is this right? do I want to swap lat and long, here? ***
+        bottom_edge = np.random.uniform(low=0, high=W-lat_range)
+        locs[:,0] += bottom_edge
+        locs[:,1] += left_edge
+
     #print(min(locs[:,0]),max(locs[:,0]),min(locs[:,1]),max(locs[:,1]))
-    
-    # TODO: could try rotating the samplig locations within the map
-    
+
     return locs
 
 # pad locations with zeros

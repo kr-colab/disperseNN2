@@ -1,4 +1,3 @@
-
 # e.g. python disperseNN2/disperseNN2.py --out temp1 --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 1 --n 10 --mu 1e-15 --seed 12345 --tree_list ../Maps/Boxes84/tree_list.txt --target_list ../Maps/Boxes84/target_list.txt --recapitate False --mutate True --phase 1 --polarize 2 --num_samples 50 --train --learning_rate 1e-4 --grid_coarseness 50 --upsample 6 --pairs 45 --gpu_index any
 
 # notes:
@@ -425,13 +424,13 @@ def prep_trees_and_train():
         for j in range(args.num_samples):
             partition["validation"].append(i)
 
-    # empirical locations
+    # empirical locations   # ADAPT TO VARYING MAP WIDTHS?
     if args.empirical != None:
         locs = read_locs(args.empirical + ".locs")
         if len(locs) != args.n:
             print("length of locs file doesn't match n")
             exit()
-        locs = project_locs(locs, trees[0])
+        locs = project_locs(locs, trees[0]) # *** ASSUMES FIXED MAP WIDTH ***
     else:
         locs = []
 
@@ -609,13 +608,13 @@ def prep_trees_and_pred():
                               args.num_pred, replace=False)
     partition["prediction"] = list(simids)
 
-    # empirical locations                                     
+    # empirical locations   # ADAPT TO VARYING MAP WIDTHS?
     if args.empirical != None:
         locs = read_locs(args.empirical + ".locs")
         if len(locs) != args.n:
             print("length of locs file doesn't match n")
             exit()
-        locs = project_locs(locs, trees[0])
+        locs = project_locs(locs, trees[0]) # *** ASSUMES FIXED MAP WIDTH ***
     else:
         locs = []
 
@@ -659,6 +658,10 @@ def prep_empirical_and_pred():
     # project locs
     locs = read_locs(args.empirical + ".locs")
     locs = np.array(locs)
+    if len(locs) != args.n:
+        print("length of locs file doesn't match n")
+        exit()
+    locs = project_locs(locs)
 
     # load model
     load_dl_modules()
@@ -738,16 +741,6 @@ def preprocess_trees():
         sdSig = np.std(targets)
         os.makedirs(args.out, exist_ok=True)
         np.save(args.out+"/mean_sd", [meanSig,sdSig])
-
-    # # empirical locations                                     
-    # if args.empirical != None:
-    #     locs = read_locs(args.empirical + ".locs")
-    #     if len(locs) != args.n:
-    #         print("length of locs file doesn't match n")
-    #         exit()
-    #     locs = project_locs(locs, trees[0])
-    # else:
-    #     locs = []
 
     # initialize generator and some things
     os.makedirs(os.path.join(args.out,"Maps",str(args.seed)), exist_ok=True)
@@ -855,4 +848,3 @@ if args.predict == True:
     else:
         print("predicting on empirical data")
         prep_empirical_and_pred()
-

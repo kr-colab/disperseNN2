@@ -291,38 +291,22 @@ class DataGenerator(tf.keras.utils.Sequence):
                 sample_dict[indID] = 0
                 loc = ts.individual(indID).location[0:2]
                 locs.append(loc)
+
+        # rescale locs
         locs = np.array(locs)
-
-        # # find width of sampling area and save dists
-        # locs = np.array(locs)
-        # sampling_width = 0
-        # for i in range(0,self.n-1):
-        #     for j in range(i+1,self.n):
-        #         d = ( (locs[i,0]-locs[j,0])**2 + (locs[i,1]-locs[j,1])**2 )**(1/2)
-        #         if d > sampling_width:
-        #             sampling_width = float(d)
-
-        # # rescale locs
-        # locs0 = np.array(locs)
-        # minx = min(locs0[:, 0])
-        # maxx = max(locs0[:, 0])
-        # miny = min(locs0[:, 1])
-        # maxy = max(locs0[:, 1])
-        # x_range = maxx - minx
-        # y_range = maxy - miny
-        # locs0[:, 0] = (locs0[:, 0] - minx) / x_range  # rescale to (0,1)      
-        # locs0[:, 1] = (locs0[:, 1] - miny) / y_range
-        # if   x_range > y_range: # these four lines for preserving aspect ratio
-        #     locs0[:, 1] *= y_range / x_range
-        # elif x_range < y_range:
-        #     locs0[:, 0] *= x_range / y_range
-        # #locs = locs0.T 
-
-        # # grab pairwise locations                                                             
-        # pairwise_locs = []
-        # for i in range(0,n-1):
-        #     for j in range(i+1,n):
-        #         pairwise_locs.append( np.concatenate( (locs[i,:],locs[j,:]) ))
+        minx = min(locs[:, 0])
+        maxx = max(locs[:, 0])
+        miny = min(locs[:, 1])
+        maxy = max(locs[:, 1])
+        x_range = maxx - minx
+        y_range = maxy - miny
+        locs[:, 0] = (locs[:, 0] - minx) / x_range  # rescale to (0,1)      
+        locs[:, 1] = (locs[:, 1] - miny) / y_range
+        if   x_range > y_range: # these four lines for preserving aspect ratio
+            locs[:, 1] *= y_range / x_range
+        elif x_range < y_range:
+            locs[:, 0] *= x_range / y_range
+        locs = locs.T
 
         # grab genos
         geno_mat0 = ts.genotype_matrix()
@@ -382,7 +366,7 @@ class DataGenerator(tf.keras.utils.Sequence):
         del mask
         gc.collect()
         
-        return geno_mat2, locs.T # not re-scaled... because I'm not giving it the sampling area currently
+        return geno_mat2, locs
 
 
 
