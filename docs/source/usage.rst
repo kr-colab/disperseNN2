@@ -25,7 +25,7 @@ To use ``disperseNN2``, first install it using pip:
 
 Workflow
 ^^^^^^^^
-This section describes the command line flags associated with each step in the workflow; for a complete, worked example with code, see :doc:`vignette`.
+This section describes the command line flags associated with each step in the workflow; for a complete, worked example, see :doc:`vignette`.
 
 A typical ``disperseNN2`` workflow involves five steps:
 
@@ -55,7 +55,7 @@ A typical ``disperseNN2`` workflow involves five steps:
 
 Although ``disperseNN2`` does not run simulations itself, it relies on simulated training data. Therefore, we provide some template code for generating training data; however, the ideal analysis will tailor the simulation step to take advantage of realistic information from your particular study system. For information on how to implement population genetic simulations, check out the extensive `SLiM manual <http://benhaller.com/slim/SLiM_Manual.pdf>`_.
 
-The simulation script we use to train ``disperseNN2`` is ``SLiM_recipes/square.slim``. This is a continuous space model where the mother-offspring distance is :math:`N(0,\sigma)` in both the x and y dimensions, and many of the other details are described in `Battey et al. 2020 <https://doi.org/10.1534/genetics.120.303143>`_. Below is an example simulation command:
+The simulation script we use to train ``disperseNN2`` is ``SLiM_recipes/square.slim``. This is a continuous space model where the mother-offspring distance is :math:`N(0,\sigma)` in both the :math:`x` and :math:`y` dimensions, and many of the other details are described in `Battey et al. 2020 <https://doi.org/10.1534/genetics.120.303143>`_. Below is an example simulation command:
 
 .. code-block:: bash
 
@@ -64,11 +64,10 @@ The simulation script we use to train ``disperseNN2`` is ``SLiM_recipes/square.s
 		slim -d SEED=12345 \
 		     -d sigma=0.2 \
 		     -d K=5 \
-		     -d mu=0 \
 		     -d r=1e-8 \
 		     -d W=50 \
 		     -d G=1e8 \
-		     -d maxgens=100000 \
+		     -d maxgens=1000 \
 		     -d OUTNAME="'temp_wd/TreeSeqs/my_sequence'" \
 		     SLiM_recipes/bat20.slim \
 		     # Note the two sets of quotes around the output name
@@ -77,15 +76,19 @@ Command line arguments are passed to ``SLiM`` using the ``-d`` flag followed by 
 
 - ``SEED`` - a random seed to reproduce the simulation results.
 - ``sigma`` - the dispersal parameter.
-- ``K`` - carrying capacity. Note: the carrying capacity in this model, K, corresponds roughly to density, but the actual density will vary depending on the model,and will fluctuate a bit over time.
-- ``mu`` - per base per genertation mutation rate.
+- ``K`` - carrying capacity. Note: the carrying capacity in this model, K, corresponds roughly to density, but the actual density will vary depending on the model, and will fluctuate a bit over time.
 - ``r`` -  per base per genertation recombination rate.
 - ``W`` - the height and width of the geographic spatial boundaries.
 - ``G`` - total size of the simulated genome.
 - ``maxgens`` - number of generations to run simulation.
 - ``OUTNAME`` - prefix to name output files.
 
-After running ``SLiM`` for a fixed number of generations, the simulation is still not complete, as many trees will likely not have coalesced still. Next you will need to finish, or "recapitate", the tree sequences. We recommend recapitating up front, as training is prohibitively slow if you try to recapitate on-the-fly. The below code snippet in python can be used to recapitate a tree sequence:
+.. note::
+
+   Here, we ran only 1,000 spatial generations; this strategy should be used cautiously because this can affect how the output is interpreted. In addition, isolation-by-distance is usually weaker with fewer spatial generations, which reduces signal for dispersal rate. In the ``disperseNN2`` analysis we ran 100,000 generations spatial.
+
+  
+After running ``SLiM`` for a fixed number of generations, the simulation is still not complete, as many trees will likely not have coalesced still. Next you will need to finish, or "recapitate", the tree sequences. We recommend recapitating at this early stage, before training, as training can be prohibitively slow if you try to recapitate on-the-fly. The below code snippet in python can be used to recapitate a tree sequence:
 
 .. code-block:: python
 
@@ -98,7 +101,7 @@ After running ``SLiM`` for a fixed number of generations, the simulation is stil
 		ts.dump("temp_wd/TreeSeqs/my_sequence_12345_recap.trees")
 
 
-For planning the total number of simulations, consider the following things. First: you can get away with fewer simulations by taking repeated, pseudo-independent samples from each simulation—--that is, if the simulated populations are sufficiently large relative to the sample size. Second: if the simulatios explore a large parameter space, e.g. more than	one or two free	parameters, then largertraining sets may be required.	In our analysis, we ran 1000 simulations while varying only the dispersal rate parameter, and sample 50	times from each	simulation (see Preprocessing, below).
+For planning the total number of simulations, consider the following. First, you can get away with fewer simulations by taking repeated, pseudo-independent samples from each simulation—--that is, if the simulated populations are sufficiently large relative to the sample size. Second, if the simulations explore a large parameter space, e.g. more than	one or two free	parameters, then larger training sets may be required.	In our analysis, we ran 1000 simulations while varying only the dispersal rate parameter, and sampled 50 times from each	simulation (see Preprocessing, below).
 
 The only real requirements of ``disperseNN2`` regarding training data are: genotypes are in a 2D array, the corresponding sample locations are in a table with two columns, and the targets are in a table with one column; all as numpy arrays. Therefore, simulation programs other than ``SLiM`` could be used in theory. However, given the strict format of the input files, we do not recommend users attempt to generate training data from sources other than ``SLiM``. 
 
@@ -254,7 +257,7 @@ Here, the second and third columns contain the true and predicted :math:`\sigma`
 .. _empirical:
 
 ************************
-5. Empirical predictions
+5. Empirical prediction
 ************************
 
 For predicting with empirical data, the command will be slightly different: instead of a list of tree sequences (and targets?), a new flag is given, --empirical, which is a prefix for two files: a VCF and a table of lat and long. The lat and longs get projected onto a flat 2D map using ____. (TODO: empirical estimation)

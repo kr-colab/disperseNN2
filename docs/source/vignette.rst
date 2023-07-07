@@ -2,7 +2,7 @@ Vignette: example workflow
 ==========================
 
 
-This vignette shows a complete pipeline for a small application of ``disperseNN2`` including instructions for the intermediate data-organizing steps. For details about individual command line flags, see :doc:`usage`.
+This vignette shows a complete pipeline for a small application of ``disperseNN2`` including instructions for the intermediate data-organizing steps. Some terminology and details referenced in the current vignette, for example descriptions of command line flags, are explained under :doc:`usage`.
 
 
 
@@ -25,9 +25,9 @@ This vignette shows a complete pipeline for a small application of ``disperseNN2
 1. Simulation
 -------------
 
-For this demonstration we will analyze a population of Internecivus raptus. Let's assume we have independent estimates from previous studies for the size of the species range and the population density: :math:`50 \times 50` km\ :math:`^2`, and 5 individuals per km\ :math:`^2`, respectively. With values for these nuisance parameters in hand we can design custom training simulations for inferring :math:`\sigma`. If our a priori expectation for :math:`\sigma` in this species is somewhere between 0.2 and 3, we will simulate dispersal rates in this range.
+For this demonstration we will analyze a population of *Internecivus raptus*. Let's assume we have independent estimates from previous studies for the size of the species range and the population density: :math:`200 \times 200` km\ :math:`^2`, and 5 individuals per km\ :math:`^2`, respectively. With values for these nuisance parameters in hand we can design custom training simulations for inferring :math:`\sigma`. If our a priori expectation for :math:`\sigma` in this species is somewhere between 0.2 and 3, we will simulate dispersal rates in this range.
 
-Below is some bash code to run the simulations using ``bat20.slim``. 
+Below is some bash code to run the simulations using ``square.slim``. 
 
 .. code-block:: bash
    :linenos:
@@ -38,7 +38,7 @@ Below is some bash code to run the simulations using ``bat20.slim``.
    for i in {1..100}
    do
        sigma=$(echo $sigmas | awk -v var="$i" '{print $var}')
-       echo "slim -d SEED=$i -d sigma=$sigma -d K=5 -d mu=0 -d r=1e-8 -d W=50 -d G=1e8 -d maxgens=1000 -d OUTNAME=\"'temp_wd/vignette/TreeSeqs/output'\" SLiM_recipes/bat20.slim" >> temp_wd/vignette/sim_commands.txt
+       echo "slim -d SEED=$i -d sigma=$sigma -d K=5 -d r=1e-8 -d W=200 -d G=1e8 -d maxgens=100 -d OUTNAME=\"'temp_wd/vignette/TreeSeqs/output'\" SLiM_recipes/square.slim" >> temp_wd/vignette/sim_commands.txt
        echo $sigma > temp_wd/vignette/Targets/target_$i.txt
        echo temp_wd/vignette/Targets/target_$i.txt >> temp_wd/vignette/target_list.txt
    done
@@ -47,18 +47,14 @@ Below is some bash code to run the simulations using ``bat20.slim``.
 
 Breaking down this pipeline one line at a time:
 
-- L1 creates a new folder where the output from the vignette will be saved.
+- L1 creates a new folder for the simulation output. The base folder ``temp_wd`` will contain all output from the current vignette.
 - L2 creates another folder for the training targets.
 - L3 draws random :math:`\sigma`\'s from a log-uniform distribution.
 - L7 builds individual commands for simulations.
 - L8 saves each :math:`\sigma` to it's own file.
 - L9 creates a list of filepaths to the targets.
-- L12 runs the simulation commands. If multiple cores are available, the number of threads used for this vignette can be increased (L11) to speed things up. In a real application, simulations should probably be distributed across many jobs on a computing cluster.
+- L12 runs the simulation commands. If multiple cores are available, the number of threads used for this vignette can be increased (L11) to speed things up. In a real application, simulations should be distributed across many jobs on a computing cluster.
 
-.. note::
-
-   Here, we ran only 1,000 spatial generations; this strategy should be used cautiously because this can affect how the output is interpreted. In addition, isolation-by-distance is usually weaker with fewer spatial generations, reducing signal for dispersal rate. In the ``disperseNN2`` analysis we ran 100,000 generations spatial.
-  
 And to recapitate the tree sequences output by ``SLiM``:
 
 .. code-block:: bash
@@ -108,7 +104,8 @@ We will take 10 repeated samples from each tree sequences, to get a total of 1,0
 				 --n 14 \
 				 --seed $i \
 				 --tree_list temp_wd/vignette/tree_list.txt \
-				 --target_list temp_wd/vignette/target_list.txt" \
+				 --target_list temp_wd/vignette/target_list.txt \
+				 --empirical temp_wd/vignette/iraptus" \
 		    >> temp_wd/vignette/preprocess_commands.txt
 		done
 		parallel -j $num_threads < temp_wd/vignette/preprocess_commands.txt
