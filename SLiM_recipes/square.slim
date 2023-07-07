@@ -72,20 +72,13 @@ early() {
 
 1: late() {
         print(c("Finished generation", sim.cycle, "; N=", p1.individualCount));
-        if (p1.individualCount < (0.75*K*W*W)){
-           catn("Population declined more than 25% in first 100 gens.");
+	// end after maxgens
+	if (sim.cycle == maxgens){
+           sim.treeSeqOutput(paste(c(OUTNAME,"_",SEED,".trees"), sep=""));
+           catn("Done.");
            sim.simulationFinished();
         }
-        else{
-		// end after maxgens
-		if (sim.cycle == maxgens){
-                   sim.treeSeqOutput(paste(c(OUTNAME,"_",SEED,".trees"), sep=""));
-                   catn("Done.");
-                   sim.simulationFinished();
-                }
-	    }
-        }
-
+}
 
 999999999 late() {} 
 

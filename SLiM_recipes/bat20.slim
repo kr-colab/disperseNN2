@@ -73,35 +73,13 @@ early() {
 
 1: late() {
         print(c("Finished generation", sim.cycle, "; N=", p1.individualCount));
-        if (p1.individualCount < (0.75*K*W*W)){
-           catn("Population declined more than 25% in first 100 gens.");
+	// end after maxgens
+	if (sim.cycle == maxgens){
+           sim.treeSeqOutput(paste(c(OUTNAME,"_",SEED,".trees"), sep=""));
+           catn("Done.");
            sim.simulationFinished();
         }
-        else{
-		// // output intermittent tree sequences
-		// if (sim.cycle == 100){
-		//     sim.treeSeqOutput(paste(c(OUTNAME,"_100gens_",SEED,".trees"), sep=""));
-		//     }
-		// else if (sim.cycle == 1000){
-		//     sim.treeSeqOutput(paste(c(OUTNAME,"_1000gens_",SEED,".trees"), sep=""));
-		//     }
-                // else if (sim.cycle == 10000){
-		//     sim.treeSeqOutput(paste(c(OUTNAME,"_10000gens_",SEED,".trees"), sep=""));
-		//     }
-		// else if (sim.cycle == 100000){
-		//     sim.treeSeqOutput(paste(c(OUTNAME,"_100000gens_",SEED,".trees"), sep=""));
-		//     catn("Done.");	    
-		//     sim.simulationFinished();
-		//     }
-		
-		// end after maxgens
-		if (sim.cycle == maxgens){
-                   sim.treeSeqOutput(paste(c(OUTNAME,"_",SEED,".trees"), sep=""));
-                   catn("Done.");
-                   sim.simulationFinished();
-                }
-	    }
-        }
+}
 
 
 999999999 late() {} // jerry-rig. I haven't taken the time to figure out how to avoid this.
