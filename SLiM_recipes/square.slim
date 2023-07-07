@@ -72,11 +72,17 @@ early() {
 
 1: late() {
         print(c("Finished generation", sim.cycle, "; N=", p1.individualCount));
-	// end after maxgens
-	if (sim.cycle == maxgens){
-           sim.treeSeqOutput(paste(c(OUTNAME,"_",SEED,".trees"), sep=""));
-           catn("Done.");
+	if (p1.individualCount == 0){
+           catn("Population died.");
            sim.simulationFinished();
+        }
+        else{
+	    // end after maxgens
+	    if (sim.cycle == maxgens){
+               sim.treeSeqOutput(paste(c(OUTNAME,"_",SEED,".trees"), sep=""));
+               catn("Done.");
+               sim.simulationFinished();
+	    }
         }
 }
 
