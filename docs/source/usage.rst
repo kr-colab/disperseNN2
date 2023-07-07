@@ -85,10 +85,10 @@ Command line arguments are passed to ``SLiM`` using the ``-d`` flag followed by 
 
 .. note::
 
-   Here, we ran only 1,000 spatial generations; this strategy should be used cautiously because this can affect how the output is interpreted. In addition, isolation-by-distance is usually weaker with fewer spatial generations, which reduces signal for dispersal rate. In the ``disperseNN2`` analysis we ran 100,000 generations spatial.
+   Here, we ran only 1,000 spatial generations; this strategy should be used with caution because this can affect how the output is interpreted. In addition, isolation-by-distance is usually weaker with fewer spatial generations which reduces signal for dispersal rate. In the ``disperseNN2`` analysis we ran 100,000 generations spatial.
 
   
-After running ``SLiM`` for a fixed number of generations, the simulation is still not complete, as many trees will likely not have coalesced still. Next you will need to finish, or "recapitate", the tree sequences. We recommend recapitating at this early stage, before training, as training can be prohibitively slow if you try to recapitate on-the-fly. The below code snippet in python can be used to recapitate a tree sequence:
+After running ``SLiM`` for a fixed number of generations, the simulation is still not complete, as many trees will likely not have coalesced still. Next you will need to finish, or "recapitate", the tree sequences. We recommend recapitating at this early stage, before training, as training can be prohibitively slow if you recapitate on-the-fly. The below code snippet in python can be used to recapitate a tree sequence:
 
 .. code-block:: python
 
@@ -100,10 +100,14 @@ After running ``SLiM`` for a fixed number of generations, the simulation is stil
 		ts = msprime.sim_ancestry(initial_state=ts, recombination_rate=1e-8, demography=demography, start_time=ts.metadata["SLiM"]["cycle"],random_seed=12345)
 		ts.dump("temp_wd/TreeSeqs/my_sequence_12345_recap.trees")
 
+.. note::
 
-For planning the total number of simulations, consider the following. First, you can get away with fewer simulations by taking repeated, pseudo-independent samples from each simulation—--that is, if the simulated populations are sufficiently large relative to the sample size. Second, if the simulations explore a large parameter space, e.g. more than	one or two free	parameters, then larger training sets may be required.	In our analysis, we ran 1000 simulations while varying only the dispersal rate parameter, and sampled 50 times from each	simulation (see Preprocessing, below).
+   Here, we have assumed a constant demographic history. If an independently inferred demographic history for your species is available, or if you want to explore different demographic histories, the recapitation step is a good place for implementing these changes. For more information see the `msprime docs <https://tskit.dev/msprime/docs/stable/ancestry.html#demography>`_.
 
-The only real requirements of ``disperseNN2`` regarding training data are: genotypes are in a 2D array, the corresponding sample locations are in a table with two columns, and the targets are in a table with one column; all as numpy arrays. Therefore, simulation programs other than ``SLiM`` could be used in theory. However, given the strict format of the input files, we do not recommend users attempt to generate training data from sources other than ``SLiM``. 
+
+For planning the total number of simulations, consider the following. First, you might be able to get away with fewer simulations by taking repeated, pseudo-independent samples from each simulation. Second, if the simulations explore a large parameter space, e.g. more than	one or two free	parameters, then larger training sets may be required.	In our analysis, we ran 1000 simulations while varying only the dispersal rate parameter, and sampled 50 times from each	simulation (see Preprocessing, below).
+
+Simulation programs other than ``SLiM`` could be used in theory. The only real requirements of ``disperseNN2`` regarding training data are: genotypes are in a 2D array, the corresponding sample locations are in a table with two columns, and the target values are saved in individual files; all as numpy arrays. 
 
 
 
@@ -119,8 +123,8 @@ The only real requirements of ``disperseNN2`` regarding training data are: genot
 2. Preprocessing
 ****************
 
-The preprocessing step involves more simulation, technically: it adds mutations to each tree sequence, takes a sample of individuals, and saves the genotypes and sample locations in numpy arrays.
-This speeds up training.
+The preprocessing step actually involves more simulation: it adds mutations to each tree sequence, takes a sample of individuals, and then saves the genotypes and sample locations in numpy arrays.
+Doing these steps up front instaed of during training is more efficient.
 In addition, multiple samples can be taken from the same tree sequence to make the training set larger.
 A basic preprocessing command looks like:
 
@@ -181,6 +185,7 @@ This example uses tree sequences as input.
 		       --pairs 45 \
 		       --pairs_encode 45 \
 		       --pairs_estimate 45 \
+		       --gpu -1 \
 		       > temp_wd/output_dir/training_history.txt
 
 - ``--train``: tells ``disperseNN2`` to train a neural network
@@ -193,6 +198,7 @@ This example uses tree sequences as input.
 - ``--pairs``: the total number of pairs to include in the analysis
 - ``--pairs_encode``: the number of pairs to include in the gradient in the encoder portion of the neural network.
 - ``--pairs_estimate``: the number of pairs to include in the estimator portion of the neural network.
+- ``--gpu``: as an integer, specifies the GPU index (e.g., 0, 1, etc). "any" means take any available gpu. -1 means no GPU.
 
 This command will print the training progress to stdout, which was redirected to ``temp_wd/output_dir/training_history.txt`` in this example.
 The model weights are saved to ``temp_wd/output_dir/out_12345_model.hdf5``.

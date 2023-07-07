@@ -71,7 +71,7 @@ parser.add_argument(
     "--num_snps",
     default=None,
     type=int,
-    help="maximum number of SNPs across all datasets (for pre-allocating memory)",
+    help="number of SNPs",
 )
 parser.add_argument(
     "--num_pred", default=None, type=int, help="number of datasets to predict on"

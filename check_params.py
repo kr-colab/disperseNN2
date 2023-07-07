@@ -23,7 +23,7 @@ def check_params(args):
             print("specify num snps via --num_snps")
             exit()
         if args.n == None:
-            print("specify max sample size via --n")
+            print("specify sample size via --n")
             exit()
 
     # # arguments for prediction
