@@ -257,11 +257,13 @@ def load_network():
             for i in range(num_conv_iterations):                                             
                 h = CONV_LAYERS[i](h)
                 h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)            
+            h = tf.keras.layers.Flatten()(h)
             h = DENSE_0(h)
         else: # cut gradient tape on some pairs to save memory
             for i in range(num_conv_iterations):
                 h = tf.stop_gradient(CONV_LAYERS[i](h))
                 h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)
+            h = tf.keras.layers.Flatten()(h)
             h = tf.stop_gradient(DENSE_0(h))            
         h = tf.keras.layers.Flatten()(h)        
         hs.append(h)
