@@ -247,7 +247,7 @@ If we are satisfied with the performance of the model on the held-out test set, 
 
 Note: ``num_reps``, here, specifies how many bootstrap replicates to perform. Eaach replicate takes a random draw of ``num_snps`` SNPs from the VCF. Replicates also re-position, or-rescale, the sample locations to represent different positions within the map.
 
-The final empirical results are stored in: temp_wd/vignette/output_dir/empirical_12345_predictions.txt
+The final empirical results are stored in: ``temp_wd/vignette/output_dir/empirical_12345_predictions.txt``.
 
 .. code-block:: bash
 
