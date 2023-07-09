@@ -265,7 +265,7 @@ def load_network():
                 h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)
             h = tf.keras.layers.Flatten()(h)
             h = tf.stop_gradient(DENSE_0(h))            
-        h = tf.keras.layers.Flatten()(h)        
+        # (unindent)
         hs.append(h)
         l = tf.gather(loc_input, comb, axis = 2)
         d = l[:,:,0] - l[:,:,1]
