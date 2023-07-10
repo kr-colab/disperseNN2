@@ -382,7 +382,8 @@ class DataGenerator(tf.keras.utils.Sequence):
                 out = self.sample_ts(self.trees[ID], np.random.randint(1e9,size=1))
                 X1[i, :] = out[0]
                 X2[i, :] = out[1]
-                X = [X1, X2]
+            # (unindent)
+            X = [X1, X2]
         else:
             for i, ID in enumerate(list_IDs_temp):
                 y[i] = np.load(self.targets[ID])
@@ -393,6 +394,7 @@ class DataGenerator(tf.keras.utils.Sequence):
                 np.random.shuffle(mask)
                 X1[i, :] = geno_mat[mask, 0:self.n]
                 X2[i, :] = np.load(self.locs[ID])[:,0:self.n]
-                X = [X1, X2]
+            # (unindent)
+            X = [X1, X2]
 
         return (X, y)
