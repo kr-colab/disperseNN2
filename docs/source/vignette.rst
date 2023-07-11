@@ -207,7 +207,7 @@ Next, we will validate the trained model on simulated test data. In a real appli
                        --num_pred 100
 		       
 .. figure:: results.png
-   :scale: 100 %
+   :scale: 50 %
    :alt: results_plot
 
    Validation results after 100 epochs of training. True :math:`\sigma` is on the x-axis and predicted values are on the y-axis. The dashed line is :math:`x=y`.
