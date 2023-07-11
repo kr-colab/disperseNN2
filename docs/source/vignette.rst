@@ -111,7 +111,7 @@ Last, build a .locs file:
 		count=$(zcat temp_wd/vignette/iraptus.vcf.gz | grep -v "##" | grep "#" | wc -w)
 		for i in $(seq 10 $count); do id=$(zcat temp_wd/vignette/iraptus.vcf.gz | grep -v "##" | grep "#" | cut -f $i); grep -w $id temp_wd/vignette/iraptus.csv; done | cut -d "," -f 4,5 | sed s/","/"\t"/g > temp_wd/vignette/iraptus.locs
 
-This filtering results in 1951 SNPs from 95 individuals. We will take 10 repeated samples from each tree sequences, to get a total of 1,000 training datasets (100 tree sequences, 10 samples from each). Our strategy for this is to use 10 different preprocess commands, each with a different random number seed.
+This filtering results in 1951 SNPs from 95 individuals. We will take 10 repeated samples from each tree sequence, to get a total of 1,000 training datasets (100 tree sequences :math:`\times` 10 samples from each). Our strategy for doing this involves 10 different preprocess commands, each with a different random number seed, which can be run in parallel.
 
 .. code-block:: bash
 		
@@ -212,7 +212,8 @@ Next, we will validate the trained model on simulated test data. In a real appli
 
    Validation results after 100 epochs of training. True :math:`\sigma` is on the x-axis and predicted values are on the y-axis. The dashed line is :math:`x=y`.
 		       
-The results show that the training run was successful. Specifically, the predictions are near the expected values, meaning there is some signal for dispersal rate. \
+The results show that the training run was successful. Specifically, the predictions are near the expected values, meaning there is some signal for dispersal rate.
+
 .. However, we are currently underestimating towards the larger end of the :math:`\sigma` range. This might be alleviated by using (i) a larger training set, (ii) more generatinos spatial, (iii) larger sample size, or (iv) or more SNPs.
 
 
@@ -227,7 +228,7 @@ The results show that the training run was successful. Specifically, the predict
 5. Empirical application
 ------------------------
 
-If we are satisfied with the performance of the model on the held-out test set, we can predict predict σ from the subsetted VCF.
+Since we are satisfied with the performance of the model on the held-out test set, we can finally predict σ in our empirical data.
 
 .. code-block:: bash
 
@@ -246,7 +247,7 @@ If we are satisfied with the performance of the model on the held-out test set, 
                        --load_weights temp_wd/vignette/output_dir/pwConv_12345_model.hdf5 \
                        --num_reps 10
 
-Note: ``num_reps``, here, specifies how many bootstrap replicates to perform. Eaach replicate takes a random draw of ``num_snps`` SNPs from the VCF. Replicates also re-position, or-rescale, the sample locations to represent different positions within the map.
+Note: ``num_reps``, here, specifies how many bootstrap replicates to perform. Each replicate takes a random draw of ``num_snps`` SNPs from the VCF.
 
 The final empirical results are stored in: ``temp_wd/vignette/output_dir/empirical_12345_predictions.txt``.
 
