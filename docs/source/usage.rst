@@ -302,8 +302,8 @@ The output is in kilometers can be found in ``Examples/Preprocessed/empirical_12
 
 .. code-block:: bash
 
-Examples/VCFs/halibut_0 0.2970724416
-Examples/VCFs/halibut_1 0.2578380969
-Examples/VCFs/halibut_2 0.3252334316
-Examples/VCFs/halibut_3 0.2698406216
-Examples/VCFs/halibut_4 0.2880779185
+		Examples/VCFs/halibut_0 0.2970724416
+		Examples/VCFs/halibut_1 0.2578380969
+		Examples/VCFs/halibut_2 0.3252334316
+		Examples/VCFs/halibut_3 0.2698406216
+		Examples/VCFs/halibut_4 0.2880779185

@@ -1,5 +1,5 @@
 Vignette: example workflow
-=========================
+==========================
 
 
 This vignette shows a complete pipeline for a small application of ``disperseNN2`` including instructions for the intermediate data-organizing steps. Some details referenced in the below vignette, e.g., descriptions of command line flags, are explained under :doc:`usage`.
