@@ -251,27 +251,47 @@ def load_network():
     # convolutions for each pair
     hs = []
     ds = []
+    # for comb in combinations:
+    #     h = tf.gather(geno_input, comb, axis = 2)
+    #     if comb in combinations_encode:                                                                                      
+    #         for i in range(num_conv_iterations):                                             
+    #             h = CONV_LAYERS[i](h)
+    #             h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)            
+    #         h = tf.keras.layers.Flatten()(h)
+    #         h = DENSE_0(h)
+    #     else: # cut gradient tape on some pairs to save memory
+    #         for i in range(num_conv_iterations):
+    #             h = tf.stop_gradient(CONV_LAYERS[i](h))
+    #             h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)
+    #         h = tf.keras.layers.Flatten()(h)
+    #         h = tf.stop_gradient(DENSE_0(h))            
+    #     # (unindent)
+    #     hs.append(h)
+    #     l = tf.gather(loc_input, comb, axis = 2)
+    #     d = l[:,:,0] - l[:,:,1]
+    #     d = tf.norm(d, ord='euclidean', axis=1)
+    #     ds.append(d)
+
     for comb in combinations:
         h = tf.gather(geno_input, comb, axis = 2)
         if comb in combinations_encode:                                                                                      
             for i in range(num_conv_iterations):                                             
                 h = CONV_LAYERS[i](h)
                 h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)            
-            h = tf.keras.layers.Flatten()(h)
             h = DENSE_0(h)
         else: # cut gradient tape on some pairs to save memory
             for i in range(num_conv_iterations):
                 h = tf.stop_gradient(CONV_LAYERS[i](h))
                 h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)
-            h = tf.keras.layers.Flatten()(h)
             h = tf.stop_gradient(DENSE_0(h))            
-        # (unindent)
+        h = tf.keras.layers.Flatten()(h)        
         hs.append(h)
         l = tf.gather(loc_input, comb, axis = 2)
         d = l[:,:,0] - l[:,:,1]
         d = tf.norm(d, ord='euclidean', axis=1)
         ds.append(d)
 
+        
     # reshape conv. output and locs
     h = tf.stack(hs, axis=1)
     d = tf.stack(ds, axis=1)                          
@@ -664,7 +684,23 @@ def prep_empirical_and_pred():
         print("length of locs file doesn't match n")
         exit()
     locs = project_locs(locs)
+    print(locs)
 
+    # rescale locs
+    locs = np.array(locs)
+    minx = min(locs[:, 0])
+    maxx = max(locs[:, 0])
+    miny = min(locs[:, 1])
+    maxy = max(locs[:, 1])
+    x_range = maxx - minx
+    y_range = maxy - miny
+    locs[:, 0] = (locs[:, 0] - minx) / x_range  # rescale to (0,1)                                                      
+    locs[:, 1] = (locs[:, 1] - miny) / y_range
+    if   x_range > y_range: # these four lines for preserving aspect ratio                                              
+        locs[:, 1] *= y_range / x_range
+    elif x_range < y_range:
+        locs[:, 0] *= x_range / y_range
+    
     # load model
     load_dl_modules()
     model, checkpointer, earlystop, reducelr = load_network()
