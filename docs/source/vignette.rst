@@ -25,7 +25,13 @@ This vignette shows a complete pipeline for a small application of ``disperseNN2
 1. Simulation
 -------------
 
-For this demonstration we will analyze a population of *Internecivus raptus*. Let's assume we have independent estimates from previous studies for the width of the species range and population density: :math:`78` km, and 2.5 individuals per km\ :math:`^2`, respectively. With values for these nuisance parameters in hand we can design custom training simulations for inferring :math:`\sigma`. If our a priori expectation for :math:`\sigma` in this species is somewhere between 0.4 and 6, we will simulate dispersal rates in this range.
+For this demonstration we will analyze a population of *Internecivus raptus*. Let's assume we have independent estimates from previous studies for several parameters:
+
+- the width of the species range is :math:`78` km
+- population density is 2.5 individuals per km\ :math:`^2`
+- recombination rate is 1e-8 crossovers per bp per generation
+
+With values for these nuisance parameters in hand we can design custom training simulations for inferring :math:`\sigma`. If our a priori expectation for :math:`\sigma` in this species is somewhere between 0.4 and 6, we will simulate dispersal rates in this range.
 
 Below is some bash code to run the simulations using ``square.slim``. 
 
@@ -246,8 +252,6 @@ Since we are satisfied with the performance of the model on the held-out test se
                        --pairs_estimate 100 \
                        --load_weights temp_wd/vignette/output_dir/pwConv_12345_model.hdf5 \
                        --num_reps 10
-
-Note: ``num_reps``, here, specifies how many bootstrap replicates to perform. Each replicate takes a random draw of ``num_snps`` SNPs from the VCF.
 
 The final empirical results are stored in: ``temp_wd/vignette/output_dir/empirical_12345_predictions.txt``.
 

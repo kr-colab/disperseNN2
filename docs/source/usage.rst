@@ -53,9 +53,9 @@ A typical ``disperseNN2`` workflow involves five steps:
 1. Simulation
 *************
 
-Although ``disperseNN2`` does not run simulations itself, it relies on simulated training data. Therefore, we provide some template code for generating training data; however, the ideal analysis will tailor the simulation step to take advantage of realistic information from your particular study system. For information on how to implement population genetic simulations, check out the extensive `SLiM manual <http://benhaller.com/slim/SLiM_Manual.pdf>`_.
+Although ``disperseNN2`` is not used for running simulations, it relies on simulated training data. Therefore, we provide some template code for generating training data. Hhowever, the ideal analysis will tailor the simulation step to take advantage of realistic information from your particular study system. For information on how to implement population genetic simulations, check out the `SLiM manual <http://benhaller.com/slim/SLiM_Manual.pdf>`_.
 
-The simulation script we use to train ``disperseNN2`` is ``SLiM_recipes/square.slim``. This is a continuous space model where the mother-offspring distance is :math:`N(0,\sigma)` in both the :math:`x` and :math:`y` dimensions, and many of the other details are described in `Battey et al. 2020 <https://doi.org/10.1534/genetics.120.303143>`_. Below is an example simulation command:
+The simulation script we use to train ``disperseNN2`` is ``SLiM_recipes/square.slim``. This is a continuous space model where the mother-offspring distance is :math:`N(0,\sigma)` in both the :math:`x` and :math:`y` dimensions. Other details of the model are described in `Battey et al. 2020 <https://doi.org/10.1534/genetics.120.303143>`_. Below is an example simulation command:
 
 .. code-block:: bash
 
@@ -74,18 +74,18 @@ The simulation script we use to train ``disperseNN2`` is ``SLiM_recipes/square.s
 		
 Command line arguments are passed to ``SLiM`` using the ``-d`` flag followed by the variable name as it appears in the recipe file.
 
-- ``SEED`` - a random seed to reproduce the simulation results.
-- ``sigma`` - the dispersal parameter.
-- ``K`` - carrying capacity. Note: the carrying capacity in this model, K, corresponds roughly to density, but the actual density will vary depending on the model, and will fluctuate a bit over time.
-- ``r`` -  per base per genertation recombination rate.
-- ``W`` - the height and width of the geographic spatial boundaries.
-- ``G`` - total size of the simulated genome.
-- ``maxgens`` - number of generations to run simulation.
-- ``OUTNAME`` - prefix to name output files.
+- ``SEED``: a random seed to reproduce the simulation results.
+- ``sigma``: the dispersal parameter.
+- ``K``: carrying capacity. Note: the carrying capacity in this model, K, corresponds roughly to density, but the actual density will vary depending on the model, and will fluctuate a bit over time.
+- ``r``:  per base per genertation recombination rate.
+- ``W``: the height and width of the geographic spatial boundaries.
+- ``G``: total size of the simulated genome.
+- ``maxgens``: number of generations to run simulation.
+- ``OUTNAME``: prefix to name output files.
 
 .. note::
 
-   Here, we ran only 1,000 spatial generations; this strategy should be used with caution because this can affect how the output is interpreted. In addition, isolation-by-distance is usually weaker with fewer spatial generations which reduces signal for dispersal rate. In the ``disperseNN2`` analysis we ran 100,000 generations spatial.
+   The above example used only 1,000 spatial generations; this strategy should be used with caution because this can affect how the output is interpreted. In addition, isolation-by-distance is usually weaker with fewer spatial generations which reduces signal for dispersal rate. In the ``disperseNN2`` paper we ran 100,000 generations spatial.
 
   
 After running ``SLiM`` for a fixed number of generations, the simulation is still not complete, as many trees will likely not have coalesced still. Next you will need to finish, or "recapitate", the tree sequences. We recommend recapitating at this early stage, before training, as training can be prohibitively slow if you recapitate on-the-fly. The below code snippet in python can be used to recapitate a tree sequence:
@@ -105,7 +105,7 @@ After running ``SLiM`` for a fixed number of generations, the simulation is stil
    Here, we have assumed a constant demographic history. If an independently inferred demographic history for your species is available, or if you want to explore different demographic histories, the recapitation step is a good place for implementing these changes. For more information see the `msprime docs <https://tskit.dev/msprime/docs/stable/ancestry.html#demography>`_.
 
 
-For planning the total number of simulations, consider the following. First, you might be able to get away with fewer simulations by taking repeated, pseudo-independent samples from each simulation. Second, if the simulations explore a large parameter space, e.g. more than	one or two free	parameters, then larger training sets may be required.	In our analysis, we ran 1000 simulations while varying only the dispersal rate parameter, and sampled 50 times from each	simulation (see Preprocessing, below).
+For planning the total number of simulations, consider the following. First, you might be able to get away with fewer simulations by taking repeated, pseudo-independent samples from each simulation. Second, if the simulations explore a large parameter space, e.g. more than	one or two free	parameters, then larger training sets may be required.	In our paper, we ran 1000 simulations while varying only the dispersal rate parameter, and sampled 50 times from each	simulation (see Preprocessing, below).
 
 Simulation programs other than ``SLiM`` could be used in theory. The only real requirements of ``disperseNN2`` regarding training data are: genotypes are in a 2D array, the corresponding sample locations are in a table with two columns, and the target values are saved in individual files; all as numpy arrays. 
 
@@ -133,23 +133,26 @@ A basic preprocessing command looks like:
 		python disperseNN2.py \
                        --out temp_wd/output_dir \
 		       --preprocess \
-                       --num_samples 10 \
+                       --n 10 \
 		       --num_snps 5000 \
-		       --n 10 \
-		       --seed 1 \
 		       --tree_list Examples/tree_list1.txt \
-		       --target_list Examples/target_list1.txt
+		       --target_list Examples/target_list1.txt \
+		       --empirical Examples/VCFs/halibut \
+		       --seed 1
+		       
 
 - ``--out``: output directory
 - ``--preprocess``: this flag tells ``disperseNN2`` to preprocess the training data
-- ``--num_samples``: this is the number of independent samples to take from each tree sequence; the total training set will be the number of simulated tree sequences :math:`\times` the number of samples from each.
-- ``--num_snps``: the number of SNPs to use as input for the CNN
 - ``--n``: sample size
+- ``--num_snps``: the number of SNPs to use as input for the CNN
+- ``--tree_list``: path to a list of filepaths to the tree sequences
+- ``--target_list``: path to list of filepaths to .txt files with the target values
+- ``--empirical``: prefix for the empirical locations. This includes the path, but without the filetype suffix, ".locs".
 - ``--seed``: random number seed
-- ``--tree_list Examples/tree_list1.txt``: list of filepaths to the tree sequences
-- ``--target_list Examples/target_list1.txt``: list of filepaths to .txt files with the target values
+
+Individuals are sampled near the empirical sample locations, to make the simulation as realistic as possible.
   
-The preprocessing step can be parallelized to some extent: a single command preprocesses all simulations serially by taking one sample of genotypes from each dataset, so independent commands can be used with different random number seeds to take multiple, pseudo-independent samples from each simulation.
+The preprocessing step can be parallelized to some extent: a single command preprocesses all simulations serially by taking one sample of genotypes from each dataset. Independent commands can be used with different random number seeds to take multiple, pseudo-independent samples from each simulation.
 		
 The preprocessed data are saved in the directory specified by ``--out``; Subsequent outputs will also be saved in this folder.
 
@@ -166,18 +169,17 @@ The preprocessed data are saved in the directory specified by ``--out``; Subsequ
 ***********
 
 Below is an example command for the training step.
-This example uses tree sequences as input.
 
 .. code-block:: bash
 
 		python disperseNN2.py \
-		       --out temp_wd/output_dir \
+		       --out Examples/Preprocessed \
 		       --train \
 		       --preprocessed \
-		       --num_snps 5000 \
-		       --max_epochs 10 \
+		       --num_snps 1951 \
+		       --max_epochs 25 \
 		       --validation_split 0.2 \
-		       --batch_size 10 \
+		       --batch_size 1 \
 		       --threads 1 \
 		       --seed 12345 \
 		       --n 10 \
@@ -191,7 +193,7 @@ This example uses tree sequences as input.
 - ``--train``: tells ``disperseNN2`` to train a neural network
 - ``--preprocessed``: tells ``disperseNN2`` to use already-preprocessed data, which it looks for in the ``--out`` directory.
 - ``--max_epochs``: maximum number of epochs to train for.
-- ``--validation_split``: the proportion of training data held out for validation between batches for hyperparameter tuning.
+- ``--validation_split``: the proportion of training data held out for validation between batches for hyperparameter tuning. We use 0.2.
 - ``--batch_size``: we find that batch_size=10 works well.
 - ``--threads``: number of threads to use with the multiprocessor. 
 - ``--learning_rate``: learning rate to use during training. It's scheduled to decrease by 2x every 10 epochs with no decrease in validation loss.
@@ -203,7 +205,7 @@ This example uses tree sequences as input.
 This command will print the training progress to stdout, which was redirected to ``temp_wd/output_dir/training_history.txt`` in this example.
 The model weights are saved to ``temp_wd/output_dir/out_12345_model.hdf5``.
 In practice, you will need a training set of maybe 50,000, and you will likely want to train for longer than 10 epochs.
-For reading preprocessed training data we recommend trying between 1 and 10 threads. 
+A single thread should be sufficient for reading preprocessed training data, but you might try up to 10 threads. 
 
 
 
@@ -217,40 +219,45 @@ For reading preprocessed training data we recommend trying between 1 and 10 thre
 4. Validation
 *************
 
-If you want to predict :math:`\sigma` from simulated tree sequences output by ``SLiM``, a predict command like the below one can be used:
+If you want to predict :math:`\sigma` from simulated data, a predict command like the below one can be used:
 
 .. code-block:: bash
 
 		python disperseNN2.py \
-		       --out temp_wd/output_dir \
+		       --out Examples/Preprocessed \
 		       --predict \
 		       --preprocessed \
-		       --num_snps 5000 \
-		       --batch_size 1 \
+		       --num_snps 1951 \
+		       --batch_size 10 \
 		       --threads 1 \
 		       --n 10 \
 		       --seed 12345 \
 		       --pairs 45 \
 		       --pairs_encode 45 \
 		       --pairs_estimate 45 \
-		       --load_weights temp_wd/output_dir/out_12345_model.hdf5 \
-		       --num_pred 5
+		       --load_weights Examples/Preprocessed/pretrained_model.hdf5 \
+		       --num_pred 10
 
 - ``--predict``: tells ``disperseNN2`` to perform predictions
 - ``--load_weights``: loads in saved weights from an already-trained model
 - ``--num_pred``: number of datasets to predict with.
 
-Similar to the earlier prediction example, this will generate a file called ``temp_wd/output_dir/Test_12345/out_12345_predictions.txt`` containing (TO DO: random number seeds aren't reproducible):
+This will generate a file called ``Examples/Preprocessed/Test_12345/pwConv_12345_predictions.txt`` containing: (TO DO: random number seeds aren't reproducible):
 
 .. code-block:: bash
 
-		0.1690090249743872      0.48620286613483377
-		0.6280568409720466      0.4672472252013161
-		0.7184737596020008      0.13608900222161735
-		-0.7790530578965832     0.23677401340070897
-		-0.27202587929510147    -0.01729259869841701
+		1.3140451217006555	1.6492410246659885
+		0.7865230997761491	0.8685257153042614
+		0.47119165922491946	0.7649536491646727
+		0.767575286929296	1.1743635040408027
+		3.2702120633354514	2.849078431752082
+		1.6979504272705979	2.077949785913849
+		5.088607364715273	3.4579915900251597
+		0.4510196845483516	0.6887610946330337
+		1.2068913180526788	2.5440247780616168
+		2.335507009283163	3.0874019344367993
 
-Here, the second and third columns contain the true and predicted :math:`\sigma`; for each simulation.
+Here, the columns list the true and predicted :math:`\sigma` for each simulation.
 
 
 
@@ -266,24 +273,37 @@ Here, the second and third columns contain the true and predicted :math:`\sigma`
 5. Empirical prediction
 ************************
 
-For predicting with empirical data, the command will be slightly different: instead of a list of tree sequences (and targets?), a new flag is given, --empirical, which is a prefix for two files: a VCF and a table of lat and long. The lat and longs get projected onto a flat 2D map using ____. (TODO: empirical estimation)
-
+Finally, for predicting with empirical data:
 
 .. code-block:: bash
 
                 python disperseNN2.py \
-		       --out temp_wd/output_dir \
+		       --out Examples/Preprocessed/ \
 		       --predict \
 		       --empirical Examples/VCFs/halibut \
-		       --num_snps 5000 \
-		       --batch_size 1 \
+		       --num_snps 1951 \
 		       --threads 1 \
 		       --n 10 \
 		       --seed 12345 \
 		       --pairs 45 \
 		       --pairs_encode 45 \
 		       --pairs_estimate 45 \
-		       --load_weights temp_wd/output_dir/out_12345_model.hdf5 \
-		       --num_pred 1
+		       --load_weights Examples/Preprocessed/pretrained_model.hdf5 \
+		       --num_reps 5
 
-		
+``--empirical``: prefix for two files: a VCF and a table of lat and long. The lat and longs get projected onto a flat 2D map using ____. (TODO: empirical estimation)
+``--num_reps``: specifies how many bootstrap replicates to perform. Each replicate takes a random draw of num_snps SNPs from the VCF.
+
+The output can be found in ``Examples/Preprocessed/empirical_12345_predictions.txt``:
+
+.. code-block:: bash
+
+		Examples/VCFs/halibut_0 356856.6022213564
+		Examples/VCFs/halibut_1 321614.5043100432
+		Examples/VCFs/halibut_2 384816.643110014
+		Examples/VCFs/halibut_3 336765.2051343926
+		Examples/VCFs/halibut_4 358916.2093402004
+
+(Those are pretty large estimates... need to think about how to best handle this.)
+
+
