@@ -150,7 +150,11 @@ A basic preprocessing command looks like:
 - ``--empirical``: prefix for the empirical locations. This includes the path, but without the filetype suffix, ".locs".
 - ``--seed``: random number seed
 
-Individuals are sampled near the empirical sample locations, to make the simulation as realistic as possible.
+.. note::
+
+   Simulated individuals are sampled near the empirical sample locations. Our strategy involves first projecting the latitude and longitude coordinates for each location onto a 2D surface, in kilometers. By default, the projected locations are repositioned to new, random areas of the training map before sampling individuals from those locations; this is making the assumption that the true habitat range is unknown and we want our predictions to be invariant to the position of the sampling area within the greater species distribution.
+
+.. Last, the spatial coordinates are rescaled to :math:`(0,1)`, preserving aspect ratio, before being shown to the neural network as input.
   
 The preprocessing step can be parallelized to some extent: a single command preprocesses all simulations serially by taking one sample of genotypes from each dataset. Independent commands can be used with different random number seeds to take multiple, pseudo-independent samples from each simulation.
 		
@@ -291,19 +295,15 @@ Finally, for predicting with empirical data:
 		       --load_weights Examples/Preprocessed/pretrained_model.hdf5 \
 		       --num_reps 5
 
-``--empirical``: prefix for two files: a VCF and a table of lat and long. The lat and longs get projected onto a flat 2D map using ____. (TODO: empirical estimation)
-``--num_reps``: specifies how many bootstrap replicates to perform. Each replicate takes a random draw of num_snps SNPs from the VCF.
+- ``--empirical``: prefix for the empirical data. This includes the path, but without the filetype suffix. Two files must be present: a VCF and a table of lat and long. 
+- ``--num_reps``: specifies how many bootstrap replicates to perform. Each replicate takes a random draw of num_snps SNPs from the VCF.
 
-The output can be found in ``Examples/Preprocessed/empirical_12345_predictions.txt``:
+The output is in kilometers can be found in ``Examples/Preprocessed/empirical_12345_predictions.txt``:
 
 .. code-block:: bash
 
-		Examples/VCFs/halibut_0 356856.6022213564
-		Examples/VCFs/halibut_1 321614.5043100432
-		Examples/VCFs/halibut_2 384816.643110014
-		Examples/VCFs/halibut_3 336765.2051343926
-		Examples/VCFs/halibut_4 358916.2093402004
-
-(Those are pretty large estimates... need to think about how to best handle this.)
-
-
+Examples/VCFs/halibut_0 0.2970724416
+Examples/VCFs/halibut_1 0.2578380969
+Examples/VCFs/halibut_2 0.3252334316
+Examples/VCFs/halibut_3 0.2698406216
+Examples/VCFs/halibut_4 0.2880779185

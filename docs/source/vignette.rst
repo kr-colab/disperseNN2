@@ -1,5 +1,5 @@
 Vignette: example workflow
-==========================
+=========================
 
 
 This vignette shows a complete pipeline for a small application of ``disperseNN2`` including instructions for the intermediate data-organizing steps. Some details referenced in the below vignette, e.g., descriptions of command line flags, are explained under :doc:`usage`.
@@ -257,16 +257,17 @@ The final empirical results are stored in: ``temp_wd/vignette/output_dir/empiric
 
 .. code-block:: bash
 
-		temp_wd/vignette/iraptus_0 29.7039941098
-		temp_wd/vignette/iraptus_1 29.3123016114
-		temp_wd/vignette/iraptus_2 28.9842874711
-		temp_wd/vignette/iraptus_3 28.0469861728
-		temp_wd/vignette/iraptus_4 28.2161462641
-		temp_wd/vignette/iraptus_5 28.3357045262
-		temp_wd/vignette/iraptus_6 27.8283315219
-		temp_wd/vignette/iraptus_7 29.5501918256
-		temp_wd/vignette/iraptus_8 28.8286674831
-		temp_wd/vignette/iraptus_9 27.5537168228
+temp_wd/vignette/iraptus_0 4.2500737306
+temp_wd/vignette/iraptus_1 4.491881125
+temp_wd/vignette/iraptus_2 4.5922921796
+temp_wd/vignette/iraptus_3 4.6481258415
+temp_wd/vignette/iraptus_4 4.8540334937
+temp_wd/vignette/iraptus_5 5.1935628625
+temp_wd/vignette/iraptus_6 4.3853448496
+temp_wd/vignette/iraptus_7 3.9447901711
+temp_wd/vignette/iraptus_8 4.2443830458
+temp_wd/vignette/iraptus_9 4.2815212007
+
 
 **Interpretation**.
 Sigma is the SD of the gaussian dispersal kernel. The distance to a random parent is root-2 * sigma.
@@ -285,3 +286,4 @@ To Do:
 - find some data that are better than halibut
 - random number seeds currently not working
 - separate training and test sims internally, automatically, using disperseNN.
+B
