@@ -246,7 +246,7 @@ def load_network():
         filter_size = 20 + 44*(i+1)
         CONV_LAYERS.append(tf.keras.layers.Conv1D(filter_size, kernel_size=conv_kernal_size, activation="relu", name="CONV_"+str(i)))
     DENSE_0 = tf.keras.layers.Dense(filter_size, activation="relu", name="DENSE_0") # matching size of final conv layer
-    DENSE_1 = tf.keras.layers.Dense(args.pairs_estimate, activation="relu", name="DENSE_1")
+    DENSE_1 = tf.keras.layers.Dense(filter_size, activation="relu", name="DENSE_1")
 
     # convolutions for each pair
     hs = []
