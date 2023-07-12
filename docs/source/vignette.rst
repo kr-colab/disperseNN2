@@ -114,8 +114,8 @@ Last, build a .locs file:
 
 .. code-block:: bash
 
-		count=$(zcat temp_wd/vignette/iraptus.vcf.gz | grep -v "##" | grep "#" | wc -w)
-		for i in $(seq 10 $count); do id=$(zcat temp_wd/vignette/iraptus.vcf.gz | grep -v "##" | grep "#" | cut -f $i); grep -w $id temp_wd/vignette/iraptus.csv; done | cut -d "," -f 4,5 | sed s/","/"\t"/g > temp_wd/vignette/iraptus.locs
+		count=$(cat temp_wd/vignette/iraptus.vcf | grep -v "##" | grep "#" | wc -w)
+		for i in $(seq 10 $count); do id=$(cat temp_wd/vignette/iraptus.vcf | grep -v "##" | grep "#" | cut -f $i); grep -w $id temp_wd/vignette/iraptus.csv; done | cut -d "," -f 4,5 | sed s/","/"\t"/g > temp_wd/vignette/iraptus.locs
 
 This filtering results in 1951 SNPs from 95 individuals. We will take 10 repeated samples from each tree sequence, to get a total of 1,000 training datasets (100 tree sequences :math:`\times` 10 samples from each). Our strategy for doing this involves 10 different preprocess commands, each with a different random number seed, which can be run in parallel.
 
