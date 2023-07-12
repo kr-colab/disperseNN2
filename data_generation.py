@@ -358,7 +358,7 @@ class DataGenerator(tf.keras.utils.Sequence):
         X1 = np.empty((self.batch_size, self.num_snps, self.n), dtype="int8")  # genos       
         X2 = np.empty((self.batch_size, 2, self.n), dtype=float)  # locs                  
         y = np.empty((self.batch_size, ), dtype=float)  # targets      
-        
+
         for i, ID in enumerate(list_IDs_temp):
             y[i] = np.load(self.targets[ID])
             # sample snps from preprocessed table

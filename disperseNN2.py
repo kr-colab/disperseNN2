@@ -197,6 +197,7 @@ def load_network():
     # set seed, gpu
     if args.seed is not None:
         tf.random.set_seed(args.seed)
+        tf.keras.utils.set_random_seed(args.seed)
     if args.gpu != 'any':  # 'any' will search for any available GPU
         os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     else:
