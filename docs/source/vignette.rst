@@ -40,7 +40,7 @@ Below is some bash code to run the simulations using ``square.slim``.
 
    mkdir -p temp_wd/vignette/TreeSeqs
    mkdir -p temp_wd/vignette/Targets		
-   sigmas=$(python -c 'from scipy.stats import loguniform; print(*loguniform.rvs(0.4,6,size=100))')
+   sigmas=$(python -c 'from scipy.stats import loguniform; import numpy; numpy.random.seed(seed=233423); print(*loguniform.rvs(0.4,6,size=100))')
    for i in {1..100}
    do
        sigma=$(echo $sigmas | awk -v var="$i" '{print $var}')
