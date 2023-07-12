@@ -6,7 +6,7 @@ def check_params(args):
 
     # avoid overwriting saved weights or other output files
     if args.train == True:
-        if os.path.exists(args.out + "/pwConv_" + str(args.seed) + "_model.hdf5"):
+        if os.path.exists(args.out + "/Train/disperseNN2_" + str(args.seed) + "_model.hdf5"):
             print("saved model with specified output name already exists (i.e. --out)")
             exit()
         # if os.path.exists(f"{args.out}_training_mean_sd.npy"):

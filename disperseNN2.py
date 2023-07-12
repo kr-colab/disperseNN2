@@ -1,9 +1,3 @@
-# e.g. python disperseNN2/disperseNN2.py --out temp1 --num_snps 5000 --max_epochs 1000 --validation_split 0.2 --batch_size 10 --threads 1 --n 10 --mu 1e-15 --seed 12345 --tree_list ../Maps/Boxes84/tree_list.txt --target_list ../Maps/Boxes84/target_list.txt --recapitate False --mutate True --phase 1 --polarize 2 --num_samples 50 --train --learning_rate 1e-4 --grid_coarseness 50 --upsample 6 --pairs 45 --gpu_index any
-
-# notes:
-#     - learning rate 1e-3 doesn't work at all, for one sigma. Neither does 5e-4. 1e-4 works.
-#     - 4950 pairs ran for a while on 80-GB ram, with 100 encode 100 estimate, as did 4725—but they oomed eventually. Trying 4000.
-
 import os
 import argparse
 import tskit
@@ -38,12 +32,6 @@ parser.add_argument(
     action="store_true",
     default=False,
     help="create preprocessed tensors from tree sequences",
-)
-parser.add_argument(
-    "--segment",
-    action="store_true",
-    default=False,
-    help="predict number of (sigma) classes, and which class for each pixel",
 )
 parser.add_argument("--empirical", default=None,
                     help="prefix for vcf and locs")
@@ -93,10 +81,16 @@ parser.add_argument(
     help="number of replicate-draws from the genotype matrix of each sample",
 )
 parser.add_argument(
+    "--hold_out",
+    default=0,
+    type=int,
+    help="integer, the number of tree sequences to hold out for testing.",
+)
+parser.add_argument(
     "--validation_split",
     default=0.2,
     type=float,
-    help="0-1, proportion of samples to use for validation.",
+    help="proportion of training set (after holding out test data) to use for validation during training.",
 )
 parser.add_argument("--batch_size", default=1, type=int, help="batch size for training")
 parser.add_argument("--max_epochs", default=1000,
@@ -298,7 +292,7 @@ def load_network():
     for p in range(num_partitions):
         part = feature_block[:,row:row+args.pairs_estimate,:]
         row += args.pairs_estimate
-        if part.shape[1] < args.pairs_estimate: # if map dimension isn't divisible by 'size_pair_estimate'
+        if part.shape[1] < args.pairs_estimate:
             paddings = tf.constant([[0,0], [0,args.pairs_estimate-part.shape[1]], [0,0]])
             part = tf.pad(part, paddings, "CONSTANT")
         h0 = DENSE_1(part)
@@ -328,7 +322,7 @@ def load_network():
         model.load_weights(args.load_weights)
     else:
         if args.train == True and args.predict == True:
-            weights = args.out + "/pwConv_" + str(args.seed) + "_model.hdf5"
+            weights = args.out + "/Train/disperseNN2_" + str(args.seed) + "_model.hdf5"
             print("loading weights:", weights)
             model.load_weights(weights)
         elif args.predict == True:
@@ -337,7 +331,7 @@ def load_network():
 
     # callbacks
     checkpointer = tf.keras.callbacks.ModelCheckpoint(
-        filepath= args.out + "/pwConv_" + str(args.seed) + "_model.hdf5",
+        filepath= args.out + "/Train/disperseNN2_" + str(args.seed) + "_model.hdf5",
         verbose=args.keras_verbose,
         save_best_only=True,
         saveweights_only=False,
@@ -384,7 +378,6 @@ def make_generator_params_dict(
         "locs": locs,
         "num_reps": args.num_reps,
         "grid_coarseness": args.grid_coarseness,
-        "segment": args.segment,
         "sample_grid": args.sample_grid,
         "empirical_locs": empirical_locs,
     }
@@ -395,42 +388,44 @@ def make_generator_params_dict(
 
 def preprocess():
     trees = read_list(args.tree_list)
-    maps = read_list(args.target_list)
+    target_paths = read_list(args.target_list)
     total_sims = len(trees)
 
-    # loop through maps to get mean and sd          
-    if os.path.isfile(args.out+"/mean_sd.npy"):
-        meanSig,sdSig = np.load(args.out+"/mean_sd.npy")
+    # separate training and test data
+    train, test = train_test_split(np.arange(total_sims), test_size=args.hold_out)
+
+    # loop through training targets to get mean and sd          
+    if os.path.isfile(args.out+"/Train/mean_sd.npy"):
+        meanSig,sdSig = np.load(args.out+"/Train/mean_sd.npy")
     else:
         targets = []
-        for i in range(total_sims):
-            with open(maps[i]) as infile:                
+        for i in train:
+            with open(target_paths[i]) as infile:                
                 arr = np.log(float(infile.readline().strip()))
             targets.append(arr)
         meanSig = np.mean(targets)
         sdSig = np.std(targets)
-        os.makedirs(args.out, exist_ok=True)
-        np.save(args.out+"/mean_sd", [meanSig,sdSig])
+        os.makedirs(args.out+"/Train", exist_ok=True)
+        np.save(args.out+"/Train/mean_sd", [meanSig,sdSig])
 
-    # initialize generator and some things
-    os.makedirs(os.path.join(args.out,"Maps",str(args.seed)), exist_ok=True)
-    os.makedirs(os.path.join(args.out,"Genos",str(args.seed)), exist_ok=True)
-    os.makedirs(os.path.join(args.out,"Locs",str(args.seed)), exist_ok=True)
-    # params = make_generator_params_dict(
-    #     targets=None,
-    #     trees=None,
-    #     shuffle=None,
-    #     genos=None,
-    #     locs=None,
-    #     empirical_locs=locs,
-    # )
-    # training_generator = DataGenerator([None], **params)
+    # make directories
+    os.makedirs(os.path.join(args.out,"Train/Targets",str(args.seed)), exist_ok=True)
+    os.makedirs(os.path.join(args.out,"Train/Genos",str(args.seed)), exist_ok=True)
+    os.makedirs(os.path.join(args.out,"Train/Locs",str(args.seed)), exist_ok=True)
+    os.makedirs(os.path.join(args.out,"Test/Targets",str(args.seed)), exist_ok=True)
+    os.makedirs(os.path.join(args.out,"Test/Genos",str(args.seed)), exist_ok=True)
+    os.makedirs(os.path.join(args.out,"Test/Locs",str(args.seed)), exist_ok=True)    
 
     # process
     for i in range(total_sims):
-        mapfile = os.path.join(args.out,"Maps",str(args.seed),str(i)+".target")
-        genofile = os.path.join(args.out,"Genos",str(args.seed),str(i)+".genos")
-        locfile = os.path.join(args.out,"Locs",str(args.seed),str(i)+".locs")
+        if i in test:
+            split = "Test"
+        else:
+            split = "Train"
+        targetfile = os.path.join(args.out,split,"Targets",str(args.seed),str(i)+".target")
+        print(i,targetfile)
+        genofile = os.path.join(args.out,split,"Genos",str(args.seed),str(i)+".genos")
+        locfile = os.path.join(args.out,split,"Locs",str(args.seed),str(i)+".locs")
         if os.path.isfile(genofile+".npy") == False or os.path.isfile(locfile+".npy") == False:
             if args.empirical != None:
                 locs = read_locs(args.empirical + ".locs")
@@ -452,12 +447,12 @@ def preprocess():
             geno_mat, locs = training_generator.sample_ts(trees[i], args.seed) 
             np.save(genofile, geno_mat)
             np.save(locfile, locs)
-        if os.path.isfile(genofile+".npy") == True and os.path.isfile(locfile+".npy") == True: # (only add map if inputs successful)
-            if os.path.isfile(mapfile+".npy") == False:
-                with open(maps[i]) as infile:
+        if os.path.isfile(genofile+".npy") == True and os.path.isfile(locfile+".npy") == True: # (only add target if inputs successful)
+            if os.path.isfile(targetfile+".npy") == False:
+                with open(target_paths[i]) as infile:
                     target = np.log(float(infile.readline().strip()))
                 target = (target - meanSig) / sdSig
-                np.save(mapfile, target)
+                np.save(targetfile, target)
         
     return
 
@@ -470,9 +465,9 @@ def train():
 
     # read targets
     print("reading input paths", flush=True)
-    targets,genos,locs = dict_from_preprocessed(args.out, args.segment)
+    targets,genos,locs = dict_from_preprocessed(args.out+"/Train/")
     total_sims = len(targets)
-
+    
     # split into val,train sets
     sim_ids = np.arange(0, total_sims)
     train, val = train_test_split(sim_ids, test_size=args.validation_split)
@@ -517,13 +512,13 @@ def train():
 
 
 
-def pred():
+def predict():
 
     # grab mean and sd from training distribution
-    meanSig, sdSig = np.load(args.out + "/mean_sd.npy")
+    meanSig, sdSig = np.load(args.out + "/Train/mean_sd.npy")
 
     # load inputs
-    targets,genos,locs = dict_from_preprocessed(args.out, args.segment)
+    targets,genos,locs = dict_from_preprocessed(args.out+"/Test/")
     total_sims = len(targets)
 
     # organize "partition" to hand to data generator
@@ -545,10 +540,10 @@ def pred():
 
     # predict
     print("predicting")
-    os.makedirs(args.out + "/Test_" + str(args.seed), exist_ok=True)
-    if os.path.isfile(args.out + "/Test_" + str(args.seed) + "/pwConv_" + str(args.seed) + "_predictions.txt"):
+    outfile = args.out + "/Test/predictions_" + str(args.seed) + "_.txt"
+    if os.path.isfile(outfile):
         print("pred output exists; overwriting...")
-        os.remove(args.out + "/Test_" + str(args.seed) + "/pwConv_" + str(args.seed) + "_predictions.txt")
+        os.remove(outfile)
     load_dl_modules()
     model, checkpointer, earlystop, reducelr = load_network()
     for b in range(int(np.ceil(args.num_pred/args.batch_size))): # loop to alleviate memory
@@ -579,7 +574,6 @@ def empirical():
         print("length of locs file doesn't match n")
         exit()
     locs = project_locs(locs)
-    print(locs)
 
     # rescale locs
     locs = np.array(locs)
@@ -626,7 +620,7 @@ def empirical():
 def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names): 
 
     if args.empirical == None:
-        with open(args.out + "/Test_" + str(args.seed) + "/pwConv_" + str(args.seed) + "_predictions.txt", "a") as out_f:
+        with open(args.out + "/Test/predictions_" + str(args.seed) + "_.txt", "a") as out_f:
             raes = []
             for i in range(len(predictions)):
 
@@ -698,7 +692,7 @@ if args.predict == True:
     print("starting prediction pipeline")
     if args.empirical == None:
         print("predicting on simulated data")
-        pred()
+        predict()
     else:
         print("predicting on empirical data")
         empirical()

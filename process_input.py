@@ -1,5 +1,3 @@
-# upsampling target to higher def. Designed for 50x50 maps, upsampling to 500x500
-
 import numpy as np
 import sys
 from geopy import distance

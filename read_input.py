@@ -103,17 +103,15 @@ def parse_provenance(ts, param):
     return(val)
             
 # read in the training targets and input paths from a preprocessed, hierarchical folder
-def dict_from_preprocessed(path, segment):
+def dict_from_preprocessed(path):
     targets,genos,locs,counter={},{},{},0
-    for root, subdir, files in os.walk(path+"/Maps/"): # everything under Maps/
-        if subdir == []: # excluding the Maps/ folder itself
+    for root, subdir, files in os.walk(path+"/Targets/"): # everything under Targets/
+        if subdir == []: # excluding the Targets/ folder itself
             for f in files:
-                mappath = os.path.join(root, f)
-                genopath = mappath.replace("Maps", "Genos").replace("target","genos")
-                locpath = mappath.replace("Maps", "Locs").replace("target","locs")
-                if segment == True:
-                    mappath = mappath.replace("Maps", "Maps_ordinal")
-                targets[counter] = mappath
+                targetpath = os.path.join(root, f)
+                genopath = targetpath.replace("Targets", "Genos").replace("target","genos")
+                locpath = targetpath.replace("Targets", "Locs").replace("target","locs")
+                targets[counter] = targetpath
                 genos[counter] = genopath
                 locs[counter] = locpath
                 counter += 1

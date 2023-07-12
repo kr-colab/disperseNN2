@@ -38,7 +38,6 @@ class DataGenerator(tf.keras.utils.Sequence):
     locs: dict
     num_reps: int
     grid_coarseness: int
-    segment: bool
     sample_grid: int
     empirical_locs: list
 
