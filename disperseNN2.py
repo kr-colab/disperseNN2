@@ -317,17 +317,17 @@ def load_network():
     print("total params:", np.sum([np.prod(v.shape) for v in model.trainable_variables]), "\n")
 
     # load weights
-    if args.load_weights is not None:
-        print("loading saved weights")
-        model.load_weights(args.load_weights)
-    else:
-        if args.train == True and args.predict == True:
+    if args.predict == True:
+        if args.load_weights is None:
             weights = args.out + "/Train/disperseNN2_" + str(args.seed) + "_model.hdf5"
-            print("loading weights:", weights)
-            model.load_weights(weights)
-        elif args.predict == True:
-            print("where is the saved model? (via --load_weights)")
-            exit()
+            print("1")
+        else:
+            weights = args.load_weights
+            print("2")
+        print("loading weights:", weights)
+        model.load_weights(weights)
+        
+
 
     # callbacks
     checkpointer = tf.keras.callbacks.ModelCheckpoint(
@@ -635,7 +635,7 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
                 print(outline, file=out_f)
 
     else:
-        with open(args.out + "/empirical_" + str(args.seed) + "_predictions.txt", "a") as out_f:
+        with open(args.out + "/empirical_" + str(args.seed) + ".txt", "a") as out_f:
             prediction = predictions[0][0]
             prediction = (prediction * sdSig) + meanSig
             prediction = np.exp(prediction)

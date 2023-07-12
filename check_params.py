@@ -27,10 +27,8 @@ def check_params(args):
             exit()
 
     # # arguments for prediction
-    # if args.predict == True:
-    #     if args.training_params == None:
-    #         print("specify params file via --training_params")
-    #         exit()
+    #elif args.predict == True:
+     #   print("where is the saved model? (via --load_weights)")
 
     # arguments related to preprocessing
     if args.preprocess == True:
