@@ -207,8 +207,9 @@ def load_network():
             gpu.entry['memory.used'])/float(gpu.entry['memory.total']), stats)
         bestGPU = min(zip(ids, ratios), key=lambda x: x[1])[0]
         os.environ['CUDA_VISIBLE_DEVICES'] = str(bestGPU)
-    tf.config.threading.set_intra_op_parallelism_threads(args.threads)
-    tf.config.threading.set_inter_op_parallelism_threads(args.threads)
+    threads = int(np.floor(args.threads/2)) # in practice it uses double the specified threads
+    tf.config.threading.set_intra_op_parallelism_threads(threads) # limits (and sets) threads used during training
+    tf.config.threading.set_inter_op_parallelism_threads(threads) # this one is needed too.
     gpu_devices = tf.config.experimental.list_physical_devices('GPU')
     for gpu in gpu_devices:
         tf.config.experimental.set_memory_growth(gpu, True)
@@ -370,7 +371,6 @@ def make_generator_params_dict(
         "n": args.n,
         "batch_size": args.batch_size,
         "mu": args.mu,
-        "threads": args.threads,
         "shuffle": shuffle,
         "rho": args.rho,
         "baseseed": args.seed,
@@ -503,27 +503,14 @@ def train():
     load_dl_modules()
     model, checkpointer, earlystop, reducelr = load_network()
     print("training!")
-    history = model.fit_generator(
-        generator=training_generator,
-        use_multiprocessing=False,
+    history = model.fit( 
+        x=training_generator,
         epochs=args.max_epochs,
-        shuffle=False, # (redundant with shuffling inside generator)
+        shuffle=False,  # (redundant with shuffling inside the generator)
         verbose=args.keras_verbose,
         validation_data=validation_generator,
         callbacks=[checkpointer, earlystop, reducelr],
-    )
-
-    # try out this version again?
-    # history = model.fit( 
-    #     x=training_generator,
-    #     use_multiprocessing=True,
-    #     workers=args.threads,
-    #     epochs=args.max_epochs,
-    #     shuffle=False,  # (redundant with shuffling inside the generator)
-    #     verbose=args.keras_verbose,
-    #     validation_data=validation_generator,
-    #     callbacks=[checkpointer, earlystop, reducelr],
-    # )
+    ) # multi-threading, here, is controlled by tf.config.threading.set_intra_op_parallelism_threads
 
     return
 
@@ -568,10 +555,10 @@ def pred():
         simids_batch = simids[b*args.batch_size:(b+1)*args.batch_size]
         partition["prediction"] = np.array(simids_batch)
         generator = DataGenerator(partition["prediction"], **params)
-        predictions = model.predict_generator(generator)
+        predictions = model.predict(generator)
         unpack_predictions(predictions, meanSig, sdSig,
                            targets, simids_batch, targets)
-
+        
     return
 
 

@@ -25,7 +25,6 @@ class DataGenerator(tf.keras.utils.Sequence):
     n: int
     batch_size: int
     mu: float
-    threads: int
     shuffle: bool
     rho: float
     baseseed: int
