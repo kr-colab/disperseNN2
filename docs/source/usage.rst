@@ -190,8 +190,7 @@ Below is an example command for the training step.
 		       --pairs 45 \
 		       --pairs_encode 45 \
 		       --pairs_estimate 45 \
-		       --gpu -1 \
-		       > temp_wd/output_dir/training_history.txt
+		       --gpu -1
 
 - ``--train``: tells ``disperseNN2`` to train a neural network
 - ``--max_epochs``: maximum number of epochs to train for.
@@ -204,7 +203,7 @@ Below is an example command for the training step.
 - ``--pairs_estimate``: the number of pairs to include in the estimator portion of the neural network.
 - ``--gpu``: as an integer, specifies the GPU index (e.g., 0, 1, etc). "any" means take any available gpu. -1 means no GPU.
 
-This command will print the training progress to stdout, which was redirected to ``temp_wd/output_dir/training_history.txt`` in this example.
+This command will print the training progress to stdout.
 The model weights are saved to ``<out>/out_12345_model.hdf5``.
 In practice, you will need a training set of maybe 50,000, and you will likely want to train for longer than 10 epochs.
 A single thread should be sufficient for reading preprocessed training data, but you might try up to 10 threads. 
