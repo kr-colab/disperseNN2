@@ -182,7 +182,7 @@ Below is an example command for the training step.
 		       --num_snps 1951 \
 		       --max_epochs 25 \
 		       --validation_split 0.2 \
-		       --batch_size 1 \
+		       --batch_size 10 \
 		       --threads 1 \
 		       --seed 12345 \
 		       --n 10 \
