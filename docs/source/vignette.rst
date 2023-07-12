@@ -163,7 +163,6 @@ In the below ``disperseNN2`` training command, we set the number of pairs to 100
                 python disperseNN2.py \
                        --out temp_wd/vignette/output_dir \
                        --train \
-                       --preprocessed \
                        --num_snps 1951 \
                        --max_epochs 20 \
                        --validation_split 0.2 \
@@ -200,7 +199,6 @@ Next, we will validate the trained model on simulated test data. In a real appli
                 python disperseNN2.py \
                        --out temp_wd/vignette/output_dir \
                        --predict \
-                       --preprocessed \
                        --num_snps 1951 \
                        --batch_size 10 \
                        --threads 1 \

@@ -179,7 +179,6 @@ Below is an example command for the training step.
 		python disperseNN2.py \
 		       --out Examples/Preprocessed \
 		       --train \
-		       --preprocessed \
 		       --num_snps 1951 \
 		       --max_epochs 25 \
 		       --validation_split 0.2 \
@@ -195,7 +194,6 @@ Below is an example command for the training step.
 		       > temp_wd/output_dir/training_history.txt
 
 - ``--train``: tells ``disperseNN2`` to train a neural network
-- ``--preprocessed``: tells ``disperseNN2`` to use already-preprocessed data, which it looks for in the ``--out`` directory.
 - ``--max_epochs``: maximum number of epochs to train for.
 - ``--validation_split``: the proportion of training data held out for validation between batches for hyperparameter tuning. We use 0.2.
 - ``--batch_size``: we find that batch_size=10 works well.
@@ -230,7 +228,6 @@ If you want to predict :math:`\sigma` from simulated data, a predict command lik
 		python disperseNN2.py \
 		       --out Examples/Preprocessed \
 		       --predict \
-		       --preprocessed \
 		       --num_snps 1951 \
 		       --batch_size 10 \
 		       --threads 1 \
