@@ -207,7 +207,7 @@ Below is an example command for the training step.
 - ``--gpu``: as an integer, specifies the GPU index (e.g., 0, 1, etc). "any" means take any available gpu. -1 means no GPU.
 
 This command will print the training progress to stdout, which was redirected to ``temp_wd/output_dir/training_history.txt`` in this example.
-The model weights are saved to ``temp_wd/output_dir/out_12345_model.hdf5``.
+The model weights are saved to ``<out>/out_12345_model.hdf5``.
 In practice, you will need a training set of maybe 50,000, and you will likely want to train for longer than 10 epochs.
 A single thread should be sufficient for reading preprocessed training data, but you might try up to 10 threads. 
 
@@ -246,7 +246,7 @@ If you want to predict :math:`\sigma` from simulated data, a predict command lik
 - ``--load_weights``: loads in saved weights from an already-trained model
 - ``--num_pred``: number of datasets to predict with.
 
-This will generate a file called ``Examples/Preprocessed/Test_12345/pwConv_12345_predictions.txt`` containing: (TO DO: random number seeds aren't reproducible):
+This will generate a file called ``<out>/Test_<seed>/pwConv_<seed>_predictions.txt`` containing: (TO DO: random number seeds aren't reproducible):
 
 .. code-block:: bash
 
@@ -298,7 +298,7 @@ Finally, for predicting with empirical data:
 - ``--empirical``: prefix for the empirical data. This includes the path, but without the filetype suffix. Two files must be present: a VCF and a table of lat and long. 
 - ``--num_reps``: specifies how many bootstrap replicates to perform. Each replicate takes a random draw of num_snps SNPs from the VCF.
 
-The output is in kilometers can be found in ``Examples/Preprocessed/empirical_12345_predictions.txt``:
+The output is in kilometers can be found in ``<out>/empirical_<seed>_predictions.txt``:
 
 .. code-block:: bash
 

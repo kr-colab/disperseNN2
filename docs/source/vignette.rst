@@ -257,16 +257,16 @@ The final empirical results are stored in: ``temp_wd/vignette/output_dir/empiric
 
 .. code-block:: bash
 
-temp_wd/vignette/iraptus_0 4.2500737306
-temp_wd/vignette/iraptus_1 4.491881125
-temp_wd/vignette/iraptus_2 4.5922921796
-temp_wd/vignette/iraptus_3 4.6481258415
-temp_wd/vignette/iraptus_4 4.8540334937
-temp_wd/vignette/iraptus_5 5.1935628625
-temp_wd/vignette/iraptus_6 4.3853448496
-temp_wd/vignette/iraptus_7 3.9447901711
-temp_wd/vignette/iraptus_8 4.2443830458
-temp_wd/vignette/iraptus_9 4.2815212007
+		temp_wd/vignette/iraptus_0 4.2500737306
+		temp_wd/vignette/iraptus_1 4.491881125
+		temp_wd/vignette/iraptus_2 4.5922921796
+		temp_wd/vignette/iraptus_3 4.6481258415
+		temp_wd/vignette/iraptus_4 4.8540334937
+		temp_wd/vignette/iraptus_5 5.1935628625
+		temp_wd/vignette/iraptus_6 4.3853448496
+		temp_wd/vignette/iraptus_7 3.9447901711
+		temp_wd/vignette/iraptus_8 4.2443830458
+		temp_wd/vignette/iraptus_9 4.2815212007
 
 
 **Interpretation**.
