@@ -37,7 +37,6 @@ class DataGenerator(tf.keras.utils.Sequence):
     polarize: int
     genos: dict
     locs: dict
-    preprocessed: bool
     num_reps: int
     grid_coarseness: int
     segment: bool
