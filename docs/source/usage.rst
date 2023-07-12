@@ -63,13 +63,13 @@ The simulation script we use to train ``disperseNN2`` is ``SLiM_recipes/square.s
 		
 		slim -d SEED=12345 \
 		     -d sigma=0.2 \
-		     -d K=5 \
+		     -d K=10 \
 		     -d r=1e-8 \
 		     -d W=50 \
 		     -d G=1e8 \
 		     -d maxgens=1000 \
 		     -d OUTNAME="'temp_wd/TreeSeqs/my_sequence'" \
-		     SLiM_recipes/bat20.slim \
+		     SLiM_recipes/square.slim \
 		     # Note the two sets of quotes around the output name
 		
 Command line arguments are passed to ``SLiM`` using the ``-d`` flag followed by the variable name as it appears in the recipe file.
