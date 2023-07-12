@@ -40,12 +40,6 @@ parser.add_argument(
     help="create preprocessed tensors from tree sequences",
 )
 parser.add_argument(
-    "--preprocessed",
-    action="store_true",
-    default=False,
-    help="use preprocessed tensors, rather than tree sequences, as input",
-)
-parser.add_argument(
     "--segment",
     action="store_true",
     default=False,
@@ -62,9 +56,6 @@ parser.add_argument(
     help="crop a fixed width from each edge of the map; enter 'sigma' to set edge_width equal to sigma",
     default=0,
     type=str,
-)
-parser.add_argument(
-    "--sampling_width", help="width of sampling area (-1 for random sampling width)", default=1.0, type=float,
 )
 parser.add_argument(
     "--num_snps",
@@ -386,13 +377,11 @@ def make_generator_params_dict(
         "recapitate": args.recapitate,
         "skip_mutate": args.skip_mutate,
         "crop": args.crop,
-        "sampling_width": args.sampling_width,
         "edge_width": args.edge_width,
         "phase": args.phase,
         "polarize": args.polarize,
         "genos": genos,
         "locs": locs,
-        "preprocessed": args.preprocessed,
         "num_reps": args.num_reps,
         "grid_coarseness": args.grid_coarseness,
         "segment": args.segment,
@@ -402,109 +391,82 @@ def make_generator_params_dict(
     return params
 
 
-def prep_trees_and_train():
 
-    # tree sequences
-    print("reading trees from:", args.tree_list, flush=True)
-    trees = read_dict(args.tree_list)
+
+def preprocess():
+    trees = read_list(args.tree_list)
+    maps = read_list(args.target_list)
     total_sims = len(trees)
 
-    # read targets                                                                 
-    print("reading targets from:", args.target_list, flush=True)
-    targets = []
-    target_files = read_dict(args.target_list)
-    for i in range(total_sims):
-        with open(target_files[i]) as infile:
-            arr = float(infile.readline().strip())
-        targets.append(np.log(arr))
-
-    # normalize targets                                                               
-    meanSig = np.mean(targets)
-    sdSig = np.std(targets)
-    np.save(f"{args.out}_training_params", [
-            meanSig, sdSig, args.n, args.num_snps])
-    targets = [(x - meanSig) / sdSig for x in targets]  # center and scale
-    targets = dict_from_list(targets)    
-    
-    # split into val,train sets
-    sim_ids = np.arange(0, total_sims)
-    train, val = train_test_split(sim_ids, test_size=args.validation_split)
-    if len(val)*args.num_samples % args.batch_size != 0 or len(train)*args.num_samples % args.batch_size != 0:
-        print(
-            "\n\ntrain and val sets each need to be divisible by batch_size; otherwise some batches will have missing data\n\n"
-        )
-        exit()
-
-    # organize "partitions" to hand to data generator
-    partition = {}
-    partition["train"] = []
-    partition["validation"] = []
-    for i in train:
-        for j in range(args.num_samples):
-            partition["train"].append(i)
-    for i in val:
-        for j in range(args.num_samples):
-            partition["validation"].append(i)
-
-    # empirical locations   # ADAPT TO VARYING MAP WIDTHS?
-    if args.empirical != None:
-        locs = read_locs(args.empirical + ".locs")
-        if len(locs) != args.n:
-            print("length of locs file doesn't match n")
-            exit()
-        locs = project_locs(locs, trees[0]) # *** ASSUMES FIXED MAP WIDTH ***
+    # loop through maps to get mean and sd          
+    if os.path.isfile(args.out+"/mean_sd.npy"):
+        meanSig,sdSig = np.load(args.out+"/mean_sd.npy")
     else:
-        locs = []
+        targets = []
+        for i in range(total_sims):
+            with open(maps[i]) as infile:                
+                arr = np.log(float(infile.readline().strip()))
+            targets.append(arr)
+        meanSig = np.mean(targets)
+        sdSig = np.std(targets)
+        os.makedirs(args.out, exist_ok=True)
+        np.save(args.out+"/mean_sd", [meanSig,sdSig])
 
-    # initialize generators
-    params = make_generator_params_dict(
-        targets=targets,
-        trees=trees,
-        shuffle=True,
-        genos=None,
-        locs=None,
-        empirical_locs=locs,
-    )
-    training_generator = DataGenerator(partition["train"], **params)
-    validation_generator = DataGenerator(partition["validation"], **params)
-
-    # train
-    load_dl_modules()
-    model, checkpointer, earlystop, reducelr = load_network()
-    print("training!")
-
-
-
-
-
-    ######################## not sure which one of these is ideal? I was trying to address it using too much memory when I messed with it.
-    # # option A
-    history = model.fit(
-        x=training_generator,
-        use_multiprocessing=True,
-        workers=args.threads,
-        epochs=args.max_epochs,
-        shuffle=False,  # (redundant with shuffling inside the generator)
-        verbose=args.keras_verbose,
-        validation_data=validation_generator,
-        callbacks=[checkpointer, earlystop, reducelr],
-    )
-
-    # # option B
-    # history = model.fit_generator(
-    #     generator=training_generator,
-    #     use_multiprocessing=False,
-    #     epochs=args.max_epochs,
-    #     shuffle=False,  # (redundant with shuffling inside the generator) 
-    #     verbose=args.keras_verbose,
-    #     validation_data=validation_generator,
-    #     callbacks=[checkpointer, earlystop, reducelr],
+    # initialize generator and some things
+    os.makedirs(os.path.join(args.out,"Maps",str(args.seed)), exist_ok=True)
+    os.makedirs(os.path.join(args.out,"Genos",str(args.seed)), exist_ok=True)
+    os.makedirs(os.path.join(args.out,"Locs",str(args.seed)), exist_ok=True)
+    # params = make_generator_params_dict(
+    #     targets=None,
+    #     trees=None,
+    #     shuffle=None,
+    #     genos=None,
+    #     locs=None,
+    #     empirical_locs=locs,
     # )
+    # training_generator = DataGenerator([None], **params)
 
+    # process
+    for i in range(total_sims):
+        mapfile = os.path.join(args.out,"Maps",str(args.seed),str(i)+".target")
+        genofile = os.path.join(args.out,"Genos",str(args.seed),str(i)+".genos")
+        locfile = os.path.join(args.out,"Locs",str(args.seed),str(i)+".locs")
+        if os.path.isfile(genofile+".npy") == False or os.path.isfile(locfile+".npy") == False:
+            if args.empirical != None:
+                locs = read_locs(args.empirical + ".locs")
+                if len(locs) != args.n:
+                    print("length of locs file doesn't match n")
+                    exit()
+                locs = project_locs(locs, trees[i])
+            else:
+                locs = []
+            params = make_generator_params_dict(
+                targets=None,
+                trees=None,
+                shuffle=None,
+                genos=None,
+                locs=None,
+                empirical_locs=locs,
+            )
+            training_generator = DataGenerator([None], **params)                        
+            geno_mat, locs = training_generator.sample_ts(trees[i], args.seed) 
+            np.save(genofile, geno_mat)
+            np.save(locfile, locs)
+        if os.path.isfile(genofile+".npy") == True and os.path.isfile(locfile+".npy") == True: # (only add map if inputs successful)
+            if os.path.isfile(mapfile+".npy") == False:
+                with open(maps[i]) as infile:
+                    target = np.log(float(infile.readline().strip()))
+                target = (target - meanSig) / sdSig
+                np.save(mapfile, target)
+        
     return
 
 
-def prep_preprocessed_and_train():
+
+
+
+
+def train():
 
     # read targets
     print("reading input paths", flush=True)
@@ -551,12 +513,24 @@ def prep_preprocessed_and_train():
         callbacks=[checkpointer, earlystop, reducelr],
     )
 
+    # try out this version again?
+    # history = model.fit( 
+    #     x=training_generator,
+    #     use_multiprocessing=True,
+    #     workers=args.threads,
+    #     epochs=args.max_epochs,
+    #     shuffle=False,  # (redundant with shuffling inside the generator)
+    #     verbose=args.keras_verbose,
+    #     validation_data=validation_generator,
+    #     callbacks=[checkpointer, earlystop, reducelr],
+    # )
+
     return
 
 
 
 
-def prep_preprocessed_and_pred():
+def pred():
 
     # grab mean and sd from training distribution
     meanSig, sdSig = np.load(args.out + "/mean_sd.npy")
@@ -601,74 +575,8 @@ def prep_preprocessed_and_pred():
     return
 
 
-def prep_trees_and_pred(): 
 
-    # grab mean and sd from training distribution
-    meanSig, sdSig = np.load(args.out + "/mean_sd.npy")
-
-    # tree sequences                                                              
-    print("reading trees from:", args.tree_list, flush=True)
-    trees = read_dict(args.tree_list)
-    total_sims = len(trees)
-
-    # read targets                                                                
-    print("reading targets from tree sequences: this should take several minutes")
-    targets = []
-    target_files = read_dict(args.target_list)
-    for i in range(total_sims):
-        with open(target_files[i]) as infile:
-            arr = float(infile.readline().strip())
-        targets.append(np.log(arr))
-
-    # (don't need to normalize targets, or split train/val, because predicting)
-
-    # organize "partition" to hand to data generator
-    partition = {}
-    if args.num_pred == None:
-        args.num_pred = int(total_sims)
-    simids = np.random.choice(np.arange(total_sims),
-                              args.num_pred, replace=False)
-    partition["prediction"] = list(simids)
-
-    # empirical locations   # ADAPT TO VARYING MAP WIDTHS?
-    if args.empirical != None:
-        locs = read_locs(args.empirical + ".locs")
-        if len(locs) != args.n:
-            print("length of locs file doesn't match n")
-            exit()
-        locs = project_locs(locs, trees[0]) # *** ASSUMES FIXED MAP WIDTH ***
-    else:
-        locs = []
-
-    # get generator ready
-    params = make_generator_params_dict(
-        targets=[None]*total_sims,
-        trees=trees,
-        shuffle=False,
-        genos=None,
-        locs=None,
-        empirical_locs=locs,
-    )
-    generator = DataGenerator(partition["prediction"], **params)
-
-    # predict
-    load_dl_modules()
-    model, checkpointer, earlystop, reducelr = load_network()
-    print("predicting")
-    predictions = model.predict_generator(generator)
-    unpack_predictions(predictions, meanSig, sdSig, targets, simids, trees)
-
-    return
-
-
-
-
-
-
-
-
-
-def prep_empirical_and_pred():
+def empirical():
 
     # load mean and sd from training
     if os.path.isfile(args.out+"/mean_sd.npy"):
@@ -728,9 +636,6 @@ def prep_empirical_and_pred():
 
 
 
-
-
-
 def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names): 
 
     if args.empirical == None:
@@ -761,73 +666,6 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
     return
 
 
-def preprocess_trees():
-    trees = read_list(args.tree_list)
-    maps = read_list(args.target_list)
-    total_sims = len(trees)
-
-    # loop through maps to get mean and sd          
-    if os.path.isfile(args.out+"/mean_sd.npy"):
-        meanSig,sdSig = np.load(args.out+"/mean_sd.npy")
-    else:
-        targets = []
-        for i in range(total_sims):
-            with open(maps[i]) as infile:                
-                arr = np.log(float(infile.readline().strip()))
-            targets.append(arr)
-        meanSig = np.mean(targets)
-        sdSig = np.std(targets)
-        os.makedirs(args.out, exist_ok=True)
-        np.save(args.out+"/mean_sd", [meanSig,sdSig])
-
-    # initialize generator and some things
-    os.makedirs(os.path.join(args.out,"Maps",str(args.seed)), exist_ok=True)
-    os.makedirs(os.path.join(args.out,"Genos",str(args.seed)), exist_ok=True)
-    os.makedirs(os.path.join(args.out,"Locs",str(args.seed)), exist_ok=True)
-    # params = make_generator_params_dict(
-    #     targets=None,
-    #     trees=None,
-    #     shuffle=None,
-    #     genos=None,
-    #     locs=None,
-    #     empirical_locs=locs,
-    # )
-    # training_generator = DataGenerator([None], **params)
-
-    # preprocess
-    for i in range(total_sims):
-        mapfile = os.path.join(args.out,"Maps",str(args.seed),str(i)+".target")
-        genofile = os.path.join(args.out,"Genos",str(args.seed),str(i)+".genos")
-        locfile = os.path.join(args.out,"Locs",str(args.seed),str(i)+".locs")
-        if os.path.isfile(genofile+".npy") == False or os.path.isfile(locfile+".npy") == False:
-            if args.empirical != None:
-                locs = read_locs(args.empirical + ".locs")
-                if len(locs) != args.n:
-                    print("length of locs file doesn't match n")
-                    exit()
-                locs = project_locs(locs, trees[i])
-            else:
-                locs = []
-            params = make_generator_params_dict(
-                targets=None,
-                trees=None,
-                shuffle=None,
-                genos=None,
-                locs=None,
-                empirical_locs=locs,
-            )
-            training_generator = DataGenerator([None], **params)                        
-            geno_mat, locs = training_generator.sample_ts(trees[i], args.seed) 
-            np.save(genofile, geno_mat)
-            np.save(locfile, locs)
-        if os.path.isfile(genofile+".npy") == True and os.path.isfile(locfile+".npy") == True: # (only add map if inputs successful)
-            if os.path.isfile(mapfile+".npy") == False:
-                with open(maps[i]) as infile:
-                    target = np.log(float(infile.readline().strip()))
-                target = (target - meanSig) / sdSig
-                np.save(mapfile, target)
-        
-    return
 
 
 
@@ -856,17 +694,12 @@ def plot_history():
 # pre-process
 if args.preprocess == True:
     print("starting pre-processing pipeline")
-    preprocess_trees()
+    preprocess()
 
 # train
 if args.train == True:
     print("starting training pipeline")
-    if args.preprocessed == False:
-        print("using tree sequences")
-        prep_trees_and_train()
-    else:
-        print("using pre-processed tensors")
-        prep_preprocessed_and_train()
+    train()
 
 # plot training history               
 if args.plot_history:
@@ -877,12 +710,7 @@ if args.predict == True:
     print("starting prediction pipeline")
     if args.empirical == None:
         print("predicting on simulated data")
-        if args.preprocessed == True:
-            print("using pre-processed tensors")
-            prep_preprocessed_and_pred()
-        else:
-            print("using tree sequences")
-            prep_trees_and_pred()
+        pred()
     else:
         print("predicting on empirical data")
-        prep_empirical_and_pred()
+        empirical()

@@ -32,7 +32,6 @@ class DataGenerator(tf.keras.utils.Sequence):
     recapitate: bool
     skip_mutate: bool
     crop: float
-    sampling_width: float
     edge_width: str
     phase: int
     polarize: int
@@ -203,27 +202,12 @@ class DataGenerator(tf.keras.utils.Sequence):
             )                                                    
         
         # crop map
-        if self.sampling_width != -1.0:
-            sample_width = (float(self.sampling_width) * W) - (edge_width * 2)
-        else:
-            sample_width = np.random.uniform(
-                0, W - (edge_width * 2)
-            ) 
+        sample_width = W - (edge_width * 2)
         sampled_inds = self.cropper(ts, W, sample_width, edge_width, alive_inds)
         failsafe = 0
-        while (
-            len(sampled_inds) < self.n
-        ):  # keep looping until you get a map with enough samples
-            if self.sampling_width != -1.0:
-                sample_width = (float(self.sampling_width) * W) - (edge_width * 2)
-            else:
-                sample_width = np.random.uniform(0, W - (edge_width * 2))
-            failsafe += 1
-            if failsafe > 100:
-                print("\tnot enough samples, killed while-loop after 100 loops")
-                sys.stdout.flush()
-                exit()
-            sampled_inds = self.cropper(ts, W, sample_width, edge_width, alive_inds)
+        if len(sampled_inds) < self.n:
+            print("\tnot enough samples, killed while-loop after 100 loops", flush=True)
+            exit()
 
         # sample individuals
         if self.sample_grid != None:
@@ -376,25 +360,16 @@ class DataGenerator(tf.keras.utils.Sequence):
         X2 = np.empty((self.batch_size, 2, self.n), dtype=float)  # locs                  
         y = np.empty((self.batch_size, ), dtype=float)  # targets      
         
-        if self.preprocessed == False:
-            for i, ID in enumerate(list_IDs_temp):
-                y[i] = self.targets[ID]
-                out = self.sample_ts(self.trees[ID], np.random.randint(1e9,size=1))
-                X1[i, :] = out[0]
-                X2[i, :] = out[1]
-            # (unindent)
-            X = [X1, X2]
-        else:
-            for i, ID in enumerate(list_IDs_temp):
-                y[i] = np.load(self.targets[ID])
-                # sample snps from preprocessed table
-                geno_mat =  np.load(self.genos[ID])
-                total_snps = geno_mat.shape[0]
-                mask = [True] * self.num_snps + [False] * (total_snps - self.num_snps)
-                np.random.shuffle(mask)
-                X1[i, :] = geno_mat[mask, 0:self.n]
-                X2[i, :] = np.load(self.locs[ID])[:,0:self.n]
-            # (unindent)
-            X = [X1, X2]
+        for i, ID in enumerate(list_IDs_temp):
+            y[i] = np.load(self.targets[ID])
+            # sample snps from preprocessed table
+            geno_mat =  np.load(self.genos[ID])
+            total_snps = geno_mat.shape[0]
+            mask = [True] * self.num_snps + [False] * (total_snps - self.num_snps)
+            np.random.shuffle(mask)
+            X1[i, :] = geno_mat[mask, 0:self.n]
+            X2[i, :] = np.load(self.locs[ID])[:,0:self.n]
+        # (unindent)
+        X = [X1, X2]
 
         return (X, y)

@@ -33,7 +33,7 @@ def check_params(args):
     #         exit()
 
     # arguments related to preprocessing
-    if args.preprocessed == True:
+    if args.preprocess == True:
         if args.num_reps > 1:
             print("can't bootstrap on preprocessed data, only tree sequences or VCF")
             exit()
@@ -42,11 +42,6 @@ def check_params(args):
     if args.train == False and args.predict == False and args.preprocess == False and args.plot_history == False:
         print("either --train or --predict or --preprocess")
         exit()
-    if args.sampling_width != "rand":
-        if float(args.sampling_width) > 1 or float(args.sampling_width) <= 0:
-            if args.sampling_width != -1.0:
-                print("sampling width as proportion, (0,1); or, say -1 to do random sampling-width")
-                exit()
     if args.predict == True and args.empirical == None:
         if args.num_pred != None:
             if args.num_pred % args.batch_size != 0:
@@ -54,16 +49,10 @@ def check_params(args):
                     "\n\npred sets each need to be divisible by batch_size; otherwise some batches will have missing data\n\n"
                 )
                 exit()
-    if args.predict == True and args.preprocessed == False  and args.empirical == None:
+    if args.predict == True and args.empirical == None:
         if args.n == None:
             print("missing sample size, via --n")
             exit()
-    if args.preprocessed == False and args.empirical == False:
-       if args.mutate == None:
-           print("specify whether or not to mutate the tree sequences")
-           exit()
-       elif args.recapitate == None:
-           print("specify whether or not to recapitate the tree sequences")
-           exit()
-
-
+    if args.edge_width != "0" and args.empirical != None:
+        print("can't specify edge width and empirical locations; at least not currently")
+        exit()
