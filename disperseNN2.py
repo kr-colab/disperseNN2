@@ -320,10 +320,8 @@ def load_network():
     if args.predict == True:
         if args.load_weights is None:
             weights = args.out + "/Train/disperseNN2_" + str(args.seed) + "_model.hdf5"
-            print("1")
         else:
             weights = args.load_weights
-            print("2")
         print("loading weights:", weights)
         model.load_weights(weights)
         
