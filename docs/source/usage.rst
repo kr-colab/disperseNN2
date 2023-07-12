@@ -180,7 +180,7 @@ Below is an example command for the training step.
 		       --out Examples/Preprocessed \
 		       --train \
 		       --num_snps 1951 \
-		       --max_epochs 25 \
+		       --max_epochs 50 \
 		       --validation_split 0.2 \
 		       --batch_size 10 \
 		       --threads 1 \
