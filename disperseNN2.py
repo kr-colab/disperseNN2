@@ -54,7 +54,7 @@ parser.add_argument(
 parser.add_argument(
     "--edge_width",
     help="crop a fixed width from each edge of the map; enter 'sigma' to set edge_width equal to sigma",
-    default=0,
+    default="0",
     type=str,
 )
 parser.add_argument(
