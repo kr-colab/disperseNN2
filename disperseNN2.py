@@ -196,7 +196,6 @@ check_params(args)
 def load_network():
     # set seed, gpu
     if args.seed is not None:
-        np.random.seed(args.seed)
         tf.random.set_seed(args.seed)
     if args.gpu != 'any':  # 'any' will search for any available GPU
         os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
@@ -690,6 +689,7 @@ def plot_history():
 
 
 ### main ###
+np.random.seed(args.seed)
 
 # pre-process
 if args.preprocess == True:
