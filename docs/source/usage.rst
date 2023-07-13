@@ -154,13 +154,13 @@ A basic preprocessing command looks like:
 
 .. note::
 
-   Simulated individuals are sampled near the empirical sample locations. Our strategy involves first projecting the latitude and longitude coordinates for each location onto a 2D surface, in kilometers. By default, the projected locations are repositioned to new, random areas of the training map before sampling individuals from those locations; this is making the assumption that the true habitat range is unknown and we want our predictions to be invariant to the position of the sampling area within the greater species distribution.
+   Simulated individuals are sampled near the empirical sample locations. Our strategy involves first projecting the latitude and longitude coordinates for each location onto a 2D surface. By default, the projected locations are repositioned to new, random areas of the training map before sampling individuals from those locations; this is making the assumption that the true habitat range is unknown and we want our predictions to be invariant to the position of the sampling area within the greater species distribution.
 
 .. Last, the spatial coordinates are rescaled to :math:`(0,1)`, preserving aspect ratio, before being shown to the neural network as input.
   
 The preprocessing step can be parallelized to some extent: a single command preprocesses all simulations serially by taking one sample of genotypes from each dataset. Independent commands can be used with different random number seeds to take multiple, pseudo-independent samples from each simulation.
 		
-The preprocessed data are saved in the directory specified by ``--out``; Subsequent outputs will also be saved in this folder.
+The preprocessed data are saved in the directory specified by ``--out``; other analysis outputs will also be saved in this folder.
 
 
 
@@ -233,18 +233,17 @@ If you want to predict :math:`\sigma` from simulated data, a predict command lik
 		       --batch_size 10 \
 		       --threads 1 \
 		       --n 10 \
-		       --seed 67890 \
+		       --seed 12345 \
 		       --pairs 45 \
 		       --pairs_encode 45 \
 		       --pairs_estimate 45 \
+		       --load_weights Examples/Preprocessed/pretrained_model.hdf5 \
 		       --num_pred 10
 
 - ``--predict``: tells ``disperseNN2`` to perform predictions
+- ``--load_weights``: loads in saved weights from an already-trained model
 - ``--num_pred``: number of datasets to predict with.
 
-.. - ``--load_weights``: loads in saved weights from an already-trained model
-
-     
 This will generate a file called ``<out>/Test_<seed>/pwConv_<seed>_predictions.txt`` containing: (TO DO: random number seeds aren't reproducible):
 
 .. code-block:: bash
@@ -287,10 +286,11 @@ Finally, for predicting with empirical data:
 		       --num_snps 1951 \
 		       --threads 1 \
 		       --n 10 \
-		       --seed 67890 \
+		       --seed 12345 \
 		       --pairs 45 \
 		       --pairs_encode 45 \
 		       --pairs_estimate 45 \
+		       --load_weights Examples/Preprocessed/pretrained_model.hdf5 \
 		       --num_reps 5
 
 - ``--empirical``: prefix for the empirical data. This includes the path, but without the filetype suffix. Two files must be present: a VCF and a table of lat and long. 
