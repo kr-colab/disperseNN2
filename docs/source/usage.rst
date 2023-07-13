@@ -200,9 +200,9 @@ Below is an example command for the training step.
 - ``--batch_size``: we find that batch_size=10 works well.
 - ``--threads``: number of threads to use during training. 
 - ``--learning_rate``: learning rate to use during training. It's scheduled to decrease by 2x every 10 epochs with no decrease in validation loss.
-- ``--pairs``: the total number of pairs to include in the analysis
-- ``--pairs_encode``: the number of pairs to include in the gradient in the encoder portion of the neural network.
-- ``--pairs_estimate``: the number of pairs to include in the estimator portion of the neural network.
+- ``--pairs``: the total number of pairs to include in the analysis. Defaults to all pairs.
+- ``--pairs_encode``: the number of pairs to include in the gradient in the encoder portion of the neural network. Default: all pairs.
+- ``--pairs_estimate``: the number of pairs to include in the estimator portion of the neural network. Default: all pairs.
 - ``--gpu``: as an integer, specifies the GPU index (e.g., 0, 1, etc). "any" means take any available gpu. -1 means no GPU.
 
 This command will print the training progress to stdout.
@@ -228,14 +228,11 @@ If you want to predict :math:`\sigma` from simulated data, a predict command lik
 
 		python disperseNN2.py \
 		       --out Examples/Preprocessed \
+                       --seed 67890 \
 		       --predict \
 		       --num_snps 1951 \
 		       --batch_size 10 \
 		       --n 10 \
-		       --seed 67890 \
-		       --pairs 45 \
-		       --pairs_encode 45 \
-		       --pairs_estimate 45 \
 		       --num_pred 10
 
 - ``--predict``: tells ``disperseNN2`` to perform predictions
@@ -283,9 +280,6 @@ Finally, for predicting with empirical data:
 		       --empirical Examples/VCFs/halibut \
 		       --num_snps 1951 \
 		       --n 10 \
-		       --pairs 45 \
-		       --pairs_encode 45 \
-		       --pairs_estimate 45 \
 		       --num_reps 5
 
 - ``--empirical``: prefix for the empirical data. This includes the path, but without the filetype suffix. Two files must be present: a VCF and a table of lat and long. 
