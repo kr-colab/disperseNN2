@@ -175,8 +175,8 @@ In the below ``disperseNN2`` training command, we set ``pairs`` to 1000; this is
                        --learning_rate 1e-4 \
                        --pairs 1000 \
                        --pairs_encode 100 \
-                       --pairs_estimate 100 \
-                       > temp_wd/vignette/output_dir/training_history.txt
+                       --pairs_estimate 100
+
 
 
 
