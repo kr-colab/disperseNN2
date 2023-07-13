@@ -558,8 +558,8 @@ def predict():
 def empirical():
 
     # load mean and sd from training
-    if os.path.isfile(args.out+"/mean_sd.npy"):
-        meanSig,sdSig = np.load(args.out+"/mean_sd.npy")
+    if os.path.isfile(args.out+"/Train/mean_sd.npy"):
+        meanSig,sdSig = np.load(args.out+"/Train/mean_sd.npy")
     else:
         print("to get mean and sd from training, give path to training directory with --out")
         exit()
