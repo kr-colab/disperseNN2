@@ -59,6 +59,7 @@ The simulation script we use to train ``disperseNN2`` is ``SLiM_recipes/square.s
 
 .. code-block:: bash
 
+		conda activate disperseNN
 		mkdir -p temp_wd/TreeSeqs
 		
 		slim -d SEED=12345 \

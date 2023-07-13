@@ -38,10 +38,11 @@ Below is some bash code to run the simulations using ``square.slim``.
 .. code-block:: bash
    :linenos:
 
+   conda activate disperseNN
    mkdir -p temp_wd/vignette/TreeSeqs
    mkdir -p temp_wd/vignette/Targets		
-   sigmas=$(python -c 'from scipy.stats import loguniform; import numpy; numpy.random.seed(seed=233423); print(*loguniform.rvs(0.4,6,size=100))')
-   for i in {1..100}
+   sigmas=$(python -c 'from scipy.stats import loguniform; import numpy; numpy.random.seed(seed=233423); print(*loguniform.rvs(0.4,6,size=110))')
+   for i in {1..110}
    do
        sigma=$(echo $sigmas | awk -v var="$i" '{print $var}')
        echo "slim -d SEED=$i -d sigma=$sigma -d K=2.5 -d r=1e-8 -d W=78 -d G=1e8 -d maxgens=1000 -d OUTNAME=\"'temp_wd/vignette/TreeSeqs/output'\" SLiM_recipes/square.slim" >> temp_wd/vignette/sim_commands.txt
@@ -65,7 +66,7 @@ And to recapitate the tree sequences output by ``SLiM``:
 
 .. code-block:: bash
 
-		for i in {1..100}
+		for i in {1..110}
 		do
 		    echo "python -c 'import tskit,msprime; \
 		                     ts=tskit.load(\"temp_wd/vignette/TreeSeqs/output_$i.trees\"); \
@@ -125,13 +126,14 @@ This filtering results in 1951 SNPs from 95 individuals. We will take 10 repeate
 		do
 		    echo "python disperseNN2.py \
 		                 --out temp_wd/vignette/output_dir \
+				 --seed $i \
 				 --preprocess \
 				 --num_snps 1951 \
 				 --n 95 \
-				 --seed $i \
 				 --tree_list temp_wd/vignette/tree_list.txt \
 				 --target_list temp_wd/vignette/target_list.txt \
-				 --empirical temp_wd/vignette/iraptus" \
+				 --empirical temp_wd/vignette/iraptus \
+				 --hold_out 10" \
 		    >> temp_wd/vignette/preprocess_commands.txt
 		done
 		parallel -j $num_threads < temp_wd/vignette/preprocess_commands.txt
@@ -156,19 +158,19 @@ This filtering results in 1951 SNPs from 95 individuals. We will take 10 repeate
 3. Training
 -----------
 
-In the below ``disperseNN2`` training command, we set the number of pairs to 1000; this is the number of pairs of individuals from each training dataset that are included in the analysis, and we chose 1000 in order to fit within available memory. The maximum number of pairs with 95 individuals would have been 4465. We've found that using 100 for ``--pairs_encode`` and ``--pairs_estimate`` works well, while reducing memory requirements. Don't forget to tack on the ``--gpu`` flag if GPUs are available.
+In the below ``disperseNN2`` training command, we set ``pairs`` to 1000; this is the number of pairs of individuals from each training dataset that are included in the analysis, and we chose 1000 to reduce the memory requirement. The maximum number of pairs with 95 individuals would have been 4465. We've found that using 100 for ``--pairs_encode`` and ``--pairs_estimate`` works well, and further reduces memory. Don't forget to tack on the ``--gpu`` flag if GPUs are available.
 
 .. code-block:: bash
 
                 python disperseNN2.py \
                        --out temp_wd/vignette/output_dir \
-                       --train \
+		       --seed 12345 \
+		       --train \
                        --num_snps 1951 \
                        --max_epochs 20 \
                        --validation_split 0.2 \
                        --batch_size 10 \
                        --threads 1 \
-                       --seed 12345 \
                        --n 95 \
                        --learning_rate 1e-4 \
                        --pairs 1000 \
@@ -207,7 +209,6 @@ Next, we will validate the trained model on simulated test data. In a real appli
                        --pairs 1000 \
                        --pairs_encode 100 \
                        --pairs_estimate 100 \
-                       --load_weights temp_wd/vignette/output_dir/pwConv_12345_model.hdf5 \
                        --num_pred 100
 		       
 .. figure:: results.png
@@ -248,7 +249,6 @@ Since we are satisfied with the performance of the model on the held-out test se
                        --pairs 1000 \
 		       --pairs_encode 100 \
                        --pairs_estimate 100 \
-                       --load_weights temp_wd/vignette/output_dir/pwConv_12345_model.hdf5 \
                        --num_reps 10
 
 The final empirical results are stored in: ``temp_wd/vignette/output_dir/empirical_12345_predictions.txt``.
@@ -282,6 +282,4 @@ We trained with only 100 generations spatial, hence the estimate reflects demogr
 
 To Do:
 - find some data that are better than halibut
-- random number seeds currently not working
-- separate training and test sims internally, automatically, using disperseNN.
-B
+
