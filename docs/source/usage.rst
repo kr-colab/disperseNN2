@@ -105,7 +105,7 @@ After running ``SLiM`` for a fixed number of generations, the simulation is stil
    Here, we have assumed a constant demographic history. If an independently inferred demographic history for your species is available, or if you want to explore different demographic histories, the recapitation step is a good place for implementing these changes. For more information see the `msprime docs <https://tskit.dev/msprime/docs/stable/ancestry.html#demography>`_.
 
 
-For planning the total number of simulations, consider the following. First, you might be able to get away with fewer simulations by taking repeated, pseudo-independent samples from each simulation. Second, if the simulations explore a large parameter space, e.g. more than	one or two free	parameters, then larger training sets may be required.	In our paper, we ran 1000 trainining simulations while varying only the dispersal rate parameter, and sampled 50 times from each	simulation (see Preprocessing, below). Last, don't forget to run extra simulations to validate your model with post training.
+For planning the total number of simulations, consider the following. First, you might be able to get away with fewer simulations by taking repeated, pseudo-independent samples from each simulation. Second, if the simulations explore a large parameter space, e.g. more than	one or two free	parameters, then larger training sets may be required.	In our paper, we ran 1000 trainining simulations while varying only the dispersal rate parameter, and sampled 50 times from each	simulation (see Preprocessing, below) to get a training set of 50,000. Last, don't forget to run extra simulations to validate your model with post training.
 
 Simulation programs other than ``SLiM`` could be used in theory. The only real requirements of ``disperseNN2`` regarding training data are: genotypes are in a 2D array, the corresponding sample locations are in a table with two columns, and the target values are saved in individual files; all as numpy arrays. 
 
@@ -132,15 +132,14 @@ A basic preprocessing command looks like:
 		
 		python disperseNN2.py \
                        --out temp_wd/output_dir \
+                       --seed 12345 \
 		       --preprocess \
                        --n 10 \
 		       --num_snps 5000 \
 		       --tree_list Examples/tree_list1.txt \
 		       --target_list Examples/target_list1.txt \
 		       --empirical Examples/VCFs/halibut \
-		       --hold_out 2 \
-		       --seed 1
-		       
+		       --hold_out 2
 
 - ``--out``: output directory
 - ``--preprocess``: this flag tells ``disperseNN2`` to preprocess the training data
@@ -180,13 +179,13 @@ Below is an example command for the training step.
 
 		python disperseNN2.py \
 		       --out Examples/Preprocessed \
+                       --seed 12345 \
 		       --train \
 		       --num_snps 1951 \
 		       --max_epochs 50 \
 		       --validation_split 0.2 \
 		       --batch_size 10 \
 		       --threads 1 \
-		       --seed 12345 \
 		       --n 10 \
 		       --learning_rate 1e-4 \
 		       --pairs 45 \
@@ -198,7 +197,7 @@ Below is an example command for the training step.
 - ``--max_epochs``: maximum number of epochs to train for.
 - ``--validation_split``: the proportion of training data held out for validation between batches for hyperparameter tuning. We use 0.2.
 - ``--batch_size``: we find that batch_size=10 works well.
-- ``--threads``: number of threads to use with the multiprocessor. 
+- ``--threads``: number of threads to use during training. 
 - ``--learning_rate``: learning rate to use during training. It's scheduled to decrease by 2x every 10 epochs with no decrease in validation loss.
 - ``--pairs``: the total number of pairs to include in the analysis
 - ``--pairs_encode``: the number of pairs to include in the gradient in the encoder portion of the neural network.
@@ -206,9 +205,9 @@ Below is an example command for the training step.
 - ``--gpu``: as an integer, specifies the GPU index (e.g., 0, 1, etc). "any" means take any available gpu. -1 means no GPU.
 
 This command will print the training progress to stdout.
-The model weights are saved to ``<out>/out_12345_model.hdf5``.
-In practice, you will need a training set of maybe 50,000, and you will likely want to train for longer than 10 epochs.
-A single thread should be sufficient for reading preprocessed training data, but you might try up to 10 threads. 
+The model weights are saved to ``<out>/Train/disperseNN2_<seed>_model.hdf5``.
+In practice, you will likely want to train for longer than 10 epochs.
+A single thread should be sufficient for reading preprocessed data, but we fonud that between 2 and 10 threads speeds up training. 
 
 
 
@@ -231,20 +230,17 @@ If you want to predict :math:`\sigma` from simulated data, a predict command lik
 		       --predict \
 		       --num_snps 1951 \
 		       --batch_size 10 \
-		       --threads 1 \
 		       --n 10 \
-		       --seed 12345 \
+		       --seed 67890 \
 		       --pairs 45 \
 		       --pairs_encode 45 \
 		       --pairs_estimate 45 \
-		       --load_weights Examples/Preprocessed/pretrained_model.hdf5 \
 		       --num_pred 10
 
 - ``--predict``: tells ``disperseNN2`` to perform predictions
-- ``--load_weights``: loads in saved weights from an already-trained model
 - ``--num_pred``: number of datasets to predict with.
 
-This will generate a file called ``<out>/Test_<seed>/pwConv_<seed>_predictions.txt`` containing: (TO DO: random number seeds aren't reproducible):
+This will generate a file called ``<out>/Test/predictions_<seed>.txt`` containing:
 
 .. code-block:: bash
 
@@ -281,22 +277,20 @@ Finally, for predicting with empirical data:
 
                 python disperseNN2.py \
 		       --out Examples/Preprocessed/ \
+                       --seed 67890 \		       
 		       --predict \
 		       --empirical Examples/VCFs/halibut \
 		       --num_snps 1951 \
-		       --threads 1 \
 		       --n 10 \
-		       --seed 12345 \
 		       --pairs 45 \
 		       --pairs_encode 45 \
 		       --pairs_estimate 45 \
-		       --load_weights Examples/Preprocessed/pretrained_model.hdf5 \
 		       --num_reps 5
 
 - ``--empirical``: prefix for the empirical data. This includes the path, but without the filetype suffix. Two files must be present: a VCF and a table of lat and long. 
 - ``--num_reps``: specifies how many bootstrap replicates to perform. Each replicate takes a random draw of num_snps SNPs from the VCF.
 
-The output is in kilometers can be found in ``<out>/empirical_<seed>_predictions.txt``:
+The output is in kilometers and can be found in ``<out>/empirical_<seed>.txt``:
 
 .. code-block:: bash
 
