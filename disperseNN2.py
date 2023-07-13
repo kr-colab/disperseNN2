@@ -421,7 +421,6 @@ def preprocess():
         else:
             split = "Train"
         targetfile = os.path.join(args.out,split,"Targets",str(args.seed),str(i)+".target")
-        print(i,targetfile)
         genofile = os.path.join(args.out,split,"Genos",str(args.seed),str(i)+".genos")
         locfile = os.path.join(args.out,split,"Locs",str(args.seed),str(i)+".locs")
         if os.path.isfile(genofile+".npy") == False or os.path.isfile(locfile+".npy") == False:

@@ -105,7 +105,7 @@ After running ``SLiM`` for a fixed number of generations, the simulation is stil
    Here, we have assumed a constant demographic history. If an independently inferred demographic history for your species is available, or if you want to explore different demographic histories, the recapitation step is a good place for implementing these changes. For more information see the `msprime docs <https://tskit.dev/msprime/docs/stable/ancestry.html#demography>`_.
 
 
-For planning the total number of simulations, consider the following. First, you might be able to get away with fewer simulations by taking repeated, pseudo-independent samples from each simulation. Second, if the simulations explore a large parameter space, e.g. more than	one or two free	parameters, then larger training sets may be required.	In our paper, we ran 1000 simulations while varying only the dispersal rate parameter, and sampled 50 times from each	simulation (see Preprocessing, below).
+For planning the total number of simulations, consider the following. First, you might be able to get away with fewer simulations by taking repeated, pseudo-independent samples from each simulation. Second, if the simulations explore a large parameter space, e.g. more than	one or two free	parameters, then larger training sets may be required.	In our paper, we ran 1000 trainining simulations while varying only the dispersal rate parameter, and sampled 50 times from each	simulation (see Preprocessing, below). Last, don't forget to run extra simulations to validate your model with post training.
 
 Simulation programs other than ``SLiM`` could be used in theory. The only real requirements of ``disperseNN2`` regarding training data are: genotypes are in a 2D array, the corresponding sample locations are in a table with two columns, and the target values are saved in individual files; all as numpy arrays. 
 
@@ -138,6 +138,7 @@ A basic preprocessing command looks like:
 		       --tree_list Examples/tree_list1.txt \
 		       --target_list Examples/target_list1.txt \
 		       --empirical Examples/VCFs/halibut \
+		       --hold_out 2 \
 		       --seed 1
 		       
 
@@ -148,6 +149,7 @@ A basic preprocessing command looks like:
 - ``--tree_list``: path to a list of filepaths to the tree sequences
 - ``--target_list``: path to list of filepaths to .txt files with the target values
 - ``--empirical``: prefix for the empirical locations. This includes the path, but without the filetype suffix, ".locs".
+- ``--hold_out``: number of tree sequences to hold out from training, to be used for testing later on (int)
 - ``--seed``: random number seed
 
 .. note::
