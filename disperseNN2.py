@@ -175,9 +175,9 @@ parser.add_argument(
 parser.add_argument("--grid_coarseness", help="TO DO", default=50, type=int)
 parser.add_argument("--sample_grid", help="coarseness of grid for grid-sampling", default=None, type=int)
 parser.add_argument("--upsample", help="number of upsample layers", default=6, type=int)
-parser.add_argument("--pairs", help="number of pairs to include in the feature block", type=int)
-parser.add_argument("--pairs_encode", help="number of pairs (<= pairs_encode) to use for gradient in the first part of the network", type=int)
-parser.add_argument("--pairs_estimate", help="average the feature block over 'pairs_encode' / 'pairs_set' sets of pairs", type=int)
+parser.add_argument("--pairs", help="number of pairs to include in the feature block", type=int, default=None)
+parser.add_argument("--pairs_encode", help="number of pairs (<= pairs_encode) to use for gradient in the first part of the network", type=int, default=None)
+parser.add_argument("--pairs_estimate", help="average the feature block over 'pairs_encode' / 'pairs_set' sets of pairs", type=int, default=None)
 
 
 args = parser.parse_args()
@@ -214,8 +214,20 @@ def load_network():
         num_conv_iterations = 0
         
     # organize pairs of individuals
+    if args.pairs == None:
+        pairs = (args.n*(args.n-1))/2
+    else:
+        pairs = args.pairs
+    if args.pairs_encode == None:
+        pairs_encode = (args.n*(args.n-1))/2
+    else:
+        pairs_encode = args.pairs_encode
+    if args.pairs_estimate == None:
+        pairs_estimate = (args.n*(args.n-1))/2
+    else:
+        pairs_estimate = args.pairs_estimate
     combinations = list(itertools.combinations(range(args.n), 2))
-    combinations = random.sample(combinations, args.pairs)
+    combinations = random.sample(combinations, pairs)
     combinations_encode = random.sample(combinations, args.pairs_encode)
     combinations = list2dict(combinations) # (using tuples as dict keys seems to work)
     combinations_encode = list2dict(combinations_encode)
@@ -237,27 +249,6 @@ def load_network():
     # convolutions for each pair
     hs = []
     ds = []
-    # for comb in combinations:
-    #     h = tf.gather(geno_input, comb, axis = 2)
-    #     if comb in combinations_encode:                                                                                      
-    #         for i in range(num_conv_iterations):                                             
-    #             h = CONV_LAYERS[i](h)
-    #             h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)            
-    #         h = tf.keras.layers.Flatten()(h)
-    #         h = DENSE_0(h)
-    #     else: # cut gradient tape on some pairs to save memory
-    #         for i in range(num_conv_iterations):
-    #             h = tf.stop_gradient(CONV_LAYERS[i](h))
-    #             h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)
-    #         h = tf.keras.layers.Flatten()(h)
-    #         h = tf.stop_gradient(DENSE_0(h))            
-    #     # (unindent)
-    #     hs.append(h)
-    #     l = tf.gather(loc_input, comb, axis = 2)
-    #     d = l[:,:,0] - l[:,:,1]
-    #     d = tf.norm(d, ord='euclidean', axis=1)
-    #     ds.append(d)
-
     for comb in combinations:
         h = tf.gather(geno_input, comb, axis = 2)
         if comb in combinations_encode:                                                                                      
@@ -281,19 +272,19 @@ def load_network():
     # reshape conv. output and locs
     h = tf.stack(hs, axis=1)
     d = tf.stack(ds, axis=1)                          
-    d = tf.keras.layers.Reshape(((args.pairs, 1)))(d) 
+    d = tf.keras.layers.Reshape(((pairs, 1)))(d) 
     feature_block = tf.keras.layers.concatenate([h,d])
     print("\nfeature block:", feature_block.shape)
 
     # loop through sets of 'pairs_set' pairs 
-    num_partitions = int(np.ceil(args.pairs / float(args.pairs_estimate)))
+    num_partitions = int(np.ceil(pairs / float(pairs_estimate)))
     row = 0
     dense_stack = []
     for p in range(num_partitions):
-        part = feature_block[:,row:row+args.pairs_estimate,:]
-        row += args.pairs_estimate
-        if part.shape[1] < args.pairs_estimate:
-            paddings = tf.constant([[0,0], [0,args.pairs_estimate-part.shape[1]], [0,0]])
+        part = feature_block[:,row:row+pairs_estimate,:]
+        row += pairs_estimate
+        if part.shape[1] < pairs_estimate:
+            paddings = tf.constant([[0,0], [0,pairs_estimate-part.shape[1]], [0,0]])
             part = tf.pad(part, paddings, "CONSTANT")
         h0 = DENSE_1(part)
         dense_stack.append(h0)
