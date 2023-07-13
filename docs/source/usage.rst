@@ -233,17 +233,18 @@ If you want to predict :math:`\sigma` from simulated data, a predict command lik
 		       --batch_size 10 \
 		       --threads 1 \
 		       --n 10 \
-		       --seed 12345 \
+		       --seed 67890 \
 		       --pairs 45 \
 		       --pairs_encode 45 \
 		       --pairs_estimate 45 \
-		       --load_weights Examples/Preprocessed/pretrained_model.hdf5 \
 		       --num_pred 10
 
 - ``--predict``: tells ``disperseNN2`` to perform predictions
-- ``--load_weights``: loads in saved weights from an already-trained model
 - ``--num_pred``: number of datasets to predict with.
 
+.. - ``--load_weights``: loads in saved weights from an already-trained model
+
+     
 This will generate a file called ``<out>/Test_<seed>/pwConv_<seed>_predictions.txt`` containing: (TO DO: random number seeds aren't reproducible):
 
 .. code-block:: bash
@@ -286,11 +287,10 @@ Finally, for predicting with empirical data:
 		       --num_snps 1951 \
 		       --threads 1 \
 		       --n 10 \
-		       --seed 12345 \
+		       --seed 67890 \
 		       --pairs 45 \
 		       --pairs_encode 45 \
 		       --pairs_estimate 45 \
-		       --load_weights Examples/Preprocessed/pretrained_model.hdf5 \
 		       --num_reps 5
 
 - ``--empirical``: prefix for the empirical data. This includes the path, but without the filetype suffix. Two files must be present: a VCF and a table of lat and long. 
