@@ -1,9 +1,10 @@
+# helper functions for processing inputs to disperseNN2
+
 import numpy as np
 import sys
 from geopy import distance
 import random
 import utm
-from matplotlib import pyplot as plt
 import tskit
 from read_input import *
 

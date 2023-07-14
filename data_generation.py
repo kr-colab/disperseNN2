@@ -8,7 +8,6 @@ import tskit
 import warnings
 from attrs import define,field
 from read_input import *
-import itertools
 import gc
 
 @define

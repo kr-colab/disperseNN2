@@ -2,7 +2,6 @@
 
 import os
 import argparse
-import tskit
 from sklearn.model_selection import train_test_split
 from check_params import *
 from read_input import *
@@ -10,12 +9,10 @@ from process_input import *
 from data_generation import DataGenerator
 import gpustat
 import itertools
+import numpy as np
 import matplotlib.pyplot as plt
-import PIL.Image as Image
-
-def load_dl_modules():
+def load_dl_modules(): # load TF only if loading input is sucessful
     print("loading bigger modules")
-    import numpy as np
     global tf
     import tensorflow as tf
     from tensorflow import keras
