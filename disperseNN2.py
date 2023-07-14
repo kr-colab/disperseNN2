@@ -505,7 +505,7 @@ def predict():
         meanSig, sdSig = np.load(args.out + "/Train/mean_sd.npy")
     else:
         meanSid, sdSig = np.load(args.training_mean_sd)
-        
+
     # load inputs
     targets,genos,locs = dict_from_preprocessed(args.out+"/Test/")
     total_sims = len(targets)
