@@ -18,17 +18,20 @@ def check_params(args):
             exit()
 
     # arguments for training
-    if args.train == True or args.predict == True:
+    if args.train == True or args.predict == True or args.empirical == True or args.preprocess == True:
         if args.num_snps == None:
             print("specify num snps via --num_snps")
             exit()
         if args.n == None:
             print("specify sample size via --n")
             exit()
+        if args.out == None:
+            print("specify output directory --out")
+            exit()
 
     # check some other param combinations
-    if args.train == False and args.predict == False and args.preprocess == False and args.plot_history == False:
-        print("either --train or --predict or --preprocess or --plot_history")
+    if args.train == False and args.predict == False and args.preprocess == False and args.plot_history == False and args.empirical == False:
+        print("either --train or --predict or --preprocess or --plot_history or --empirical")
         exit()
     if args.predict == True and args.empirical == None:
         if args.num_pred != None:
@@ -40,3 +43,5 @@ def check_params(args):
     if args.edge_width != "0" and args.empirical != None:
         print("can't specify edge width and empirical locations; at least not currently")
         exit()
+
+            

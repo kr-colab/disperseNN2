@@ -112,7 +112,7 @@ parser.add_argument(
     "--skip_mutate", action="store_true",help="skip adding mutations", default=False,
 )
 parser.add_argument(
-    "--out", help="file name stem for output", default=None, required=True
+    "--out", help="file name stem for output", default=None,
 )
 parser.add_argument("--seed", default=None, type=int, help="random seed.")
 parser.add_argument("--gpu", default="-1", type=str,
