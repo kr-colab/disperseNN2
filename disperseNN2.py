@@ -509,7 +509,7 @@ def predict():
 
     # predict
     print("predicting")
-    outfile = args.out + "/Test/predictions_" + str(args.seed) + "_.txt"
+    outfile = args.out + "/Test/predictions_" + str(args.seed) + ".txt"
     if os.path.isfile(outfile):
         print("pred output exists; overwriting...")
         os.remove(outfile)
@@ -583,7 +583,7 @@ def empirical():
 def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names): 
 
     if args.empirical == None:
-        with open(args.out + "/Test/predictions_" + str(args.seed) + "_.txt", "a") as out_f:
+        with open(args.out + "/Test/predictions_" + str(args.seed) + ".txt", "a") as out_f:
             raes = []
             for i in range(len(predictions)):
                 trueval = np.load(targets[simids[i]]) # read in normalized
