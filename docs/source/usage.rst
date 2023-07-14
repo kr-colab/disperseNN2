@@ -19,7 +19,7 @@ To use ``disperseNN2``, first install it using pip:
 
 .. code-block:: console
 
-   (.venv) $ pip install ``disperseNN2``
+   (.venv) $ pip install disperseNN2
 
 
 
@@ -57,21 +57,20 @@ Although ``disperseNN2`` is not used for running simulations, it relies on simul
 
 The simulation script we use to train ``disperseNN2`` is ``SLiM_recipes/square.slim``. This is a continuous space model where the mother-offspring distance is :math:`N(0,\sigma)` in both the :math:`x` and :math:`y` dimensions. Other details of the model are described in `Battey et al. 2020 <https://doi.org/10.1534/genetics.120.303143>`_. Below is an example simulation command:
 
-.. code-block:: bash
+.. code-block:: console
 
-		conda activate disperseNN
-		mkdir -p temp_wd/TreeSeqs
-		
-		slim -d SEED=12345 \
-		     -d sigma=0.2 \
-		     -d K=10 \
-		     -d r=1e-8 \
-		     -d W=50 \
-		     -d G=1e8 \
-		     -d maxgens=1000 \
-		     -d OUTNAME="'temp_wd/TreeSeqs/my_sequence'" \
-		     SLiM_recipes/square.slim \
-		     # Note the two sets of quotes around the output name
+		(.venv) $ conda activate disperseNN
+		(.venv) $ mkdir -p temp_wd/TreeSeqs
+		(.venv) $ slim -d SEED=12345 \
+                >              -d sigma=0.2 \     
+		> 	       -d K=10 \
+		>	       -d r=1e-8 \
+		>	       -d W=50 \
+		>	       -d G=1e8 \
+		>	       -d maxgens=1000 \
+		>	       -d OUTNAME="'temp_wd/TreeSeqs/my_sequence'" \
+		>	       SLiM_recipes/square.slim \
+		>	       # Note the two sets of quotes around the output name
 		
 Command line arguments are passed to ``SLiM`` using the ``-d`` flag followed by the variable name as it appears in the recipe file.
 
@@ -91,15 +90,15 @@ Command line arguments are passed to ``SLiM`` using the ``-d`` flag followed by 
   
 After running ``SLiM`` for a fixed number of generations, the simulation is still not complete, as many trees will likely not have coalesced still. Next you will need to finish, or "recapitate", the tree sequences. We recommend recapitating at this early stage, before training, as training can be prohibitively slow if you recapitate on-the-fly. The below code snippet in python can be used to recapitate a tree sequence:
 
-.. code-block:: python
+.. code-block:: pycon
 
-		import tskit,msprime
-		ts=tskit.load("temp_wd/TreeSeqs/my_sequence_12345.trees")
-		Ne=len(ts.individuals())
-		demography = msprime.Demography.from_tree_sequence(ts)
-		demography[1].initial_size = Ne
-		ts = msprime.sim_ancestry(initial_state=ts, recombination_rate=1e-8, demography=demography, start_time=ts.metadata["SLiM"]["cycle"],random_seed=12345)
-		ts.dump("temp_wd/TreeSeqs/my_sequence_12345_recap.trees")
+		>>> import tskit,msprime
+		>>> ts=tskit.load("temp_wd/TreeSeqs/my_sequence_12345.trees")
+		>>> Ne=len(ts.individuals())
+		>>> demography = msprime.Demography.from_tree_sequence(ts)
+		>>> demography[1].initial_size = Ne
+		>>> ts = msprime.sim_ancestry(initial_state=ts, recombination_rate=1e-8, demography=demography, start_time=ts.metadata["SLiM"]["cycle"],random_seed=12345)
+		>>> ts.dump("temp_wd/TreeSeqs/my_sequence_12345_recap.trees")
 
 .. note::
 
@@ -129,18 +128,18 @@ Doing these steps up front instaed of during training is more efficient.
 In addition, multiple samples can be taken from the same tree sequence to make the training set larger.
 A basic preprocessing command looks like:
 
-.. code-block:: bash
+.. code-block:: console
 		
-		python disperseNN2.py \
-                       --out temp_wd/output_dir \
-                       --seed 12345 \
-		       --preprocess \
-                       --n 10 \
-		       --num_snps 5000 \
-		       --tree_list Examples/tree_list1.txt \
-		       --target_list Examples/target_list1.txt \
-		       --empirical Examples/VCFs/halibut \
-		       --hold_out 2
+		(.venv) $ python disperseNN2.py \
+                >                --out temp_wd/output_dir \
+		>                --seed 12345 \
+		>		 --preprocess \
+		>                --n 10 \
+		>		 --num_snps 5000 \
+		>		 --tree_list Examples/tree_list1.txt \
+		>		 --target_list Examples/target_list1.txt \
+		>		 --empirical Examples/VCFs/halibut \
+		>		 --hold_out 2
 
 - ``--out``: output directory
 - ``--preprocess``: this flag tells ``disperseNN2`` to preprocess the training data
@@ -176,24 +175,24 @@ The preprocessed data are saved in the directory specified by ``--out``; other a
 
 Below is an example command for the training step.
 
-.. code-block:: bash
+.. code-block:: console
 
-		python disperseNN2.py \
-		       --out Examples/Preprocessed \
-                       --seed 12345 \
-		       --train \
-		       --num_snps 1951 \
-		       --max_epochs 50 \
-		       --validation_split 0.2 \
-		       --batch_size 10 \
-		       --threads 1 \
-		       --n 10 \
-		       --learning_rate 1e-4 \
-		       --pairs 45 \
-		       --pairs_encode 45 \
-		       --pairs_estimate 45 \
-		       --gpu -1 \
-		       > temp_wd/output_dir/training_history_12345.txt
+		(.venv) $ python disperseNN2.py \
+		>		 --out Examples/Preprocessed \
+		>                --seed 12345 \
+		>		 --train \
+		>		 --num_snps 1951 \
+		>		 --max_epochs 50 \
+		>		 --validation_split 0.2 \
+		>		 --batch_size 10 \
+		>		 --threads 1 \
+		>		 --n 10 \
+		>		 --learning_rate 1e-4 \
+		>		 --pairs 45 \
+		>		 --pairs_encode 45 \
+		>		 --pairs_estimate 45 \
+		>		 --gpu -1 \
+		>		 > temp_wd/output_dir/training_history_12345.txt
 
 - ``--train``: tells ``disperseNN2`` to train a neural network
 - ``--max_epochs``: maximum number of epochs to train for.
@@ -213,9 +212,9 @@ A single thread should be sufficient for reading preprocessed data, but we fonud
 
 After training has completed (or has been interrupted), the training history can be visualized using a ``disperseNN2`` functionality:
 
-.. code-block:: bash
+.. code-block:: console
 
-                python disperseNN2.py --plot_history temp_wd/output_dir/training_history_12345.txt
+                (.venv) $ python disperseNN2.py --plot_history temp_wd/output_dir/training_history_12345.txt
 
 .. figure:: training.png
    :scale: 50 %
@@ -240,24 +239,25 @@ After training has completed (or has been interrupted), the training history can
 
 If you want to predict :math:`\sigma` from simulated data, a predict command like the below one can be used:
 
-.. code-block:: bash
+.. code-block:: console
 
-		python disperseNN2.py \
-		       --out Examples/Preprocessed \
-                       --seed 67890 \
-		       --predict \
-		       --num_snps 1951 \
-		       --batch_size 10 \
-		       --n 10 \
-		       --num_pred 10
+		(.venv) $ python disperseNN2.py \
+		>		 --out Examples/Preprocessed \
+		>                --seed 67890 \
+		>		 --predict \
+		>		 --num_snps 1951 \
+		>		 --batch_size 10 \
+		>		 --n 10 \
+		>		 --num_pred 10
 
 - ``--predict``: tells ``disperseNN2`` to perform predictions
 - ``--num_pred``: number of datasets to predict with.
 
 This will generate a file called ``<out>/Test/predictions_<seed>.txt`` containing:
 
-.. code-block:: bash
+.. code-block:: console
 
+		(.venv) $ cat Examples/Preprocessed/Test/predictions_67890.txt
 		1.4369271974721274      1.9806803220508296
 		0.9820625410339322      1.186689110171824
 		1.4355382722024348      1.4655386350662676
@@ -287,24 +287,25 @@ Here, the columns list the true and predicted :math:`\sigma` for each simulation
 
 Finally, for predicting with empirical data:
 
-.. code-block:: bash
+.. code-block:: console
 
-                python disperseNN2.py \
-		       --out Examples/Preprocessed/ \
-                       --seed 67890 \		       
-		       --predict \
-		       --empirical Examples/VCFs/halibut \
-		       --num_snps 1951 \
-		       --n 10 \
-		       --num_reps 5
+                (.venv) $ python disperseNN2.py \
+                >                --out Examples/Preprocessed/ \
+		>		 --seed 67890 \		       
+		>		 --predict \
+		>		 --empirical Examples/VCFs/halibut \
+		>		 --num_snps 1951 \
+		>		 --n 10 \
+		>		 --num_reps 5
 
 - ``--empirical``: prefix for the empirical data. This includes the path, but without the filetype suffix. Two files must be present: a VCF and a table of lat and long. 
 - ``--num_reps``: specifies how many bootstrap replicates to perform. Each replicate takes a random draw of num_snps SNPs from the VCF.
 
 The output is in kilometers and can be found in ``<out>/empirical_<seed>.txt``:
 
-.. code-block:: bash
+.. code-block:: console
 
+		(.venv) $ cat Examples/Preprocessed/empirical_67890.txt
 		Examples/VCFs/halibut_0 0.2743969424
 		Examples/VCFs/halibut_1 0.2441067173
 		Examples/VCFs/halibut_2 0.2532925786
