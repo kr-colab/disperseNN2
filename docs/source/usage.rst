@@ -305,9 +305,8 @@ The output is in kilometers and can be found in ``<out>/empirical_<seed>.txt``:
 
 .. code-block:: bash
 
-		Examples/VCFs/halibut_0 0.3331666936
-		Examples/VCFs/halibut_1 0.3123447942
-		Examples/VCFs/halibut_2 0.365144078
-		Examples/VCFs/halibut_3 0.3288862183
-		Examples/VCFs/halibut_4 0.3325758717
-
+		Examples/VCFs/halibut_0 0.2743969424
+		Examples/VCFs/halibut_1 0.2441067173
+		Examples/VCFs/halibut_2 0.2532925786
+		Examples/VCFs/halibut_3 0.2990145165
+		Examples/VCFs/halibut_4 0.2740349936
