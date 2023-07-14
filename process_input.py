@@ -8,6 +8,7 @@ import utm
 import tskit
 from read_input import *
 
+
 # project sample locations
 def project_locs(locs, fp=None):
 
@@ -39,12 +40,14 @@ def project_locs(locs, fp=None):
 
     return locs
 
+
 # pad locations with zeros
 def pad_locs(locs, n):
     padded = np.zeros((2, n))
     n = locs.shape[1]
     padded[:, 0:n] = locs
     return padded
+
 
 # pre-processing rules:
 #     1 biallelic change the alelles to 0 and 1 before inputting.
@@ -191,8 +194,6 @@ def ibd(genos, coords, phase, num_snps):
     print("IBD r^2, slope, Nw:", r2, b, Nw)
 
 
-
-
 # main
 def main():
     vcf_path = sys.argv[1]
@@ -206,7 +207,6 @@ def main():
     phase = int(sys.argv[5])
     geno_mat = vcf2genos(vcf_path, n, num_snps, phase)
     np.save(outname + ".genos", geno_mat)
-
 
 if __name__ == "__main__":
     main()

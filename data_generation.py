@@ -35,16 +35,19 @@ class DataGenerator(tf.keras.utils.Sequence):
     sample_grid: int
     empirical_locs: list
 
+    
     def __attrs_post_init__(self):
         "Initialize a few things"
         self.on_epoch_end()
         np.random.seed(self.baseseed)
         warnings.simplefilter("ignore", msprime.TimeUnitsMismatchWarning) # (recapitate step)
 
+        
     def __len__(self):
         "Denotes the number of batches per epoch"
         return int(np.floor(len(self.list_IDs) / self.batch_size))
 
+    
     def __getitem__(self, index):
         "Generate one batch of data"
 
@@ -59,12 +62,14 @@ class DataGenerator(tf.keras.utils.Sequence):
 
         return X, y
 
+    
     def on_epoch_end(self):
         "Updates indexes after each epoch"
         self.indexes = np.arange(len(self.list_IDs))
         if self.shuffle == True:
             np.random.shuffle(self.indexes)
 
+            
     def cropper(self, ts, W, sample_width, edge_width, alive_inds):
         "Cropping the map, returning individuals inside sampling window"
         cropped = [] 
@@ -90,6 +95,7 @@ class DataGenerator(tf.keras.utils.Sequence):
 
         return cropped
 
+    
     def sample_ind(self, ts, sampled_inds, W, i, j):
         bin_size = W / self.sample_grid
         output_ind = None
@@ -109,6 +115,7 @@ class DataGenerator(tf.keras.utils.Sequence):
 
         return output_ind
 
+    
     def unpolarize(self, snp):
         "Change 0,1 encoding to major/minor allele. Also filter no-biallelic"
         alleles = {}                                                                          
@@ -133,6 +140,7 @@ class DataGenerator(tf.keras.utils.Sequence):
             new_genotypes = False
             
         return new_genotypes
+
     
     def empirical_sample(self, ts, sampled_inds, n, N, W):
         locs = np.array(self.empirical_locs)

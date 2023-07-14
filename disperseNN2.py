@@ -18,7 +18,6 @@ def load_dl_modules(): # load TF only if loading input is sucessful
     from tensorflow import keras
     return
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "--preprocess",
@@ -171,9 +170,6 @@ parser.add_argument("--pairs_estimate", help="average the feature block over 'pa
 
 args = parser.parse_args()
 check_params(args)
-
-
-
 
 
 def load_network():
@@ -361,8 +357,6 @@ def make_generator_params_dict(
     return params
 
 
-
-
 def preprocess():
 
     # read lists
@@ -435,10 +429,6 @@ def preprocess():
     return
 
 
-
-
-
-
 def train():
 
     # read targets
@@ -486,8 +476,6 @@ def train():
     ) # multi-threading, here, is controlled by tf.config.threading.set_intra_op_parallelism_threads
 
     return
-
-
 
 
 def predict():
@@ -592,10 +580,6 @@ def empirical():
     return
 
 
-
-
-
-
 def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names): 
 
     if args.empirical == None:
@@ -618,8 +602,6 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
             prediction = np.exp(prediction)
             prediction = np.round(prediction, 10)
             print(file_names, prediction, file=out_f)
-
-        
         
     return
 
