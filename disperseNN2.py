@@ -1,3 +1,5 @@
+# main code for disperseNN2
+
 import os
 import argparse
 import tskit
@@ -188,6 +190,7 @@ check_params(args)
 
 
 def load_network():
+
     # set seed, gpu
     if args.seed is not None:
         tf.random.set_seed(args.seed)
@@ -233,7 +236,7 @@ def load_network():
     combinations = list(itertools.combinations(range(args.n), 2))
     combinations = random.sample(combinations, pairs)
     combinations_encode = random.sample(combinations, args.pairs_encode)
-    combinations = list2dict(combinations) # (using tuples as dict keys seems to work)
+    combinations = list2dict(combinations)
     combinations_encode = list2dict(combinations_encode)
     
     # load inputs
@@ -247,8 +250,8 @@ def load_network():
     for i in range(num_conv_iterations):                                             
         filter_size = 20 + 44*(i+1)
         CONV_LAYERS.append(tf.keras.layers.Conv1D(filter_size, kernel_size=conv_kernal_size, activation="relu", name="CONV_"+str(i)))
-    DENSE_0 = tf.keras.layers.Dense(filter_size, activation="relu", name="DENSE_0") # matching size of final conv layer
-    DENSE_1 = tf.keras.layers.Dense(filter_size, activation="relu", name="DENSE_1")
+    DENSE_0 = tf.keras.layers.Dense(128, activation="relu", name="DENSE_0")
+    DENSE_1 = tf.keras.layers.Dense(128, activation="relu", name="DENSE_1")
 
     # convolutions for each pair
     hs = []
@@ -318,8 +321,6 @@ def load_network():
         print("loading weights:", weights)
         model.load_weights(weights)
         
-
-
     # callbacks
     checkpointer = tf.keras.callbacks.ModelCheckpoint(
         filepath= args.out + "/Train/disperseNN2_" + str(args.seed) + "_model.hdf5",
@@ -378,6 +379,8 @@ def make_generator_params_dict(
 
 
 def preprocess():
+
+    # read lists
     trees = read_list(args.tree_list)
     target_paths = read_list(args.target_list)
     total_sims = len(trees)
@@ -550,7 +553,6 @@ def predict():
     return
 
 
-
 def empirical():
 
     # load mean and sd from training
@@ -615,12 +617,10 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
         with open(args.out + "/Test/predictions_" + str(args.seed) + "_.txt", "a") as out_f:
             raes = []
             for i in range(len(predictions)):
-
-                # process output and read targets
                 trueval = np.load(targets[simids[i]]) # read in normalized
                 trueval = (trueval * sdSig) + meanSig
                 trueval = np.exp(trueval)
-                prediction = predictions[i][0] # (500x500) 
+                prediction = predictions[i][0] 
                 prediction = (prediction * sdSig) + meanSig 
                 prediction = np.exp(prediction)
                 outline = "\t".join(map(str,[trueval, prediction]))
@@ -637,9 +637,6 @@ def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names)
         
         
     return
-
-
-
 
 
 def plot_history():
@@ -659,7 +656,6 @@ def plot_history():
     ax1.plot(epochs, loss, color="red", lw=0.5, label='loss')
     ax1.legend()
     fig.savefig(args.plot_history+"_plot.pdf",bbox_inches='tight')
-
 
 
 ### main ###

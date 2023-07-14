@@ -31,13 +31,10 @@ def project_locs(locs, fp=None):
     if fp:
         ts = tskit.load(fp)
         W = parse_provenance(ts, 'W')
-        #print(W, lat_range, long_range)
-        left_edge = np.random.uniform(low=0, high=W-long_range) # is this right? do I want to swap lat and long, here? ***
+        left_edge = np.random.uniform(low=0, high=W-long_range) 
         bottom_edge = np.random.uniform(low=0, high=W-lat_range)
         locs[:,0] += bottom_edge
         locs[:,1] += left_edge
-
-    #print(min(locs[:,0]),max(locs[:,0]),min(locs[:,1]),max(locs[:,1]))
 
     return locs
 

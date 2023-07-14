@@ -1,4 +1,4 @@
-# data generator code for training CNN
+# data generator code for training disperseNN2
 
 import sys
 import numpy as np
@@ -9,10 +9,7 @@ import warnings
 from attrs import define,field
 from read_input import *
 import itertools
-
-#import psutil # for printing memory usage for bug                                                                                                                            
-#import os # for print memory usage
-import gc # garbage collect
+import gc
 
 @define
 class DataGenerator(tf.keras.utils.Sequence):
@@ -53,6 +50,7 @@ class DataGenerator(tf.keras.utils.Sequence):
 
     def __getitem__(self, index):
         "Generate one batch of data"
+
         # Generate indexes of the batch
         indexes = self.indexes[index * self.batch_size : (index + 1) * self.batch_size]
 
@@ -95,7 +93,6 @@ class DataGenerator(tf.keras.utils.Sequence):
 
         return cropped
 
-
     def sample_ind(self, ts, sampled_inds, W, i, j):
         bin_size = W / self.sample_grid
         output_ind = None
@@ -115,7 +112,6 @@ class DataGenerator(tf.keras.utils.Sequence):
 
         return output_ind
 
-
     def unpolarize(self, snp):
         "Change 0,1 encoding to major/minor allele. Also filter no-biallelic"
         alleles = {}                                                                          
@@ -129,7 +125,7 @@ class DataGenerator(tf.keras.utils.Sequence):
             major, minor = list(set(alleles))  # set() gives random order                     
             if alleles[major] < alleles[minor]:                                               
                 major, minor = minor, major                                                   
-            for i in range(self.n * 2):  # go back through and convert genotypes                   
+            for i in range(self.n * 2): # go back through and convert genotypes                   
                 a = snp[i]                                                           
                 if a == major:                                                                
                     new_genotype = 0                                                          
@@ -140,7 +136,6 @@ class DataGenerator(tf.keras.utils.Sequence):
             new_genotypes = False
             
         return new_genotypes
-
     
     def empirical_sample(self, ts, sampled_inds, n, N, W):
         locs = np.array(self.empirical_locs)
@@ -350,16 +345,13 @@ class DataGenerator(tf.keras.utils.Sequence):
         return geno_mat2, locs
 
 
-
     def __data_generation(self, list_IDs_temp):
         "Generates data containing batch_size samples"        
         X1 = np.empty((self.batch_size, self.num_snps, self.n), dtype="int8")  # genos       
         X2 = np.empty((self.batch_size, 2, self.n), dtype=float)  # locs                  
         y = np.empty((self.batch_size, ), dtype=float)  # targets      
-
         for i, ID in enumerate(list_IDs_temp):
             y[i] = np.load(self.targets[ID])
-            # sample snps from preprocessed table
             geno_mat =  np.load(self.genos[ID])
             total_snps = geno_mat.shape[0]
             mask = [True] * self.num_snps + [False] * (total_snps - self.num_snps)
