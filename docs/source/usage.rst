@@ -223,7 +223,7 @@ After training has completed (or has been interrupted), the training history can
 
    Plot of training history. X-axis the	training iteration, and	Y-axis is mean squared error.
 
-This plot shows	that the validation loss decreases over	time, without too much under- or over-fitting.
+
 
 		
 
