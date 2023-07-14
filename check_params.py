@@ -9,9 +9,6 @@ def check_params(args):
         if os.path.exists(args.out + "/Train/disperseNN2_" + str(args.seed) + "_model.hdf5"):
             print("saved model with specified output name already exists (i.e. --out)")
             exit()
-        if os.path.exists(args.out + "/Train/mean_sd.npy"):
-            print("saved mean and sd with specified output name already exists (i.e. --out)")
-            exit()
     if args.predict == True:
         if os.path.exists(args.out + "/Test/predictions_"  + str(args.seed) + ".txt"):
             print("saved predictions with specified output name already exists (i.e. --out + --seed)")
