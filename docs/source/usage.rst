@@ -192,7 +192,8 @@ Below is an example command for the training step.
 		       --pairs 45 \
 		       --pairs_encode 45 \
 		       --pairs_estimate 45 \
-		       --gpu -1
+		       --gpu -1 \
+		       > temp_wd/output_dir/training_history_12345.txt
 
 - ``--train``: tells ``disperseNN2`` to train a neural network
 - ``--max_epochs``: maximum number of epochs to train for.
@@ -210,8 +211,19 @@ The model weights are saved to ``<out>/Train/disperseNN2_<seed>_model.hdf5``.
 In practice, you will likely want to train for longer than 10 epochs.
 A single thread should be sufficient for reading preprocessed data, but we fonud that between 2 and 10 threads speeds up training. 
 
+After training has completed (or has been interrupted), the training history can be visualized using a ``disperseNN2`` functionality:
 
+.. code-block:: bash
 
+                python disperseNN2.py --plot_history temp_wd/output_dir/training_history_12345.txt
+
+.. figure:: training.png
+   :scale: 50 %
+   :alt: training_plot
+
+   Plot of training history.
+
+		
 
 
 
