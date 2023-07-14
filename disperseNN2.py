@@ -201,24 +201,24 @@ def load_network():
         
     # organize pairs of individuals
     if args.pairs == None:
-        pairs = (args.n*(args.n-1))/2
+        pairs = int((args.n*(args.n-1))/2)
     else:
         pairs = args.pairs
     if args.pairs_encode == None:
-        pairs_encode = (args.n*(args.n-1))/2
+        pairs_encode = int((args.n*(args.n-1))/2)
         if pairs_encode > 100:
             pairs_encode = 100
     else:
         pairs_encode = args.pairs_encode
     if args.pairs_estimate == None:
-        pairs_estimate = (args.n*(args.n-1))/2
+        pairs_estimate = int((args.n*(args.n-1))/2)
         if pairs_estimate > 100:
             pairs_estimate = 100        
     else:
         pairs_estimate = args.pairs_estimate        
     combinations = list(itertools.combinations(range(args.n), 2))
     combinations = random.sample(combinations, pairs)
-    combinations_encode = random.sample(combinations, args.pairs_encode)
+    combinations_encode = random.sample(combinations, pairs_encode)
     combinations = list2dict(combinations)
     combinations_encode = list2dict(combinations_encode)
     
