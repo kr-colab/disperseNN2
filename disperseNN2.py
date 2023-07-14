@@ -24,16 +24,16 @@ def load_dl_modules():
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--train", action="store_true", default=False, help="run training pipeline"
-)
-parser.add_argument(
-    "--predict", action="store_true", default=False, help="run prediction pipeline"
-)
-parser.add_argument(
     "--preprocess",
     action="store_true",
     default=False,
     help="create preprocessed tensors from tree sequences",
+)
+parser.add_argument(
+    "--train", action="store_true", default=False, help="run training pipeline"
+)
+parser.add_argument(
+    "--predict", action="store_true", default=False, help="run prediction pipeline"
 )
 parser.add_argument("--empirical", default=None,
                     help="prefix for vcf and locs")
@@ -115,7 +115,6 @@ parser.add_argument(
 parser.add_argument(
     "--skip_mutate", action="store_true",help="skip adding mutations", default=False,
 )
-parser.add_argument("--crop", default=None, type=float, help="map-crop size")
 parser.add_argument(
     "--out", help="file name stem for output", default=None, required=True
 )
@@ -129,12 +128,6 @@ parser.add_argument(
     default=None,
     type=str,
     help="Path to a _weights.hdf5 file to load weight from previous run.",
-)
-parser.add_argument(
-    "--load_model",
-    default=None,
-    type=str,
-    help="Path to a _model.hdf5 file to load model from previous run.",
 )
 parser.add_argument(
     "--phase",
@@ -162,9 +155,6 @@ parser.add_argument(
     type=int,
     help="num threads.",
 )
-parser.add_argument("--samplewidth_list", help="", default=None)
-parser.add_argument("--geno_list", help="", default=None)
-parser.add_argument("--loc_list", help="", default=None)
 parser.add_argument(
     "--training_mean_sd", help="sigma mean and sd from training", default=None
 )
@@ -362,13 +352,11 @@ def make_generator_params_dict(
         "baseseed": args.seed,
         "recapitate": args.recapitate,
         "skip_mutate": args.skip_mutate,
-        "crop": args.crop,
         "edge_width": args.edge_width,
         "phase": args.phase,
         "polarize": args.polarize,
         "genos": genos,
         "locs": locs,
-        "num_reps": args.num_reps,
         "grid_coarseness": args.grid_coarseness,
         "sample_grid": args.sample_grid,
         "empirical_locs": empirical_locs,

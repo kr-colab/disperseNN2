@@ -27,13 +27,11 @@ class DataGenerator(tf.keras.utils.Sequence):
     baseseed: int
     recapitate: bool
     skip_mutate: bool
-    crop: float
     edge_width: str
     phase: int
     polarize: int
     genos: dict
     locs: dict
-    num_reps: int
     grid_coarseness: int
     sample_grid: int
     empirical_locs: list
@@ -228,10 +226,7 @@ class DataGenerator(tf.keras.utils.Sequence):
         ts = ts.simplify(keep_nodes)
 
         # mutate
-        if self.num_reps == 1:
-            total_snps = self.num_snps
-        else:
-            total_snps = self.num_snps * 10 # arbitrary size of SNP table for bootstraps
+        total_snps = self.num_snps
         if self.skip_mutate == False:
             mu = float(self.mu)
             ts = msprime.sim_mutations(
