@@ -12,13 +12,13 @@ def check_params(args):
         if os.path.exists(args.out + "/Train/mean_sd.npy"):
             print("saved mean and sd with specified output name already exists (i.e. --out)")
             exit()
-    # if args.predict == True:
-    #     if os.path.exists(f"{args.out}_predictions.txt"):
-    #         print("saved predictions with specified output name already exists (i.e. --out)")
-    #         exit()
+    if args.predict == True:
+        if os.path.exists(args.out + "/Test/predictions_"  + str(args.seed) + ".txt"):
+            print("saved predictions with specified output name already exists (i.e. --out + --seed)")
+            exit()
 
     # arguments for training
-    if args.train == True:
+    if args.train == True or args.predict == True:
         if args.num_snps == None:
             print("specify num snps via --num_snps")
             exit()
@@ -26,19 +26,9 @@ def check_params(args):
             print("specify sample size via --n")
             exit()
 
-    # # arguments for prediction
-    #elif args.predict == True:
-     #   print("where is the saved model? (via --load_weights)")
-
-    # arguments related to preprocessing
-    if args.preprocess == True:
-        if args.num_reps > 1:
-            print("can't bootstrap on preprocessed data, only tree sequences or VCF")
-            exit()
-
     # check some other param combinations
     if args.train == False and args.predict == False and args.preprocess == False and args.plot_history == False:
-        print("either --train or --predict or --preprocess")
+        print("either --train or --predict or --preprocess or --plot_history")
         exit()
     if args.predict == True and args.empirical == None:
         if args.num_pred != None:
@@ -47,10 +37,6 @@ def check_params(args):
                     "\n\npred sets each need to be divisible by batch_size; otherwise some batches will have missing data\n\n"
                 )
                 exit()
-    if args.predict == True and args.empirical == None:
-        if args.n == None:
-            print("missing sample size, via --n")
-            exit()
     if args.edge_width != "0" and args.empirical != None:
         print("can't specify edge width and empirical locations; at least not currently")
         exit()
