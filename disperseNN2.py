@@ -164,7 +164,7 @@ parser.add_argument("--samplewidth_list", help="", default=None)
 parser.add_argument("--geno_list", help="", default=None)
 parser.add_argument("--loc_list", help="", default=None)
 parser.add_argument(
-    "--training_params", help="params used in training: sigma mean and sd, n, num_snps", default=None
+    "--training_mean_sd", help="sigma mean and sd from training", default=None
 )
 parser.add_argument(
     "--learning_rate",
@@ -501,8 +501,11 @@ def train():
 def predict():
 
     # grab mean and sd from training distribution
-    meanSig, sdSig = np.load(args.out + "/Train/mean_sd.npy")
-
+    if args.training_mean_sd is None:
+        meanSig, sdSig = np.load(args.out + "/Train/mean_sd.npy")
+    else:
+        meanSid, sdSig = np.load(args.training_mean_sd)
+        
     # load inputs
     targets,genos,locs = dict_from_preprocessed(args.out+"/Test/")
     total_sims = len(targets)
@@ -547,11 +550,10 @@ def predict():
 def empirical():
 
     # load mean and sd from training
-    if os.path.isfile(args.out+"/Train/mean_sd.npy"):
-        meanSig,sdSig = np.load(args.out+"/Train/mean_sd.npy")
+    if args.training_mean_sd is	None:
+        meanSig, sdSig = np.load(args.out + "/Train/mean_sd.npy")
     else:
-        print("to get mean and sd from training, give path to training directory with --out")
-        exit()
+        meanSid, sdSig = np.load(args.training_mean_sd)
 
     # project locs
     locs = read_locs(args.empirical + ".locs")
