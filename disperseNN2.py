@@ -248,32 +248,30 @@ def load_network():
 
     # convolutions for each pair
     hs = []
-    ds = []
     for comb in combinations:
         h = tf.gather(geno_input, comb, axis = 2)
+        l = tf.gather(loc_input, comb, axis = 2)
+        d = l[:,:,0] - l[:,:,1]
+        d = tf.norm(d, ord='euclidean', axis=1)
+        d = tf.keras.layers.Reshape((1,))(d)
         if comb in combinations_encode:                                                                                      
             for i in range(num_conv_iterations):                                             
                 h = CONV_LAYERS[i](h)
-                h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)            
+                h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)
+            h = tf.keras.layers.Flatten()(h)
+            h = tf.keras.layers.concatenate([h,d])            
             h = DENSE_0(h)
         else: # cut gradient tape on some pairs to save memory
             for i in range(num_conv_iterations):
                 h = tf.stop_gradient(CONV_LAYERS[i](h))
                 h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)
-            h = tf.stop_gradient(DENSE_0(h))            
-        h = tf.keras.layers.Flatten()(h)        
+            h = tf.keras.layers.Flatten()(h)
+            h = tf.keras.layers.concatenate([h,d])
+            h = tf.stop_gradient(DENSE_0(h))
+        # (unindent)
         hs.append(h)
-        l = tf.gather(loc_input, comb, axis = 2)
-        d = l[:,:,0] - l[:,:,1]
-        d = tf.norm(d, ord='euclidean', axis=1)
-        ds.append(d)
-
-        
-    # reshape conv. output and locs
-    h = tf.stack(hs, axis=1)
-    d = tf.stack(ds, axis=1)                          
-    d = tf.keras.layers.Reshape(((pairs, 1)))(d) 
-    feature_block = tf.keras.layers.concatenate([h,d])
+    # (unindent)
+    feature_block = tf.stack(hs, axis=1)
     print("\nfeature block:", feature_block.shape)
 
     # loop through sets of 'pairs_set' pairs 
