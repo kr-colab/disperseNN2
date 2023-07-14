@@ -147,6 +147,8 @@ This filtering results in 1951 SNPs from 95 individuals. We will take 10 repeate
 
 
 
+
+
    
 
 
@@ -175,8 +177,23 @@ In the below ``disperseNN2`` training command, we set ``pairs`` to 1000; this is
                        --learning_rate 1e-4 \
                        --pairs 1000 \
                        --pairs_encode 100 \
-                       --pairs_estimate 100
+                       --pairs_estimate 100 \
+		       > temp_wd/vignette/output_dir/training_history_12345.txt
 
+After the run completes, let's visualize the training history:
+
+.. code-block:: bash
+
+                python disperseNN2.py --plot_history temp_wd/vignette/output_dir/training_history_12345.txt
+		
+.. figure:: training.png
+   :scale: 50 %
+   :alt: training_plot
+
+   Plot of training history. X-axis the training iteration, and Y-axis is mean squared error.
+
+This plot shows that the validation loss decreases over time, without too much under- or over-fitting.
+		
 
 
 
