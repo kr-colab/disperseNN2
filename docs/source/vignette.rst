@@ -36,47 +36,28 @@ With values for these nuisance parameters in hand we can design custom training 
 Below is some bash code to run the simulations using ``square.slim``. 
 
 
-..
-   .. code-block:: console
-		   :linenos:
-
-		   (.venv) $ conda activate disperseNN
-		   (.venv) $ mkdir -p temp_wd/vignette/TreeSeqs
-		   (.venv) $ mkdir -p temp_wd/vignette/Targets
-		   (.venv) $ sigmas=$(python -c 'from scipy.stats import loguniform; import numpy; numpy.random.seed(seed=233423); print(*loguniform.rvs(0.4,6,size=110))')
-		   (.venv) $ for i in {1..110} \
-		   >             do \
-		   >             sigma=$(echo $sigmas | awk -v var="$i" '{print $var}') \
-		   >             echo "slim -d SEED=$i -d sigma=$sigma -d K=2.5 -d r=1e-8 -d W=78 -d G=1e8 -d maxgens=1000 -d OUTNAME=\"'temp_wd/vignette/TreeSeqs/output'\" SLiM_recipes/square.slim" >> temp_wd/vignette/sim_commands.txt \
-		   >             echo $sigma > temp_wd/vignette/Targets/target_$i.txt \
-		   >             echo temp_wd/vignette/Targets/target_$i.txt >> temp_wd/vignette/target_list.txt \
-		   >             done
-		   (.venv) $ num_threads=2 # change to number of available cores
-		   (.venv) $ parallel -j $num_threads < temp_wd/vignette/sim_commands.txt
-
-
-
-		
-.. code-block:: bash
-		:linenos:
-
-		conda activate disperseNN
-		mkdir -p temp_wd/vignette/TreeSeqs
-		mkdir -p temp_wd/vignette/Targets		
-		sigmas=$(python -c 'from scipy.stats import loguniform; import numpy; numpy.random.seed(seed=233423); print(*loguniform.rvs(0.4,6,size=110))')
-		for i in {1..110}; do
-		    sigma=$(echo $sigmas | awk -v var="$i" '{print $var}')
-		    echo "slim -d SEED=$i -d sigma=$sigma -d K=2.5 -d r=1e-8 -d W=78 -d G=1e8 -d maxgens=1000 -d OUTNAME=\"'temp_wd/vignette/TreeSeqs/output'\" SLiM_recipes/square.slim" >> temp_wd/vignette/sim_commands.txt
-		    echo $sigma > temp_wd/vignette/Targets/target_$i.txt
-		    echo temp_wd/vignette/Targets/target_$i.txt >> temp_wd/vignette/target_list.txt; done
-		num_threads=2 # change to number of available cores
-		parallel -j $num_threads < temp_wd/vignette/sim_commands.txt
+.. code-block:: console                         
+                :linenos:                       
+                                                
+                (.venv) $ conda activate disperseNN
+                (.venv) $ mkdir -p temp_wd/vignette/TreeSeqs
+                (.venv) $ mkdir -p temp_wd/vignette/Targets
+		(.venv) $ sigmas=$(python -c 'from scipy.stats import loguniform; import numpy; numpy.random.seed(seed=233423); print(*loguniform.rvs(0.4,6,size=110))')
+                (.venv) $ for i in {1..110}; do \
+                >             sigma=$(echo $sigmas | awk -v var="$i" '{print $var}'); \
+		>             echo "slim -d SEED=$i -d sigma=$sigma -d K=2.5 -d r=1e-8 -d W=78 -d G=1e8 -d maxgens=1000 -d OUTNAME=\"'temp_wd/vignette/TreeSeqs/output'\" SLiM_recipes/square.slim" >> temp_wd/vignette/sim_commands.txt; \
+		>             echo $sigma > temp_wd/vignette/Targets/target_$i.txt; \
+		>             echo temp_wd/vignette/Targets/target_$i.txt >> temp_wd/vignette/target_list.txt; \
+		>         done
+		(.venv) $ num_threads=2 # change to number of available cores
+		(.venv) $ parallel -j $num_threads < temp_wd/vignette/sim_commands.txt
 
 Breaking down this pipeline one line at a time:
 
-- L1 creates a new folder for the simulation output. The base folder ``temp_wd`` will contain all output from the current vignette.
-- L2 creates another folder for the training targets.
-- L3 draws random :math:`\sigma`\'s from a log-uniform distribution.
+- L1 activates our conda environment
+- L2 creates a new folder for the simulation output. The base folder ``temp_wd`` will contain all output from the current vignette.
+- L3 creates another folder for the training targets.
+- L4 draws random :math:`\sigma`\'s from a log-uniform distribution.
 - L7 builds individual commands for simulations.
 - L8 saves each :math:`\sigma` to it's own file.
 - L9 creates a list of filepaths to the targets.
@@ -84,38 +65,25 @@ Breaking down this pipeline one line at a time:
 
 And to recapitate the tree sequences output by ``SLiM``:
 
-..
-   .. code-block:: console
+.. code-block:: console
 
-		   (.venv) $ for i in {1..110}
-		   >         do
-		   >         echo "python -c 'import tskit,msprime; \
-		   >                      ts=tskit.load(\"temp_wd/vignette/TreeSeqs/output_$i.trees\"); \
-		   >		       Ne=len(ts.individuals()); \
-		   >		       demography = msprime.Demography.from_tree_sequence(ts); \
-		   >		       demography[1].initial_size = Ne; \
-		   >		       ts = msprime.sim_ancestry(initial_state=ts, recombination_rate=1e-8, demography=demography, start_time=ts.metadata[\"SLiM\"][\"cycle\"],random_seed=$i,); \
-		   >		       ts.dump(\"temp_wd/vignette/TreeSeqs/output_$i"_"recap.trees\")'" \
-		   >         >> temp_wd/vignette/recap_commands.txt
-		   >         echo temp_wd/vignette/TreeSeqs/output_$i"_"recap.trees >> temp_wd/vignette/tree_list.txt
-		   >         done   
-		   (.venv) $ parallel -j $num_threads < temp_wd/vignette/recap_commands.txt
+		(.venv) $ for i in {1..110}; do \
+		>             echo "python -c 'import tskit,msprime; \
+		>                              ts=tskit.load(\"temp_wd/vignette/TreeSeqs/output_$i.trees\"); \
+		>		               Ne=len(ts.individuals()); \
+		>		               demography = msprime.Demography.from_tree_sequence(ts); \
+		>		               demography[1].initial_size = Ne; \
+		>		               ts = msprime.sim_ancestry(initial_state=ts, recombination_rate=1e-8, demography=demography, start_time=ts.metadata[\"SLiM\"][\"cycle\"],random_seed=$i,); \
+		>		               ts.dump(\"temp_wd/vignette/TreeSeqs/output_$i"_"recap.trees\")'" \
+		>             >> temp_wd/vignette/recap_commands.txt; \
+		>             echo temp_wd/vignette/TreeSeqs/output_$i"_"recap.trees >> temp_wd/vignette/tree_list.txt; \
+		>         done   
+		(.venv) $ parallel -j $num_threads < temp_wd/vignette/recap_commands.txt
 
-.. code-block:: bash
 
-		for i in {1..110}
-		do
-		echo "python -c 'import tskit,msprime; \
-		             ts=tskit.load(\"temp_wd/vignette/TreeSeqs/output_$i.trees\"); \
-			     Ne=len(ts.individuals()); \
-			     demography = msprime.Demography.from_tree_sequence(ts); \
-			     demography[1].initial_size = Ne; \
-			     ts = msprime.sim_ancestry(initial_state=ts, recombination_rate=1e-8, demography=demography, start_time=ts.metadata[\"SLiM\"][\"cycle\"],random_seed=$i,); \
-			     ts.dump(\"temp_wd/vignette/TreeSeqs/output_$i"_"recap.trees\")'" \
-		     >> temp_wd/vignette/recap_commands.txt
-		echo temp_wd/vignette/TreeSeqs/output_$i"_"recap.trees >> temp_wd/vignette/tree_list.txt
-		done
-		parallel -j $num_threads < temp_wd/vignette/recap_commands.txt
+
+
+
 
 
 
@@ -148,15 +116,24 @@ We provide a simple python script for subsetting a VCF for a particular set of i
 
 Last, build a .locs file:
 
-.. code-block:: bash
+..
+   .. code-block:: bash
 
-		count=$(cat temp_wd/vignette/iraptus.vcf | grep -v "##" | grep "#" | wc -w)
-		for i in $(seq 10 $count)
-		do \
-		id=$(cat temp_wd/vignette/iraptus.vcf | grep -v "##" | grep "#" | cut -f $i)
-		grep -w $id temp_wd/vignette/iraptus.csv
-		done | cut -d "," -f 4,5 | sed s/","/"\t"/g > temp_wd/vignette/iraptus.locs
+		   count=$(cat temp_wd/vignette/iraptus.vcf | grep -v "##" | grep "#" | wc -w)
+		   for i in $(seq 10 $count)
+		   do \
+		   id=$(cat temp_wd/vignette/iraptus.vcf | grep -v "##" | grep "#" | cut -f $i)
+		   grep -w $id temp_wd/vignette/iraptus.csv
+		   done | cut -d "," -f 4,5 | sed s/","/"\t"/g > temp_wd/vignette/iraptus.locs
 
+.. code-block:: console                                                                        
+                                                                                            
+                (.venv) $ count=$(cat temp_wd/vignette/iraptus.vcf | grep -v "##" | grep "#" | wc -w) 
+                (.venv) $ for i in $(seq 10 $count); do \                                       
+                >             id=$(cat temp_wd/vignette/iraptus.vcf | grep -v "##" | grep "#" | cut -f $i); \
+                >             grep -w $id temp_wd/vignette/iraptus.csv; \
+                >         done | cut -d "," -f 4,5 | sed s/","/"\t"/g > temp_wd/vignette/iraptus.locs 
+		   
 This filtering results in 1951 SNPs from 95 individuals. We will take 10 repeated samples from each tree sequence, to get a total of 1,000 training datasets (100 tree sequences :math:`\times` 10 samples from each). Our strategy for doing this involves 10 different preprocess commands, each with a different random number seed, which can be run in parallel.
 
 .. code-block:: bash
