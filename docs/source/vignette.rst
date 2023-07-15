@@ -27,7 +27,7 @@ This vignette shows a complete pipeline for a small application of ``disperseNN2
 
 For this demonstration we will analyze a population of *Internecivus raptus*. Let's assume we have independent estimates from previous studies for several parameters:
 
-- the width of the species range is :math:`78` km
+- the width of the species range is 78 km
 - population density is 2.5 individuals per km\ :math:`^2`
 - recombination rate is 1e-8 crossovers per bp per generation
 

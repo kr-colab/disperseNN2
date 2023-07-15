@@ -16,7 +16,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
-#    'sphinx_copybutton',    
+    'sphinx_copybutton',    
 ]
 
 intersphinx_mapping = {
@@ -33,5 +33,12 @@ html_theme = 'sphinx_rtd_theme'
 
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
-#copybutton_prompt_text = "(.venv) $"
+
+# options for copy-button (https://sphinx-copybutton.readthedocs.io/en/latest/use.html)
+copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: |^>|\(\.venv\) \$ "
+copybutton_prompt_is_regexp = True
+copybutton_only_copy_prompt_lines = True
+copybutton_remove_prompts = True
+#copybutton_copy_empty_lines = True
+#copybutton_line_continuation_character = "\\"
 
