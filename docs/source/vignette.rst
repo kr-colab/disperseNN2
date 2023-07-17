@@ -139,7 +139,7 @@ This filtering results in 1951 SNPs from 95 individuals. These values are includ
 		
 		(.venv) $ python disperseNN2.py \
 		>                 --out temp_wd/vignette/output_dir \
-		>	          --seed $i \
+		>	          --seed 12345 \
 		>	          --preprocess \
 		>	          --num_snps 1951 \
 		>	          --n 95 \
@@ -177,7 +177,7 @@ In the below ``disperseNN2`` training command, we set ``pairs`` to 1000; this is
 		> 		 --seed 12345 \
 		> 		 --train \
 		>                --num_snps 1951 \
-		>                --max_epochs 50 \
+		>                --max_epochs 100 \
 		>                --validation_split 0.2 \
 		>                --batch_size 10 \
 		>                --threads 1 \
@@ -194,7 +194,7 @@ After the run completes, let's visualize the training history:
 
                 (.venv) $ python disperseNN2.py --plot_history temp_wd/vignette/output_dir/training_history_12345.txt
 		
-.. figure:: training.png
+.. figure:: training_vignette.png
    :scale: 50 %
    :alt: training_plot
 
@@ -225,12 +225,12 @@ Next, we will validate the trained model on simulated test data. In a real appli
 
                 (.venv) $ python disperseNN2.py \
 		>                --out temp_wd/vignette/output_dir \
+                >                --seed 12345 \		
 		>                --predict \
 		>                --num_snps 1951 \
 		>                --batch_size 10 \
 		>                --threads 1 \
 		>                --n 95 \
-		>                --seed 12345 \
 		>                --pairs 1000 \
 		>                --pairs_encode 100 \
 		>                --pairs_estimate 100 \
@@ -266,13 +266,13 @@ Since we are satisfied with the performance of the model on the held-out test se
 
 		(.venv) $ python disperseNN2.py \
 		>                --out temp_wd/vignette/output_dir \
+                >                --seed 12345 \		
 		>		 --predict \
 		>		 --empirical temp_wd/vignette/iraptus \
 		>		 --num_snps 1951 \
 		>		 --batch_size 10 \
 		>		 --threads 1 \
 		>		 --n 95 \
-		>		 --seed 12345 \
 		>                --pairs 1000 \
 		>		 --pairs_encode 100 \
 		>                --pairs_estimate 100 \
@@ -283,27 +283,23 @@ The final empirical results are stored in: ``temp_wd/vignette/output_dir/empiric
 .. code-block:: console
 
 		(.venv) $ cat temp_wd/vignette/output_dir/empirical_12345.txt
-		temp_wd/vignette/iraptus_0 4.2268459929
-		temp_wd/vignette/iraptus_1 4.1407194192
-		temp_wd/vignette/iraptus_2 4.097539774
-		temp_wd/vignette/iraptus_3 4.2981321573
-		temp_wd/vignette/iraptus_4 4.2558288957
-		temp_wd/vignette/iraptus_5 4.5424448525
-		temp_wd/vignette/iraptus_6 4.253179034
-		temp_wd/vignette/iraptus_7 3.9609131107
-		temp_wd/vignette/iraptus_8 4.1268756167
-		temp_wd/vignette/iraptus_9 4.1737962439
+		temp_wd/vignette/iraptus_0 4.1420808309
+		temp_wd/vignette/iraptus_1 4.7910640622
+		temp_wd/vignette/iraptus_2 4.389315269
+		temp_wd/vignette/iraptus_3 4.7345274221
+		temp_wd/vignette/iraptus_4 4.7970227995
+		temp_wd/vignette/iraptus_5 4.001395583
+		temp_wd/vignette/iraptus_6 4.5269442433
+		temp_wd/vignette/iraptus_7 3.2909419522
+		temp_wd/vignette/iraptus_8 3.3997020363
+		temp_wd/vignette/iraptus_9 4.3588295194
+		
 
 
 
 
 **Interpretation**.
-The output, :math:`\sigma`, is an estimate for the standard deviation of the Gaussian dispersal kernel from our training simulations; in addition, the same parameter is used for the mating distance (and competition distance). Therefore, to get the distance to a random parent, i.e., effective :math:`\sigma`,  we apply a posthoc correction of :math:`\sqrt{\frac{3}{2}} \times \sigma`. In this example, we trained with only 100 generations spatial, hence the dispersal rate estimate reflects demography in the recent past.
-
-
-
-
-
+The output, :math:`\sigma`, is an estimate for the standard deviation of the Gaussian dispersal kernel from our training simulations; in addition, the same parameter was used for the mating distance (and competition distance). Therefore, to get the distance to a random parent, i.e., effective :math:`\sigma`,  we would apply a posthoc correction of :math:`\sqrt{\frac{3}{2}} \times \sigma` (see original disperseNN paper for details). In this example, we trained with only 100 generations spatial, hence the dispersal rate estimate reflects demography in the recent past.
 
 
 

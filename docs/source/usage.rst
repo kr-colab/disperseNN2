@@ -87,7 +87,6 @@ Command line arguments are passed to ``SLiM`` using the ``-d`` flag followed by 
 
    The above example used only 1,000 spatial generations; this strategy should be used with caution because this can affect how the output is interpreted. In addition, isolation-by-distance is usually weaker with fewer spatial generations which reduces signal for dispersal rate. In the ``disperseNN2`` paper we ran 100,000 generations spatial.
 
-  
 After running ``SLiM`` for a fixed number of generations, the simulation is still not complete, as many trees will likely not have coalesced still. Next you will need to finish, or "recapitate", the tree sequences. We recommend recapitating at this early stage, before training, as training can be prohibitively slow if you recapitate on-the-fly. The below code snippet in python can be used to recapitate a tree sequence:
 
 .. code-block:: pycon
@@ -105,7 +104,7 @@ After running ``SLiM`` for a fixed number of generations, the simulation is stil
    Here, we have assumed a constant demographic history. If an independently inferred demographic history for your species is available, or if you want to explore different demographic histories, the recapitation step is a good place for implementing these changes. For more information see the `msprime docs <https://tskit.dev/msprime/docs/stable/ancestry.html#demography>`_.
 
 
-For planning the total number of simulations, consider the following. First, you might be able to get away with fewer simulations by taking repeated, pseudo-independent samples from each simulation. Second, if the simulations explore a large parameter space, e.g. more than	one or two free	parameters, then larger training sets may be required.	In our paper, we ran 1000 trainining simulations while varying only the dispersal rate parameter, and sampled 50 times from each	simulation (see Preprocessing, below) to get a training set of 50,000. Last, don't forget to run extra simulations to validate your model with post training.
+For planning the total number of simulations, consider the following. If the simulations explore a large parameter space, e.g. more than	one or two free	parameters, then larger training sets may be required.	In our paper, we used a training set of 50,000—--but, this is number may depend on the training distribution, Last, don't forget to run extra simulations (e.g., 100 or 1000) to validate your model with post training.
 
 Simulation programs other than ``SLiM`` could be used in theory. The only real requirements of ``disperseNN2`` regarding training data are: genotypes are in a 2D array, the corresponding sample locations are in a table with two columns, and the target values are saved in individual files; all as numpy arrays. 
 
