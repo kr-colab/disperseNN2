@@ -111,9 +111,18 @@ We provide a simple python script for subsetting a VCF for a particular set of i
 
 .. code-block:: console
 
-		(.venv) $ python Empirical/subset_vcf.py Examples/VCFs/iraptus_full.vcf.gz temp_wd/vignette/iraptus.csv temp_wd/vignette/iraptus.vcf 0 1
+		(.venv) $ python Empirical/subset_vcf.py Examples/VCFs/iraptus_full.vcf.gz temp_wd/vignette/iraptus.csv temp_wd/vignette/iraptus.vcf 0 1 12345
 		(.venv) $ gunzip temp_wd/vignette/iraptus.vcf.gz
 
+The flags for ``Empirical/subset_vcf.py`` are:
+
+1. path to input vcf (gzipped)
+2. path to metadata (.csv)
+3. output name
+4. minimum read depth to retain a SNP (int)
+5. minimum proportion of samples represented to keep a SNP (float)
+6. random number seed (int)
+		
 Last, build a .locs file:
 
 ..

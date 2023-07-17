@@ -1,6 +1,7 @@
 import sys
 import numpy as np
 import gzip
+import random
 
 # params
 vcf_path = sys.argv[1]
@@ -8,7 +9,11 @@ sample_path = sys.argv[2]  # list of samples to keep
 outname = sys.argv[3]  # with .vcf
 min_read_depth = int(sys.argv[4])  # min read depth, DP field
 min_sample_prop = float(sys.argv[5])  # min proportion of samples with non missing data
+seed = int(sys.argv[6])
 
+# set seed
+#np.random.seed(seed)
+random.seed(seed) # currently affects lines with MAF=0.5, where 0s and 1s are random
 
 # read in samples
 keepers = {}
