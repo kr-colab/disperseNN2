@@ -11,7 +11,7 @@ import gpustat
 import itertools
 import numpy as np
 import matplotlib.pyplot as plt
-def load_dl_modules(): # load TF only if loading input is sucessful
+def load_dl_modules(): # load TF only if loading input is successful
     print("loading bigger modules")
     global tf
     import tensorflow as tf

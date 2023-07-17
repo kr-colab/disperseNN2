@@ -187,7 +187,6 @@ Below is an example command for the training step.
 		>		 --batch_size 10 \
 		>		 --threads 1 \
 		>		 --n 10 \
-		>		 --learning_rate 1e-4 \
 		>		 --pairs 45 \
 		>		 --pairs_encode 45 \
 		>		 --pairs_estimate 45 \
@@ -199,7 +198,6 @@ Below is an example command for the training step.
 - ``--validation_split``: the proportion of training data held out for validation between batches for hyperparameter tuning. We use 0.2.
 - ``--batch_size``: we find that batch_size=10 works well.
 - ``--threads``: number of threads to use during training. 
-- ``--learning_rate``: learning rate to use during training. It's scheduled to decrease by 2x every 10 epochs with no decrease in validation loss.
 - ``--pairs``: the total number of pairs to include in the analysis. Defaults to all pairs.
 - ``--pairs_encode``: the number of pairs to include in the gradient in the encoder portion of the neural network. Default: all pairs.
 - ``--pairs_estimate``: the number of pairs to include in the estimator portion of the neural network. Default: all pairs.

@@ -2,7 +2,7 @@ Vignette: example workflow
 ==========================
 
 
-This vignette shows a complete pipeline for a small application of ``disperseNN2`` including instructions for the intermediate data-organizing steps. Some details referenced in the below vignette, e.g., descriptions of command line flags, are explained under :doc:`usage`.
+This vignette shows a complete pipeline for a small application of ``disperseNN2`` including instructions for the intermediate data-organizing steps. Some details referenced in the below vignette, e.g., descriptions of command line flags, are explained under :doc:`usage`. We recommend using a cluster node with 10s of CPUs and a GPU for the below analysis.
 
 
 
@@ -31,7 +31,7 @@ For this demonstration we will analyze a population of *Internecivus raptus*. Le
 - population density is 2.5 individuals per km\ :math:`^2`
 - recombination rate is 1e-8 crossovers per bp per generation
 
-With values for these nuisance parameters in hand we can design custom training simulations for inferring :math:`\sigma`. If our a priori expectation for :math:`\sigma` in this species is somewhere between 0.4 and 6, we will simulate dispersal rates in this range.
+With values for these nuisance parameters in hand we can design custom training simulations for inferring :math:`\sigma`. If our a priori expectation for :math:`\sigma` in this species is somewhere between 0.4 and 6, we will simulate dispersal rates in this range. 100 training simulations should suffice for this demonstration, plus 100 more for testing, so we need 200 total simulations.
 
 Below is some bash code to run the simulations using ``square.slim``. 
 
@@ -42,8 +42,8 @@ Below is some bash code to run the simulations using ``square.slim``.
                 (.venv) $ conda activate disperseNN
                 (.venv) $ mkdir -p temp_wd/vignette/TreeSeqs
                 (.venv) $ mkdir -p temp_wd/vignette/Targets
-		(.venv) $ sigmas=$(python -c 'from scipy.stats import loguniform; import numpy; numpy.random.seed(seed=233423); print(*loguniform.rvs(0.4,6,size=110))')
-                (.venv) $ for i in {1..110}; do \
+		(.venv) $ sigmas=$(python -c 'from scipy.stats import loguniform; import numpy; numpy.random.seed(seed=12345); print(*loguniform.rvs(0.4,6,size=200))')
+                (.venv) $ for i in {1..200}; do \
                 >             sigma=$(echo $sigmas | awk -v var="$i" '{print $var}'); \
 		>             echo "slim -d SEED=$i -d sigma=$sigma -d K=2.5 -d r=1e-8 -d W=78 -d G=1e8 -d maxgens=1000 -d OUTNAME=\"'temp_wd/vignette/TreeSeqs/output'\" SLiM_recipes/square.slim" >> temp_wd/vignette/sim_commands.txt; \
 		>             echo $sigma > temp_wd/vignette/Targets/target_$i.txt; \
@@ -67,7 +67,7 @@ And to recapitate the tree sequences output by ``SLiM``:
 
 .. code-block:: console
 
-		(.venv) $ for i in {1..110}; do \
+		(.venv) $ for i in {1..200}; do \
 		>             echo "python -c 'import tskit,msprime; \
 		>                              ts=tskit.load(\"temp_wd/vignette/TreeSeqs/output_$i.trees\"); \
 		>		               Ne=len(ts.individuals()); \
@@ -125,16 +125,6 @@ The flags for ``Empirical/subset_vcf.py`` are:
 		
 Last, build a .locs file:
 
-..
-   .. code-block:: bash
-
-		   count=$(cat temp_wd/vignette/iraptus.vcf | grep -v "##" | grep "#" | wc -w)
-		   for i in $(seq 10 $count)
-		   do \
-		   id=$(cat temp_wd/vignette/iraptus.vcf | grep -v "##" | grep "#" | cut -f $i)
-		   grep -w $id temp_wd/vignette/iraptus.csv
-		   done | cut -d "," -f 4,5 | sed s/","/"\t"/g > temp_wd/vignette/iraptus.locs
-
 .. code-block:: console                                                                        
                                                                                             
                 (.venv) $ count=$(cat temp_wd/vignette/iraptus.vcf | grep -v "##" | grep "#" | wc -w) 
@@ -143,27 +133,20 @@ Last, build a .locs file:
                 >             grep -w $id temp_wd/vignette/iraptus.csv; \
                 >         done | cut -d "," -f 4,5 | sed s/","/"\t"/g > temp_wd/vignette/iraptus.locs 
 		   
-This filtering results in 1951 SNPs from 95 individuals. We will take 10 repeated samples from each tree sequence, to get a total of 1,000 training datasets (100 tree sequences :math:`\times` 10 samples from each). Our strategy for doing this involves 10 different preprocess commands, each with a different random number seed, which can be run in parallel.
+This filtering results in 1951 SNPs from 95 individuals. These values are included in our below ``disperseNN2`` preprocessing command:
 
-.. code-block:: bash
+.. code-block:: console
 		
-		for i in {1..10}
-		do
-		echo "python disperseNN2.py \
-		             --out temp_wd/vignette/output_dir \
-			       --seed $i \
-			       --preprocess \
-			       --num_snps 1951 \
-			       --n 95 \
-			       --tree_list temp_wd/vignette/tree_list.txt \
-			       --target_list temp_wd/vignette/target_list.txt \
-			       --empirical temp_wd/vignette/iraptus \
-			       --hold_out 10" \
-		     >> temp_wd/vignette/preprocess_commands.txt
-		done
-		parallel -j $num_threads < temp_wd/vignette/preprocess_commands.txt
-
-
+		(.venv) $ python disperseNN2.py \
+		>                 --out temp_wd/vignette/output_dir \
+		>	          --seed $i \
+		>	          --preprocess \
+		>	          --num_snps 1951 \
+		>	          --n 95 \
+		>	          --tree_list temp_wd/vignette/tree_list.txt \
+		>	          --target_list temp_wd/vignette/target_list.txt \
+		>	          --empirical temp_wd/vignette/iraptus \
+		>	          --hold_out 100
 
 
 
@@ -194,7 +177,7 @@ In the below ``disperseNN2`` training command, we set ``pairs`` to 1000; this is
 		> 		 --seed 12345 \
 		> 		 --train \
 		>                --num_snps 1951 \
-		>                --max_epochs 20 \
+		>                --max_epochs 50 \
 		>                --validation_split 0.2 \
 		>                --batch_size 10 \
 		>                --threads 1 \
@@ -315,8 +298,7 @@ The final empirical results are stored in: ``temp_wd/vignette/output_dir/empiric
 
 
 **Interpretation**.
-Sigma is the SD of the gaussian dispersal kernel. The distance to a random parent is root-2 * sigma.
-We trained with only 100 generations spatial, hence the estimate reflects demography in the recent past.
+The output, :math:`\sigma`, is an estimate for the standard deviation of the Gaussian dispersal kernel from our training simulations; in addition, the same parameter is used for the mating distance (and competition distance). Therefore, to get the distance to a random parent, i.e., effective :math:`\sigma`,  we apply a posthoc correction of :math:`\sqrt{\frac{3}{2}} \times \sigma`. In this example, we trained with only 100 generations spatial, hence the dispersal rate estimate reflects demography in the recent past.
 
 
 
