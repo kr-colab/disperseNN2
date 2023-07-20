@@ -283,16 +283,17 @@ The final empirical results are stored in: ``temp_wd/vignette/output_dir/empiric
 .. code-block:: console
 
 		(.venv) $ cat temp_wd/vignette/output_dir/empirical_12345.txt
-		temp_wd/vignette/iraptus_0 4.1420808309
-		temp_wd/vignette/iraptus_1 4.7910640622
-		temp_wd/vignette/iraptus_2 4.389315269
-		temp_wd/vignette/iraptus_3 4.7345274221
-		temp_wd/vignette/iraptus_4 4.7970227995
-		temp_wd/vignette/iraptus_5 4.001395583
-		temp_wd/vignette/iraptus_6 4.5269442433
-		temp_wd/vignette/iraptus_7 3.2909419522
-		temp_wd/vignette/iraptus_8 3.3997020363
-		temp_wd/vignette/iraptus_9 4.3588295194
+		temp_wd/vignette/iraptus_0 4.0292504657
+		temp_wd/vignette/iraptus_1 4.7502661752
+		temp_wd/vignette/iraptus_2 4.3643506614
+		temp_wd/vignette/iraptus_3 4.6555107812
+		temp_wd/vignette/iraptus_4 4.7846365925
+		temp_wd/vignette/iraptus_5 3.9105241623
+		temp_wd/vignette/iraptus_6 4.465856206
+		temp_wd/vignette/iraptus_7 3.2642763587
+		temp_wd/vignette/iraptus_8 3.3628482169
+		temp_wd/vignette/iraptus_9 4.3176748371
+
 		
 
 
