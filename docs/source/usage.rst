@@ -15,11 +15,20 @@ Usage
 Install
 ^^^^^^^
 
-To use ``disperseNN2``, first install it using pip:
+To use ``disperseNN2``, first create a new conda env.
+
+$ conda create -n diploshic python=3.9 --yes
+
+
+Then inside the conda env, install using pip:
 
 .. code-block:: console
 
    (.venv) $ pip install disperseNN2
+
+.. note::
+
+   It's possible to hit issues related to mismatched versions of TF or cuda and that of your nvidia drivers.
 
 
 
