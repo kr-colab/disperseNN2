@@ -595,13 +595,14 @@ def empirical():
 
 
 def plot_history():
-    loss,val_loss = [],[]
+    loss,val_loss = [],[np.nan] # loss starts at iteration 0; val_loss starts at end of first epoch
     with open(args.plot_history) as infile:
         for line in infile:
             if "val_loss:" in line:
                 endofline = line.strip().split(" loss:")[-1]
                 loss.append(float(endofline.split()[0]))
                 val_loss.append(float(endofline.split()[3]))
+    loss.append(np.nan) # make columns even-length
     epochs = np.arange(len(loss))
     fig = plt.figure(figsize=(4,1.5),dpi=200)
     plt.rcParams.update({'font.size': 7})

@@ -33,13 +33,19 @@ For this demonstration we will analyze a population of *Internecivus raptus*. Le
 
 With values for these nuisance parameters in hand we can design custom training simulations for inferring :math:`\sigma`. If our a priori expectation for :math:`\sigma` in this species is somewhere between 0.4 and 6, we will simulate dispersal rates in this range. 100 training simulations should suffice for this demonstration, plus 100 more for testing, so we need 200 total simulations.
 
-Below is some bash code to run the simulations using ``square.slim``. 
+Below is some bash code to run the simulations using ``square.slim``. If you haven't yet, first activate the ``disperseNN2`` conda env, and install ``SLiM``:
 
+.. code-block:: console
+
+                (.venv) $ conda activate disperseNN2
+
+.. code-block:: console
+
+                (.venv) $ mamba install slim==4.0.1 -c conda-forge
 
 .. code-block:: console                         
                 :linenos:                       
                                                 
-                (.venv) $ conda activate disperseNN
                 (.venv) $ mkdir -p temp_wd/vignette/TreeSeqs
                 (.venv) $ mkdir -p temp_wd/vignette/Targets
 		(.venv) $ sigmas=$(python -c 'from scipy.stats import loguniform; import numpy; numpy.random.seed(seed=12345); print(*loguniform.rvs(0.4,6,size=200))')
@@ -238,7 +244,7 @@ Next, we will validate the trained model on simulated test data. In a real appli
 
 We visualized the predictions, ``temp_wd/vignette/output_dir/Test/predictions_12345.txt``, in R:
 		
-.. figure:: results.png
+.. figure:: results_vignette.png
    :scale: 50 %
    :alt: results_plot
 
