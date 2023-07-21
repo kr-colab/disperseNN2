@@ -113,7 +113,7 @@ Let's pretend we want to take a subset of individuals from a particular geograph
 
 		(.venv) $ cat Examples/VCFs/iraptus_meta_full.txt | grep "Scotian Shelf - East" | sed s/"\t"/,/g > temp_wd/vignette/iraptus.csv
 
-We provide a simple python script for subsetting a VCF for a particular set of individuals, which also filters indels and non-variant sites.
+We provide a simple script for subsetting a VCF for a particular set of individuals, which also filters indels and non-variant sites:
 
 .. code-block:: console
 

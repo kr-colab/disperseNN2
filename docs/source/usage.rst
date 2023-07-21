@@ -185,7 +185,7 @@ A basic preprocessing command looks like:
 
 .. note::
 
-   Simulated individuals are sampled near the empirical sample locations. Our strategy involves first projecting the latitude and longitude coordinates for each location onto a 2D surface. By default, the projected locations are repositioned to new, random areas of the training map before sampling individuals from those locations; this is making the assumption that the true habitat range is unknown and we want our predictions to be invariant to the position of the sampling area within the greater species distribution.
+   Simulated individuals are sampled near the empirical sample locations: a table with one row per individual, with latitude and longitude tab-separated. Our strategy involves first projecting the geographic coordinates for each location onto a 2D surface. By default, the projected locations are repositioned to new, random areas of the training map before sampling individuals from those locations; this is making the assumption that the true habitat range is unknown and we want our predictions to be invariant to the position of the sampling area within the greater species distribution.
 
 .. Last, the spatial coordinates are rescaled to :math:`(0,1)`, preserving aspect ratio, before being shown to the neural network as input.
   
@@ -315,7 +315,7 @@ Here, the columns list the true and predicted :math:`\sigma` for each simulation
 5. Empirical prediction
 ************************
 
-Finally, for predicting with empirical data:
+Finally, for predicting with empirical data, we provide the program with (1) a .vcf and (2) a .locs file (mentioned above, with preprocessing). The order of individuals in the .vcf needs to match that of the .locs file. SNPs should be minimally filtered to exclude indels, multi-allelic sites, and maybe low-confidence variant calls; however, low-frequency SNPs should be left in as these are informative about demography.
 
 .. code-block:: console
 
@@ -328,7 +328,7 @@ Finally, for predicting with empirical data:
 		>		 --n 10 \
 		>		 --num_reps 5
 
-- ``--empirical``: prefix for the empirical data. This includes the path, but without the filetype suffix. Two files must be present: a VCF and a table of lat and long. 
+- ``--empirical``: prefix for the empirical data that is shared for both the .vcf and .locs files. This includes the path, but without the filetype suffix. 
 - ``--num_reps``: specifies how many bootstrap replicates to perform. Each replicate takes a random draw of num_snps SNPs from the VCF.
 
 The output is in kilometers and can be found in ``<out>/empirical_<seed>.txt``:
