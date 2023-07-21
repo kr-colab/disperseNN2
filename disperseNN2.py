@@ -281,24 +281,14 @@ def load_network():
 
     # organize pairs of individuals
     if args.pairs is None:
-        pairs = int((args.n * (args.n - 1)) / 2)
-    else:
-        pairs = args.pairs
+        args.pairs = int((args.n * (args.n - 1)) / 2)
     if args.pairs_encode is None:
-        pairs_encode = int((args.n * (args.n - 1)) / 2)
-        if pairs_encode > 100:
-            pairs_encode = 100
-    else:
-        pairs_encode = args.pairs_encode
+        args.pairs_encode = int((args.n * (args.n - 1)) / 2)
     if args.pairs_estimate is None:
-        pairs_estimate = int((args.n * (args.n - 1)) / 2)
-        if pairs_estimate > 100:
-            pairs_estimate = 100
-    else:
-        pairs_estimate = args.pairs_estimate
+        args.pairs_estimate = int((args.n * (args.n - 1)) / 2)
     combinations = list(itertools.combinations(range(args.n), 2))
-    combinations = random.sample(combinations, pairs)
-    combinations_encode = random.sample(combinations, pairs_encode)
+    combinations = random.sample(combinations, args.pairs)
+    combinations_encode = random.sample(combinations, args.pairs_encode)
     combinations = list2dict(combinations)
     combinations_encode = list2dict(combinations_encode)
 
@@ -352,15 +342,15 @@ def load_network():
     print("\nfeature block:", feature_block.shape)
 
     # loop through sets of 'pairs_set' pairs
-    num_partitions = int(np.ceil(pairs / float(pairs_estimate)))
+    num_partitions = int(np.ceil(args.pairs / float(args.pairs_estimate)))
     row = 0
     dense_stack = []
     for p in range(num_partitions):
-        part = feature_block[:, row:row + pairs_estimate, :]
-        row += pairs_estimate
-        if part.shape[1] < pairs_estimate:
+        part = feature_block[:, row:row + args.pairs_estimate, :]
+        row += args.pairs_estimate
+        if part.shape[1] < args.pairs_estimate:
             paddings = tf.constant(
-                [[0, 0], [0, pairs_estimate - part.shape[1]], [0, 0]]
+                [[0, 0], [0, args.pairs_estimate - part.shape[1]], [0, 0]]
             )
             part = tf.pad(part, paddings, "CONSTANT")
         h0 = DENSE_1(part)
