@@ -12,8 +12,8 @@ min_sample_prop = float(sys.argv[5])  # min proportion of samples with non missi
 seed = int(sys.argv[6])
 
 # set seed
-#np.random.seed(seed)
-random.seed(seed) # currently affects lines with MAF=0.5, where 0s and 1s are random
+# np.random.seed(seed)
+random.seed(seed)  # currently affects lines with MAF=0.5, where 0s and 1s are random
 
 # read in samples
 keepers = {}
@@ -145,7 +145,7 @@ for line in vcf:
 
             ### figure out major/minor alleles
             else:
-                anc, der = list(set(ac))  # set() gives random order 
+                anc, der = list(set(ac))  # set() gives random order
                 if ac[anc] < ac[der]:
                     anc, der = der, anc
                 anc = str(anc)

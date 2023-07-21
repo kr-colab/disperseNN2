@@ -11,32 +11,33 @@ from read_input import *
 
 # project sample locations
 def project_locs(locs, fp=None):
-
     # projection (plus some code for calculating error)
-    locs = np.array(locs) 
-    locs = np.array(utm.from_latlon(locs[:,0], locs[:,1])[0:2]) / 1000 
+    locs = np.array(locs)
+    locs = np.array(utm.from_latlon(locs[:, 0], locs[:, 1])[0:2]) / 1000
     locs = locs.T
-    
+
     # calculate extremes
-    min_lat = min(locs[:,0])
-    min_long = min(locs[:,1])
-    max_lat = max(locs[:,0])
-    max_long = max(locs[:,1])
-    lat_range = max_lat-min_lat
-    long_range = max_long-min_long
+    min_lat = min(locs[:, 0])
+    min_long = min(locs[:, 1])
+    max_lat = max(locs[:, 0])
+    max_long = max(locs[:, 1])
+    lat_range = max_lat - min_lat
+    long_range = max_long - min_long
 
     # rescale lat and long to each start at 0
-    locs[:,0] = (1-((locs[:,0]-min_lat) / lat_range)) * lat_range # "1-" to orient north-south            
-    locs[:,1] = locs[:,1]-min_long
+    locs[:, 0] = (
+        1 - ((locs[:, 0] - min_lat) / lat_range)
+    ) * lat_range  # "1-" to orient north-south
+    locs[:, 1] = locs[:, 1] - min_long
 
     # reposition sample locations to random area within the map
     if fp:
         ts = tskit.load(fp)
-        W = parse_provenance(ts, 'W')
-        left_edge = np.random.uniform(low=0, high=W-long_range) 
-        bottom_edge = np.random.uniform(low=0, high=W-lat_range)
-        locs[:,0] += bottom_edge
-        locs[:,1] += left_edge
+        W = parse_provenance(ts, "W")
+        left_edge = np.random.uniform(low=0, high=W - long_range)
+        bottom_edge = np.random.uniform(low=0, high=W - lat_range)
+        locs[:, 0] += bottom_edge
+        locs[:, 1] += left_edge
 
     return locs
 
@@ -63,7 +64,7 @@ def vcf2genos(vcf_path, n, num_snps, phase):
         elif line[0] == "#":
             header = line.strip().split("\t")
             if n == None:  # option for getting sample size from vcf
-                n = len(header)-9
+                n = len(header) - 9
         else:
             newline = line.strip().split("\t")
             genos = []
@@ -97,18 +98,19 @@ def vcf2genos(vcf_path, n, num_snps, phase):
 
 # calculate isolation by distance
 def ibd(genos, coords, phase, num_snps):
-
     # subset for n samples (avoiding padding-zeros)
     n = 0
     for i in range(genos.shape[1]):
-        reverse_index = genos.shape[1]-i-1
+        reverse_index = genos.shape[1] - i - 1
         if len(set(genos[:, reverse_index])) > 1:
             n += reverse_index
             break
     n += 1  # for 0 indexing
     if phase == 2:
-        n = int(n/2)
-    genos = genos[:, 0:n*phase]  # *** maybe don't need to subset, as long as we know n?  
+        n = int(n / 2)
+    genos = genos[
+        :, 0 : n * phase
+    ]  # (maybe don't need to subset, as long as we know n?)
 
     # if collapsed genos, make fake haplotypes for calculating Rousset's statistic
     if phase == 1:
@@ -138,59 +140,68 @@ def ibd(genos, coords, phase, num_snps):
 
     # denominator for "a"
     locus_specific_denominators = np.zeros((num_snps))
-    P = (n*(n-1))/2  # number of pairwise comparisons
-    for i1 in range(0, n-1):
-        X11 = genos[:, i1*2]
-        X12 = genos[:, i1*2+1]
-        X1_ave = (X11+X12)/2  # average allelic does within individual-i
-        for i2 in range(i1+1, n):
-            X21 = genos[:, i2*2]
-            X22 = genos[:, i2*2+1]
-            X2_ave = (X21+X22)/2
+    P = (n * (n - 1)) / 2  # number of pairwise comparisons
+    for i1 in range(0, n - 1):
+        X11 = genos[:, i1 * 2]
+        X12 = genos[:, i1 * 2 + 1]
+        X1_ave = (X11 + X12) / 2  # average allelic does within individual-i
+        for i2 in range(i1 + 1, n):
+            X21 = genos[:, i2 * 2]
+            X22 = genos[:, i2 * 2 + 1]
+            X2_ave = (X21 + X22) / 2
             #
-            SSw = (X11-X1_ave)**2 + (X12-X1_ave)**2 + \
-                (X21-X2_ave)**2 + (X22-X2_ave)**2
+            SSw = (
+                (X11 - X1_ave) ** 2
+                + (X12 - X1_ave) ** 2
+                + (X21 - X2_ave) ** 2
+                + (X22 - X2_ave) ** 2
+            )
             locus_specific_denominators += SSw
-    locus_specific_denominators = locus_specific_denominators / (2*P)
+    locus_specific_denominators = locus_specific_denominators / (2 * P)
     denominator = np.sum(locus_specific_denominators)
 
     # numerator for "a"
     gendists = []
-    for i1 in range(0, n-1):
-        X11 = genos[:, i1*2]
-        X12 = genos[:, i1*2+1]
-        X1_ave = (X11+X12)/2  # average allelic does within individual-i
-        for i2 in range(i1+1, n):
-            X21 = genos[:, i2*2]
-            X22 = genos[:, i2*2+1]
-            X2_ave = (X21+X22)/2
+    for i1 in range(0, n - 1):
+        X11 = genos[:, i1 * 2]
+        X12 = genos[:, i1 * 2 + 1]
+        X1_ave = (X11 + X12) / 2  # average allelic does within individual-i
+        for i2 in range(i1 + 1, n):
+            X21 = genos[:, i2 * 2]
+            X22 = genos[:, i2 * 2 + 1]
+            X2_ave = (X21 + X22) / 2
             #
-            SSw = (X11-X1_ave)**2 + (X12-X1_ave)**2 + \
-                (X21-X2_ave)**2 + (X22-X2_ave)**2
-            Xdotdot = (X11+X12+X21+X22)/4  # average allelic dose for the pair
+            SSw = (
+                (X11 - X1_ave) ** 2
+                + (X12 - X1_ave) ** 2
+                + (X21 - X2_ave) ** 2
+                + (X22 - X2_ave) ** 2
+            )
+            Xdotdot = (X11 + X12 + X21 + X22) / 4  # average allelic dose for the pair
             # a measure of between indiv
-            SSb = (X1_ave-Xdotdot)**2 + (X2_ave-Xdotdot)**2
-            locus_specific_numerators = ((2*SSb)-SSw) / 4
+            SSb = (X1_ave - Xdotdot) ** 2 + (X2_ave - Xdotdot) ** 2
+            locus_specific_numerators = ((2 * SSb) - SSw) / 4
             numerator = np.sum(locus_specific_numerators)
-            a = numerator/denominator
+            a = numerator / denominator
             gendists.append(a)
 
     # geographic distance
     geodists = []
-    for i in range(0, n-1):
-        for j in range(i+1, n):
+    for i in range(0, n - 1):
+        for j in range(i + 1, n):
             d = distance.distance(coords[i, :], coords[j, :]).km
             d = np.log(d)
             geodists.append(d)
 
     # regression
     from scipy import stats
+
     geodists = np.array(geodists)
     gendists = np.array(gendists)
     b = stats.linregress(geodists, gendists)[0]
     r = stats.pearsonr(geodists, gendists)[0]
     r2 = r**2
-    Nw = (1 / b)
+    Nw = 1 / b
     print("IBD r^2, slope, Nw:", r2, b, Nw)
 
 
@@ -207,6 +218,7 @@ def main():
     phase = int(sys.argv[5])
     geno_mat = vcf2genos(vcf_path, n, num_snps, phase)
     np.save(outname + ".genos", geno_mat)
+
 
 if __name__ == "__main__":
     main()

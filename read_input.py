@@ -75,14 +75,14 @@ def read_locs(path):
     with open(path) as infile:
         for line in infile:
             newline = line.strip().split()
-            newline = list(map(float,newline))
+            newline = list(map(float, newline))
             collection.append(newline)
     return collection
 
 
 # fill a dictionary with a single value
 def fill_dict_single_value(val, reps):
-    collection={}
+    collection = {}
     for i in range(reps):
         collection[i] = val
     return collection
@@ -108,23 +108,27 @@ def dict_from_list(mylist):
 def parse_provenance(ts, param):
     prov = str(ts.provenance(0)).split()
     for i in range(len(prov)):
-        if param+"=" in prov[i]:
-            val = float(prov[i].split("=")[1].split("\"")[0])
+        if param + "=" in prov[i]:
+            val = float(prov[i].split("=")[1].split('"')[0])
             break
-    return(val)
+    return val
 
 
 # read in the training targets and input paths from a preprocessed, hierarchical folder
 def dict_from_preprocessed(path):
-    targets,genos,locs,counter={},{},{},0
-    for root, subdir, files in os.walk(path+"/Targets/"): # everything under Targets/
-        if subdir == []: # excluding the Targets/ folder itself
+    targets, genos, locs, counter = {}, {}, {}, 0
+    for root, subdir, files in os.walk(path + "/Targets/"):  # everything under Targets/
+        if subdir == []:  # excluding the Targets/ folder itself
             for f in files:
                 targetpath = os.path.join(root, f)
-                genopath = targetpath.replace("Targets", "Genos").replace("target","genos")
-                locpath = targetpath.replace("Targets", "Locs").replace("target","locs")
+                genopath = targetpath.replace("Targets", "Genos").replace(
+                    "target", "genos"
+                )
+                locpath = targetpath.replace("Targets", "Locs").replace(
+                    "target", "locs"
+                )
                 targets[counter] = targetpath
                 genos[counter] = genopath
                 locs[counter] = locpath
                 counter += 1
-    return targets,genos,locs
+    return targets, genos, locs
