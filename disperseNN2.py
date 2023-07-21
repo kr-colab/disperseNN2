@@ -188,9 +188,9 @@ def load_network():
     threads = int(np.floor(args.threads/2)) # in practice it uses double the specified threads
     tf.config.threading.set_intra_op_parallelism_threads(threads) # limits (and sets) threads used during training
     tf.config.threading.set_inter_op_parallelism_threads(threads) # this one is needed too.
-    gpu_devices = tf.config.experimental.list_physical_devices('GPU')
-    for gpu in gpu_devices:
-        tf.config.experimental.set_memory_growth(gpu, True)
+    # gpu_devices = tf.config.experimental.list_physical_devices('GPU') # allocate gpu memory dynamically
+    # for gpu in gpu_devices:
+    #     tf.config.experimental.set_memory_growth(gpu, True)
 
     # update conv+pool iterations based on number of SNPs
     num_conv_iterations = int(np.floor(np.log10(args.num_snps))-1)
