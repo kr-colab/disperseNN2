@@ -205,7 +205,15 @@ The preprocessed data are saved in the directory specified by ``--out``; other a
 3. Training
 ***********
 
-Below is an example command for the training step.
+..
+    DEV:
+        Preprocessing and training commands to get the training data, after simulating as in the vignette
+	python disperseNN2.py                  --out temp_wd/vignette/output_dir_n10                  --seed 12345                  --preprocess                  --num_snps 1951                  --n 10                  --tree_list temp2                  --target_list temp1                  --empirical Examples/VCFs/halibut                  --hold_out 10
+	python disperseNN2.py                --out Examples/Preprocessed                --seed 67890                --train                --num_snps 1951                --max_epochs 50                --validation_split 0.2                --batch_size 10                --threads 1                --n 10                --pairs 45                --pairs_encode 45                --pairs_estimate 45                --gpu 2
+
+
+
+Below is an example command for the training step. Here, we're using some already-preprocessed training data provided with the package.
 
 .. code-block:: console
 
@@ -213,12 +221,10 @@ Below is an example command for the training step.
 		>		 --out Examples/Preprocessed \
 		>                --seed 12345 \
 		>		 --train \
-		>		 --num_snps 1951 \
 		>		 --max_epochs 50 \
 		>		 --validation_split 0.2 \
 		>		 --batch_size 10 \
 		>		 --threads 1 \
-		>		 --n 10 \
 		>		 --pairs 45 \
 		>		 --pairs_encode 45 \
 		>		 --pairs_estimate 45 \
@@ -238,7 +244,7 @@ Below is an example command for the training step.
 This command will print the training progress to stdout.
 The model weights are saved to ``<out>/Train/disperseNN2_<seed>_model.hdf5``.
 In practice, you will likely want to train for longer than 10 epochs.
-A single thread should be sufficient for reading preprocessed data, but we fonud that between 2 and 10 threads speeds up training. 
+A single thread should be sufficient for reading preprocessed data, but we found that between 2 and 10 threads speeds up training. 
 
 After training has completed (or has been interrupted), the training history can be visualized using a ``disperseNN2`` functionality:
 
@@ -267,7 +273,7 @@ After training has completed (or has been interrupted), the training history can
 4. Validation
 *************
 
-If you want to predict :math:`\sigma` from simulated data, a predict command like the below one can be used:
+If you want to predict :math:`\sigma` from simulated data, a predict command like the below one can be used. The seed tells it to use a pre-trained model that comes with the package:
 
 .. code-block:: console
 
@@ -275,9 +281,7 @@ If you want to predict :math:`\sigma` from simulated data, a predict command lik
 		>		 --out Examples/Preprocessed \
 		>                --seed 67890 \
 		>		 --predict \
-		>		 --num_snps 1951 \
 		>		 --batch_size 10 \
-		>		 --n 10 \
 		>		 --num_pred 10
 
 - ``--predict``: tells ``disperseNN2`` to perform predictions
@@ -288,16 +292,16 @@ This will generate a file called ``<out>/Test/predictions_<seed>.txt`` containin
 .. code-block:: console
 
 		(.venv) $ cat Examples/Preprocessed/Test/predictions_67890.txt
-		1.4369271974721274      1.9806803220508296
-		0.9820625410339322      1.186689110171824
-		1.4355382722024348      1.4655386350662676
-		5.7779024313810154      2.4762330756097093
-		0.42382894621819184     0.47895961668499304
-		1.5875503080280997      2.4020665455934065
-		3.26279380573441        2.9089088397237615
-		1.1466445562606893      1.1072462108638617
-		0.47409650933782926     0.6602425910881142
-		0.4445415347763558      0.5027703630816823
+		2.817471663985437       2.6201806819788205
+		3.7493742115925794      2.6694670953873465
+		1.530075843679355       1.5735053641195622
+		3.668717628736522       2.448611674409433
+		3.5848703681624023      1.979834465777554
+		4.76753249496659        3.7804896368793037
+		2.8390955052720184      2.8736537436511993
+		1.8610431192017078      2.7411681635647076
+		0.6651983152551871      0.7620765517175182
+		5.580424872474207       3.1467304372998264
 
 Here, the columns list the true and predicted :math:`\sigma` for each simulation.
 
@@ -315,7 +319,7 @@ Here, the columns list the true and predicted :math:`\sigma` for each simulation
 5. Empirical prediction
 ************************
 
-Finally, for predicting with empirical data, we provide the program with (1) a .vcf and (2) a .locs file (mentioned above, with preprocessing). The order of individuals in the .vcf needs to match that of the .locs file. SNPs should be minimally filtered to exclude indels, multi-allelic sites, and maybe low-confidence variant calls; however, low-frequency SNPs should be left in as these are informative about demography.
+For predicting with empirical data, we provide the program with (1) a .vcf and (2) a .locs file (mentioned above, with preprocessing). The order of individuals in the .vcf needs to match that of the .locs file. SNPs should be minimally filtered to exclude indels, multi-allelic sites, and maybe low-confidence variant calls; however, low-frequency SNPs should be left in as these are informative about demography.
 
 .. code-block:: console
 
@@ -324,8 +328,6 @@ Finally, for predicting with empirical data, we provide the program with (1) a .
 		>		 --seed 67890 \		       
 		>		 --predict \
 		>		 --empirical Examples/VCFs/halibut \
-		>		 --num_snps 1951 \
-		>		 --n 10 \
 		>		 --num_reps 5
 
 - ``--empirical``: prefix for the empirical data that is shared for both the .vcf and .locs files. This includes the path, but without the filetype suffix. 
@@ -336,8 +338,8 @@ The output is in kilometers and can be found in ``<out>/empirical_<seed>.txt``:
 .. code-block:: console
 
 		(.venv) $ cat Examples/Preprocessed/empirical_67890.txt
-		Examples/VCFs/halibut rep0 0.2743969424
-		Examples/VCFs/halibut rep1 0.2441067173
-		Examples/VCFs/halibut rep2 0.2532926691
-		Examples/VCFs/halibut rep3 0.2990145165
-		Examples/VCFs/halibut rep4 0.2740349936
+		Examples/VCFs/halibut rep0 2.4848595098
+		Examples/VCFs/halibut rep1 2.2881405623
+		Examples/VCFs/halibut rep2 1.8599958634
+		Examples/VCFs/halibut rep3 2.4091420017
+		Examples/VCFs/halibut rep4 2.3767512964

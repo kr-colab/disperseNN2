@@ -182,12 +182,9 @@ In the below ``disperseNN2`` training command, we set ``pairs`` to 1000; this is
 		>                --out temp_wd/vignette/output_dir \
 		> 		 --seed 12345 \
 		> 		 --train \
-		>                --num_snps 1951 \
 		>                --max_epochs 100 \
 		>                --validation_split 0.2 \
 		>                --batch_size 10 \
-		>                --threads 1 \
-		>                --n 95 \
 		>                --learning_rate 1e-4 \
 		>                --pairs 1000 \
 		>                --pairs_encode 100 \
@@ -233,10 +230,7 @@ Next, we will validate the trained model on simulated test data. In a real appli
 		>                --out temp_wd/vignette/output_dir \
                 >                --seed 12345 \		
 		>                --predict \
-		>                --num_snps 1951 \
 		>                --batch_size 10 \
-		>                --threads 1 \
-		>                --n 95 \
 		>                --pairs 1000 \
 		>                --pairs_encode 100 \
 		>                --pairs_estimate 100 \
@@ -275,10 +269,7 @@ Since we are satisfied with the performance of the model on the held-out test se
                 >                --seed 12345 \		
 		>		 --predict \
 		>		 --empirical temp_wd/vignette/iraptus \
-		>		 --num_snps 1951 \
 		>		 --batch_size 10 \
-		>		 --threads 1 \
-		>		 --n 95 \
 		>                --pairs 1000 \
 		>		 --pairs_encode 100 \
 		>                --pairs_estimate 100 \

@@ -20,14 +20,15 @@ def check_params(args):
         print("either --train or --predict or --preprocess or --plot_history or --empirical")
         exit()
     if args.train == True or args.predict == True or args.preprocess == True:
+        if args.out == None:
+            print("specify output directory --out")
+            exit()
+    if args.preprocess == True:
         if args.num_snps == None:
             print("specify num snps via --num_snps")
             exit()
         if args.n == None:
             print("specify sample size via --n")
-            exit()
-        if args.out == None:
-            print("specify output directory --out")
             exit()
     if args.predict == True and args.empirical == None:
         if args.num_pred != None:

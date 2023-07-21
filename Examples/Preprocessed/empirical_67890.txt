@@ -1,0 +1,5 @@
+Examples/VCFs/halibut rep0 2.4848595098
+Examples/VCFs/halibut rep1 2.2881405623
+Examples/VCFs/halibut rep2 1.8599958634
+Examples/VCFs/halibut rep3 2.4091420017
+Examples/VCFs/halibut rep4 2.3767512964

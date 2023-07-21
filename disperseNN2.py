@@ -366,8 +366,8 @@ def preprocess():
     train, test = train_test_split(np.arange(total_sims), test_size=args.hold_out)
 
     # loop through training targets to get mean and sd          
-    if os.path.isfile(args.out+"/Train/mean_sd.npy"):
-        meanSig,sdSig = np.load(args.out+"/Train/mean_sd.npy")
+    if os.path.isfile(args.out+"/Train/training_params.npy"):
+        n,num_snps,meanSig,sdSig = np.load(args.out+"/Train/training_params.npy")
     else:
         targets = []
         for i in train:
@@ -377,7 +377,7 @@ def preprocess():
         meanSig = np.mean(targets)
         sdSig = np.std(targets)
         os.makedirs(args.out+"/Train", exist_ok=True)
-        np.save(args.out+"/Train/mean_sd", [meanSig,sdSig])
+        np.save(args.out+"/Train/training_params", [args.n,args.num_snps,meanSig,sdSig])
 
     # make directories
     os.makedirs(os.path.join(args.out,"Train/Targets",str(args.seed)), exist_ok=True)
@@ -433,6 +433,13 @@ def train():
     print("reading input paths", flush=True)
     targets,genos,locs = dict_from_preprocessed(args.out+"/Train/")
     total_sims = len(targets)
+
+    # grab n and num_snps from preprocessed dir
+    if args.training_mean_sd is None:
+        args.n,args.num_snps,meanSig,sdSig = np.load(args.out + "/Train/training_params.npy")
+    else:
+        args.n,args.num_snps,meanSid,sdSig = np.load(args.training_mean_sd)
+    args.n,args.num_snps = int(args.n),int(args.num_snps)
     
     # split into val,train sets
     sim_ids = np.arange(0, total_sims)
@@ -480,9 +487,10 @@ def predict():
 
     # grab mean and sd from training distribution
     if args.training_mean_sd is None:
-        meanSig, sdSig = np.load(args.out + "/Train/mean_sd.npy")
+        args.n,args.num_snps,meanSig,sdSig = np.load(args.out + "/Train/training_params.npy")
     else:
-        meanSid, sdSig = np.load(args.training_mean_sd)
+        args.n,args.num_snps,meanSid,sdSig = np.load(args.training_mean_sd)
+    args.n,args.num_snps = int(args.n),int(args.num_snps)
 
     # load inputs
     targets,genos,locs = dict_from_preprocessed(args.out+"/Test/")
@@ -536,11 +544,12 @@ def predict():
 
 def empirical():
 
-    # load mean and sd from training
-    if args.training_mean_sd is	None:
-        meanSig, sdSig = np.load(args.out + "/Train/mean_sd.npy")
+    # grab mean and sd from training distribution 
+    if args.training_mean_sd is None:
+        args.n,args.num_snps,meanSig,sdSig = np.load(args.out + "/Train/training_params.npy")
     else:
-        meanSid, sdSig = np.load(args.training_mean_sd)
+        args.n,args.num_snps,meanSid,sdSig = np.load(args.training_mean_sd)
+    args.n,args.num_snps = int(args.n),int(args.num_snps)
 
     # project locs
     locs = read_locs(args.empirical + ".locs")
