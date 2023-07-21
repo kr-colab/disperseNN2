@@ -231,13 +231,6 @@ parser.add_argument(
     type=int,
     default=None,
 )
-parser.add_argument(
-    "--pairs_estimate",
-    help="average the feature block over 'pairs_encode' / 'pairs_set' \
-    sets of pairs",
-    type=int,
-    default=None,
-)
 args = parser.parse_args()
 check_params(args)
 
@@ -284,8 +277,6 @@ def load_network():
         args.pairs = int((args.n * (args.n - 1)) / 2)
     if args.pairs_encode is None:
         args.pairs_encode = int((args.n * (args.n - 1)) / 2)
-    if args.pairs_estimate is None:
-        args.pairs_estimate = int((args.n * (args.n - 1)) / 2)
     combinations = list(itertools.combinations(range(args.n), 2))
     combinations = random.sample(combinations, args.pairs)
     combinations_encode = random.sample(combinations, args.pairs_encode)
@@ -341,24 +332,10 @@ def load_network():
     feature_block = tf.stack(hs, axis=1)
     print("\nfeature block:", feature_block.shape)
 
-    # loop through sets of 'pairs_set' pairs
-    num_partitions = int(np.ceil(args.pairs / float(args.pairs_estimate)))
-    row = 0
-    dense_stack = []
-    for p in range(num_partitions):
-        part = feature_block[:, row:row + args.pairs_estimate, :]
-        row += args.pairs_estimate
-        if part.shape[1] < args.pairs_estimate:
-            paddings = tf.constant(
-                [[0, 0], [0, args.pairs_estimate - part.shape[1]], [0, 0]]
-            )
-            part = tf.pad(part, paddings, "CONSTANT")
-        h0 = DENSE_1(part)
-        dense_stack.append(h0)
-    h = tf.stack(dense_stack, axis=1)
-    h = tf.keras.layers.AveragePooling2D(pool_size=(num_partitions, 1))(h)
-
-    # compress down to one sigma estimate
+    # apply 2d dense layer
+    h = DENSE_1(feature_block)
+    
+    # flatten and final dense
     h = tf.keras.layers.Flatten()(h)
     output = tf.keras.layers.Dense(1, activation="linear")(h)
 
