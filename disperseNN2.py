@@ -11,7 +11,7 @@ import gpustat
 import itertools
 import numpy as np
 import matplotlib.pyplot as plt
-def load_dl_modules(): # load TF only if loading input is successful
+def load_dl_modules(): # load TF only if reading input is successful
     print("loading bigger modules")
     global tf
     import tensorflow as tf
@@ -166,8 +166,6 @@ parser.add_argument("--upsample", help="number of upsample layers", default=6, t
 parser.add_argument("--pairs", help="number of pairs to include in the feature block", type=int, default=None)
 parser.add_argument("--pairs_encode", help="number of pairs (<= pairs_encode) to use for gradient in the first part of the network", type=int, default=None)
 parser.add_argument("--pairs_estimate", help="average the feature block over 'pairs_encode' / 'pairs_set' sets of pairs", type=int, default=None)
-
-
 args = parser.parse_args()
 check_params(args)
 
