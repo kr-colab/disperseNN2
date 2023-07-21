@@ -1,22 +1,44 @@
-# upsampling target to higher def. Designed for 50x50 maps, upsampling to 500x500
+# helper functions for processing inputs to disperseNN2
 
 import numpy as np
 import sys
 from geopy import distance
 import random
-from matplotlib import pyplot as plt
+import utm
+import tskit
+from read_input import *
 
-# get sampling width
-def project_locs(coords):
-    n = len(coords)
-    sampling_width = 0
-    for i in range(0, n-1):
-        for j in range(i+1, n):
-            # ellipsoid='WGS-84' by default
-            d = distance.distance(coords[i, :], coords[j, :]).km
-            if d > sampling_width:
-                sampling_width = float(d)
-    return sampling_width
+
+# project sample locations
+def project_locs(locs, fp=None):
+
+    # projection (plus some code for calculating error)
+    locs = np.array(locs) 
+    locs = np.array(utm.from_latlon(locs[:,0], locs[:,1])[0:2]) / 1000 
+    locs = locs.T
+    
+    # calculate extremes
+    min_lat = min(locs[:,0])
+    min_long = min(locs[:,1])
+    max_lat = max(locs[:,0])
+    max_long = max(locs[:,1])
+    lat_range = max_lat-min_lat
+    long_range = max_long-min_long
+
+    # rescale lat and long to each start at 0
+    locs[:,0] = (1-((locs[:,0]-min_lat) / lat_range)) * lat_range # "1-" to orient north-south            
+    locs[:,1] = locs[:,1]-min_long
+
+    # reposition sample locations to random area within the map
+    if fp:
+        ts = tskit.load(fp)
+        W = parse_provenance(ts, 'W')
+        left_edge = np.random.uniform(low=0, high=W-long_range) 
+        bottom_edge = np.random.uniform(low=0, high=W-lat_range)
+        locs[:,0] += bottom_edge
+        locs[:,1] += left_edge
+
+    return locs
 
 
 # pad locations with zeros
@@ -172,8 +194,6 @@ def ibd(genos, coords, phase, num_snps):
     print("IBD r^2, slope, Nw:", r2, b, Nw)
 
 
-
-
 # main
 def main():
     vcf_path = sys.argv[1]
@@ -187,7 +207,6 @@ def main():
     phase = int(sys.argv[5])
     geno_mat = vcf2genos(vcf_path, n, num_snps, phase)
     np.save(outname + ".genos", geno_mat)
-
 
 if __name__ == "__main__":
     main()

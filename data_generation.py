@@ -1,4 +1,4 @@
-# data generator code for training CNN
+# data generator code for training disperseNN2
 
 import sys
 import numpy as np
@@ -8,11 +8,7 @@ import tskit
 import warnings
 from attrs import define,field
 from read_input import *
-import itertools
-
-#import psutil # for printing memory usage for bug                                                                                                                            
-#import os # for print memory usage
-import gc # garbage collect
+import gc
 
 @define
 class DataGenerator(tf.keras.utils.Sequence):
@@ -25,37 +21,36 @@ class DataGenerator(tf.keras.utils.Sequence):
     n: int
     batch_size: int
     mu: float
-    threads: int
     shuffle: bool
     rho: float
     baseseed: int
     recapitate: bool
     skip_mutate: bool
-    crop: float
-    sampling_width: float
-    edge_width: dict
+    edge_width: str
     phase: int
     polarize: int
     genos: dict
     locs: dict
-    preprocessed: bool
-    num_reps: int
     grid_coarseness: int
-    segment: bool
     sample_grid: int
+    empirical_locs: list
 
+    
     def __attrs_post_init__(self):
         "Initialize a few things"
         self.on_epoch_end()
         np.random.seed(self.baseseed)
         warnings.simplefilter("ignore", msprime.TimeUnitsMismatchWarning) # (recapitate step)
 
+        
     def __len__(self):
         "Denotes the number of batches per epoch"
         return int(np.floor(len(self.list_IDs) / self.batch_size))
 
+    
     def __getitem__(self, index):
         "Generate one batch of data"
+
         # Generate indexes of the batch
         indexes = self.indexes[index * self.batch_size : (index + 1) * self.batch_size]
 
@@ -67,12 +62,14 @@ class DataGenerator(tf.keras.utils.Sequence):
 
         return X, y
 
+    
     def on_epoch_end(self):
         "Updates indexes after each epoch"
         self.indexes = np.arange(len(self.list_IDs))
         if self.shuffle == True:
             np.random.shuffle(self.indexes)
 
+            
     def cropper(self, ts, W, sample_width, edge_width, alive_inds):
         "Cropping the map, returning individuals inside sampling window"
         cropped = [] 
@@ -98,7 +95,7 @@ class DataGenerator(tf.keras.utils.Sequence):
 
         return cropped
 
-
+    
     def sample_ind(self, ts, sampled_inds, W, i, j):
         bin_size = W / self.sample_grid
         output_ind = None
@@ -118,7 +115,7 @@ class DataGenerator(tf.keras.utils.Sequence):
 
         return output_ind
 
-
+    
     def unpolarize(self, snp):
         "Change 0,1 encoding to major/minor allele. Also filter no-biallelic"
         alleles = {}                                                                          
@@ -132,7 +129,7 @@ class DataGenerator(tf.keras.utils.Sequence):
             major, minor = list(set(alleles))  # set() gives random order                     
             if alleles[major] < alleles[minor]:                                               
                 major, minor = minor, major                                                   
-            for i in range(self.n * 2):  # go back through and convert genotypes                   
+            for i in range(self.n * 2): # go back through and convert genotypes                   
                 a = snp[i]                                                           
                 if a == major:                                                                
                     new_genotype = 0                                                          
@@ -145,6 +142,29 @@ class DataGenerator(tf.keras.utils.Sequence):
         return new_genotypes
 
     
+    def empirical_sample(self, ts, sampled_inds, n, N, W):
+        locs = np.array(self.empirical_locs)
+        np.random.shuffle(locs)
+        indiv_dict = {} # tracking which indivs have been picked up already  
+        for i in sampled_inds:
+            indiv_dict[i] = 0 
+        keep_indivs = []        
+        for pt in range(n): # for each sampling location
+            dists = {}
+            for i in indiv_dict:
+                ind = ts.individual(i)
+                loc = ind.location[0:2]
+                d = ( (loc[0]-locs[pt,0])**2 + (loc[1]-locs[pt,1])**2 )**(1/2)
+                dists[d] = i # see what I did there?
+            nearest = dists[min(dists)]
+            ind = ts.individual(nearest)
+            loc = ind.location[0:2]
+            keep_indivs.append(nearest)
+            del indiv_dict[nearest]
+
+        return keep_indivs
+
+
     def sample_ts(self, filepath, seed):
         "The meat: load in and fully process a tree sequence"
 
@@ -153,8 +173,8 @@ class DataGenerator(tf.keras.utils.Sequence):
         np.random.seed(seed)
 
         # grab map width and sigma from provenance
-        #W = parse_provenance(ts, 'W')
-        W = 50 # ***
+        W = parse_provenance(ts, 'W')
+        #W = 50 #        *********************
         if self.edge_width == 'sigma':
             edge_width = parse_provenance(ts, 'sigma')
         else:
@@ -179,32 +199,15 @@ class DataGenerator(tf.keras.utils.Sequence):
             )                                                    
         
         # crop map
-        if self.sampling_width != -1.0:
-            sample_width = (float(self.sampling_width) * W) - (edge_width * 2)
-        else:
-            sample_width = np.random.uniform(
-                0, W - (edge_width * 2)
-            ) 
+        sample_width = W - (edge_width * 2)
         sampled_inds = self.cropper(ts, W, sample_width, edge_width, alive_inds)
         failsafe = 0
-        while (
-            len(sampled_inds) < self.n
-        ):  # keep looping until you get a map with enough samples
-            if self.sampling_width != -1.0:
-                sample_width = (float(self.sampling_width) * W) - (edge_width * 2)
-            else:
-                sample_width = np.random.uniform(0, W - (edge_width * 2))
-            failsafe += 1
-            if failsafe > 100:
-                print("\tnot enough samples, killed while-loop after 100 loops")
-                sys.stdout.flush()
-                exit()
-            sampled_inds = self.cropper(ts, W, sample_width, edge_width, alive_inds)
+        if len(sampled_inds) < self.n:
+            print("\tnot enough samples, killed while-loop after 100 loops", flush=True)
+            exit()
 
         # sample individuals
-        if self.sample_grid == None:
-            keep_indivs = np.random.choice(sampled_inds, self.n, replace=False)
-        else:
+        if self.sample_grid != None:
             if self.n < self.sample_grid**2:
                 print("your sample grid is too fine, not enough samples to fill it")
                 exit()
@@ -212,10 +215,15 @@ class DataGenerator(tf.keras.utils.Sequence):
             for r in range(int(np.ceil(self.n / self.sample_grid**2))): # sampling from each square multiple times until >= n samples
                 for i in range(self.sample_grid):
                     for j in range(self.sample_grid):
-                        new_guy = self.sample_ind(ts,sampled_inds,W,i,j)                    
+                        new_guy = self.sample_ind(ts,sampled_inds,W,i,j)
                         keep_indivs.append(new_guy)
-                        sampled_inds.remove(new_guy) # to avoid sampling same guy twice
-            keep_indivs = np.random.choice(keep_indivs, self.n, replace=False) # taking n from the >=n list            
+                        sampled_inds.remove(new_guy) # to avoid sampling same guy twice                                              
+            keep_indivs = np.random.choice(keep_indivs, self.n, replace=False) # taking n from the >=n list                          
+        elif self.empirical_locs != []:
+            keep_indivs = self.empirical_sample(ts, sampled_inds, self.n, len(sampled_inds), W)
+        else:
+            keep_indivs = np.random.choice(sampled_inds, self.n, replace=False)
+        # (unindent)
         keep_nodes = []
         for i in keep_indivs:
             ind = ts.individual(i)
@@ -225,10 +233,7 @@ class DataGenerator(tf.keras.utils.Sequence):
         ts = ts.simplify(keep_nodes)
 
         # mutate
-        if self.num_reps == 1:
-            total_snps = self.num_snps
-        else:
-            total_snps = self.num_snps * 10 # arbitrary size of SNP table for bootstraps
+        total_snps = self.num_snps
         if self.skip_mutate == False:
             mu = float(self.mu)
             ts = msprime.sim_mutations(
@@ -264,38 +269,22 @@ class DataGenerator(tf.keras.utils.Sequence):
                 sample_dict[indID] = 0
                 loc = ts.individual(indID).location[0:2]
                 locs.append(loc)
+
+        # rescale locs
         locs = np.array(locs)
-
-        # # find width of sampling area and save dists
-        # locs = np.array(locs)
-        # sampling_width = 0
-        # for i in range(0,self.n-1):
-        #     for j in range(i+1,self.n):
-        #         d = ( (locs[i,0]-locs[j,0])**2 + (locs[i,1]-locs[j,1])**2 )**(1/2)
-        #         if d > sampling_width:
-        #             sampling_width = float(d)
-
-        # # rescale locs
-        # locs0 = np.array(locs)
-        # minx = min(locs0[:, 0])
-        # maxx = max(locs0[:, 0])
-        # miny = min(locs0[:, 1])
-        # maxy = max(locs0[:, 1])
-        # x_range = maxx - minx
-        # y_range = maxy - miny
-        # locs0[:, 0] = (locs0[:, 0] - minx) / x_range  # rescale to (0,1)      
-        # locs0[:, 1] = (locs0[:, 1] - miny) / y_range
-        # if   x_range > y_range: # these four lines for preserving aspect ratio
-        #     locs0[:, 1] *= y_range / x_range
-        # elif x_range < y_range:
-        #     locs0[:, 0] *= x_range / y_range
-        # #locs = locs0.T 
-
-        # # grab pairwise locations                                                             
-        # pairwise_locs = []
-        # for i in range(0,n-1):
-        #     for j in range(i+1,n):
-        #         pairwise_locs.append( np.concatenate( (locs[i,:],locs[j,:]) ))
+        minx = min(locs[:, 0])
+        maxx = max(locs[:, 0])
+        miny = min(locs[:, 1])
+        maxy = max(locs[:, 1])
+        x_range = maxx - minx
+        y_range = maxy - miny
+        locs[:, 0] = (locs[:, 0] - minx) / x_range  # rescale to (0,1)      
+        locs[:, 1] = (locs[:, 1] - miny) / y_range
+        if   x_range > y_range: # these four lines for preserving aspect ratio
+            locs[:, 1] *= y_range / x_range
+        elif x_range < y_range:
+            locs[:, 0] *= x_range / y_range
+        locs = locs.T
 
         # grab genos
         geno_mat0 = ts.genotype_matrix()
@@ -355,8 +344,7 @@ class DataGenerator(tf.keras.utils.Sequence):
         del mask
         gc.collect()
         
-        return geno_mat2, locs.T # not re-scaled... because I'm not giving it the sampling area currently
-
+        return geno_mat2, locs
 
 
     def __data_generation(self, list_IDs_temp):
@@ -364,24 +352,15 @@ class DataGenerator(tf.keras.utils.Sequence):
         X1 = np.empty((self.batch_size, self.num_snps, self.n), dtype="int8")  # genos       
         X2 = np.empty((self.batch_size, 2, self.n), dtype=float)  # locs                  
         y = np.empty((self.batch_size, ), dtype=float)  # targets      
-        
-        if self.preprocessed == False:
-            for i, ID in enumerate(list_IDs_temp):
-                y[i] = self.targets[ID]
-                out = self.sample_ts(self.trees[ID], np.random.randint(1e9,size=1))
-                X1[i, :] = out[0]
-                X2[i, :] = out[1]
-                X = [X1, X2]
-        else:
-            for i, ID in enumerate(list_IDs_temp):
-                y[i] = np.load(self.targets[ID])
-                # sample snps from preprocessed table
-                geno_mat =  np.load(self.genos[ID])
-                total_snps = geno_mat.shape[0]
-                mask = [True] * self.num_snps + [False] * (total_snps - self.num_snps)
-                np.random.shuffle(mask)
-                X1[i, :] = geno_mat[mask, 0:self.n]
-                X2[i, :] = np.load(self.locs[ID])[:,0:self.n]
-                X = [X1, X2]
+        for i, ID in enumerate(list_IDs_temp):
+            y[i] = np.load(self.targets[ID])
+            geno_mat =  np.load(self.genos[ID])
+            total_snps = geno_mat.shape[0]
+            mask = [True] * self.num_snps + [False] * (total_snps - self.num_snps)
+            np.random.shuffle(mask)
+            X1[i, :] = geno_mat[mask, 0:self.n]
+            X2[i, :] = np.load(self.locs[ID])[:,0:self.n]
+        # (unindent)
+        X = [X1, X2]
 
         return (X, y)
