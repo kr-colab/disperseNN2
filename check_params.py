@@ -15,8 +15,11 @@ def check_params(args):
             print("saved predictions with specified output name already exists (i.e. --out + --seed)")
             exit()
 
-    # arguments for training
-    if args.train == True or args.predict == True or args.empirical == True or args.preprocess == True:
+    # other checks
+    if args.train == False and args.predict == False and args.preprocess == False and args.plot_history == False and args.empirical == False:
+        print("either --train or --predict or --preprocess or --plot_history or --empirical")
+        exit()
+    if args.train == True or args.predict == True or args.preprocess == True:
         if args.num_snps == None:
             print("specify num snps via --num_snps")
             exit()
@@ -26,11 +29,6 @@ def check_params(args):
         if args.out == None:
             print("specify output directory --out")
             exit()
-
-    # check some other param combinations
-    if args.train == False and args.predict == False and args.preprocess == False and args.plot_history == False and args.empirical == False:
-        print("either --train or --predict or --preprocess or --plot_history or --empirical")
-        exit()
     if args.predict == True and args.empirical == None:
         if args.num_pred != None:
             if args.num_pred % args.batch_size != 0:
