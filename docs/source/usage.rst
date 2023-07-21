@@ -15,20 +15,35 @@ Usage
 Install
 ^^^^^^^
 
-To use ``disperseNN2``, first create a new conda env.
-
-$ conda create -n diploshic python=3.9 --yes
-
-
-Then inside the conda env, install using pip:
+To use ``disperseNN2``, we recommend first creating a new conda environment for staying organized:
 
 .. code-block:: console
 
-   (.venv) $ pip install disperseNN2
+		(.venv) $ conda create -n disperseNN2 python=3.9 --yes
+		(.venv) $ conda activate disperseNN2
 
-.. note::
 
-   It's possible to hit issues related to mismatched versions of TF or cuda and that of your nvidia drivers.
+Then inside the conda env, install ``disperseNN2`` using pip (NOT YET LIVE; for now: ``pip install -r requirements/development.txt``):
+
+.. code-block:: console
+
+		(.venv) $ pip install disperseNN2
+
+``disperseNN2`` should run fine on a CPU. For using GPUs it is necessary to install additional software. We use the below commands to set things up on our computer. However, note that tensorflow and cuda versions must be compatible with your particular `NVIDIA drivers <https://www.tensorflow.org/install/source#gpu>`_. Therefore, the below commands will not work in every case and you may need to improvise.
+
+.. code-block:: console
+
+		(.venv) $ mamba install cudatoolkit=11.8.0 cuda-nvcc -c conda-forge -c nvidia
+		(.venv) $ python3 -m pip install nvidia-cudnn-cu11==8.6.0.163 tensorflow==2.12.*
+                (.venv) $ mkdir -p $CONDA_PREFIX/bin/nvvm/libdevice/
+                (.venv) $ cp $CONDA_PREFIX/nvvm/libdevice/libdevice.10.bc $CONDA_PREFIX/bin/nvvm/libdevice/		
+		(.venv) $ mkdir -p $CONDA_PREFIX/etc/conda/activate.d
+                (.venv) $ echo 'export XLA_FLAGS=--xla_gpu_cuda_data_dir=$CONDA_PREFIX/bin/' >> $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh		
+		(.venv) $ source $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
+		(.venv) $ python3 -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))" # verify that gpus get picked up
+
+
+
 
 
 
