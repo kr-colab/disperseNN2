@@ -1,4 +1,0 @@
-
-1. run ``black``
-2. run ``flake8``, fix any issue
-3. open a PR
