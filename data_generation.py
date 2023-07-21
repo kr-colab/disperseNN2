@@ -351,10 +351,14 @@ class DataGenerator(tf.keras.utils.Sequence):
         "Generates data containing batch_size samples"        
         X1 = np.empty((self.batch_size, self.num_snps, self.n), dtype="int8")  # genos       
         X2 = np.empty((self.batch_size, 2, self.n), dtype=float)  # locs                  
-        y = np.empty((self.batch_size, ), dtype=float)  # targets      
+        y = np.empty((self.batch_size, ), dtype=float)  # targets
+        shuffled_indices = np.arange(self.n)        
+        np.random.shuffle(shuffled_indices)
         for i, ID in enumerate(list_IDs_temp):
             y[i] = np.load(self.targets[ID])
-            X1[i, :] = np.load(self.genos[ID])
+            genomat = np.load(self.genos[ID])
+            genomat = genomat[:,shuffled_indices] # shuffling augments the training set; especially when pairs_encode<pairs
+            X1[i, :] = genomat
             X2[i, :] = np.load(self.locs[ID])
         # (unindent)
         X = [X1, X2]
