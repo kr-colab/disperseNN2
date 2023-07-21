@@ -7,7 +7,7 @@ import msprime
 import tskit
 import warnings
 from attrs import define, field
-from read_input import *
+from read_input import parse_provenance
 import gc
 
 

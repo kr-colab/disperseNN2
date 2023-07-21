@@ -4,9 +4,9 @@ import os
 import random
 import argparse
 from sklearn.model_selection import train_test_split
-from check_params import *
-from read_input import *
-from process_input import *
+from check_params import check_params
+from read_input import list2dict, read_list, read_locs, dict_from_preprocessed
+from process_input import project_locs, vcf2genos
 from data_generation import DataGenerator
 import gpustat
 import itertools
@@ -459,8 +459,8 @@ def preprocess():
 
     # loop through training targets to get mean and sd
     if os.path.isfile(args.out + "/Train/training_params.npy"):
-        n, num_snps, meanSig, sdSig = np.load(args.out +
-                                              "/Train/training_params.npy")
+        n, num_snps, meanSig, sdSig = np.load(
+            args.out + "/Train/training_params.npy")
     else:
         targets = []
         for i in train:
