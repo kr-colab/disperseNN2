@@ -518,8 +518,18 @@ def predict():
         partition["prediction"] = np.array(simids_batch)
         generator = DataGenerator(partition["prediction"], **params)
         predictions = model.predict(generator)
-        unpack_predictions(predictions, meanSig, sdSig,
-                           targets, simids_batch, targets)
+
+        # unpack predictions
+        with open(args.out + "/Test/predictions_" + str(args.seed) + ".txt", "a") as out_f:
+            for i in range(len(predictions)):
+                trueval = np.load(targets[simids_batch[i]]) # read in normalized                 
+                trueval = (trueval * sdSig) + meanSig
+                trueval = np.exp(trueval)
+                prediction = predictions[i][0]
+                prediction = (prediction * sdSig) + meanSig
+                prediction = np.exp(prediction)
+                outline = "\t".join(map(str,[trueval, prediction]))
+                print(outline, file=out_f)
         
     return
 
@@ -571,35 +581,15 @@ def empirical():
         test_locs = np.reshape(
             locs, (1, locs.shape[1], locs.shape[0])
         )
-        dataset = args.empirical + "_" + str(i)
         prediction = model.predict([test_genos, test_locs])
-        unpack_predictions(prediction, meanSig, sdSig, None, None, dataset)
-
-    return
-
-
-def unpack_predictions(predictions, meanSig, sdSig, targets, simids, file_names): 
-
-    if args.empirical == None:
-        with open(args.out + "/Test/predictions_" + str(args.seed) + ".txt", "a") as out_f:
-            raes = []
-            for i in range(len(predictions)):
-                trueval = np.load(targets[simids[i]]) # read in normalized
-                trueval = (trueval * sdSig) + meanSig
-                trueval = np.exp(trueval)
-                prediction = predictions[i][0] 
-                prediction = (prediction * sdSig) + meanSig 
-                prediction = np.exp(prediction)
-                outline = "\t".join(map(str,[trueval, prediction]))
-                print(outline, file=out_f)
-
-    else:
+        
+        # unpack_prediction
         with open(args.out + "/empirical_" + str(args.seed) + ".txt", "a") as out_f:
-            prediction = predictions[0][0]
+            prediction = prediction[0][0]
             prediction = (prediction * sdSig) + meanSig
             prediction = np.exp(prediction)
             prediction = np.round(prediction, 10)
-            print(file_names, prediction, file=out_f)
+            print(args.empirical, "rep"+str(i), prediction, file=out_f)
         
     return
 

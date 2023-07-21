@@ -340,8 +340,8 @@ The output is in kilometers and can be found in ``<out>/empirical_<seed>.txt``:
 .. code-block:: console
 
 		(.venv) $ cat Examples/Preprocessed/empirical_67890.txt
-		Examples/VCFs/halibut_0 0.2743969424
-		Examples/VCFs/halibut_1 0.2441067173
-		Examples/VCFs/halibut_2 0.2532925786
-		Examples/VCFs/halibut_3 0.2990145165
-		Examples/VCFs/halibut_4 0.2740349936
+		Examples/VCFs/halibut rep0 0.2743969424
+		Examples/VCFs/halibut rep1 0.2441067173
+		Examples/VCFs/halibut rep2 0.2532926691
+		Examples/VCFs/halibut rep3 0.2990145165
+		Examples/VCFs/halibut rep4 0.2740349936
