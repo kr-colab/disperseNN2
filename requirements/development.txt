@@ -1,0 +1,11 @@
+tensorflow==2.11.0
+gpustat
+numpy
+slim
+geopy
+attrs
+scikit-learn
+msprime
+tskit
+utm
+matplotlib
