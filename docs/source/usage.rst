@@ -22,12 +22,13 @@ To use ``disperseNN2``, we recommend first creating a new conda environment for 
 		(.venv) $ conda create -n disperseNN2 python=3.9 --yes
 
 
-Then inside the conda env, install ``disperseNN2`` using pip (NOT YET LIVE; for now: ``pip install -r requirements/development.txt``):
+Then inside the conda env, install ``disperseNN2`` using pip:
 
 .. code-block:: console
 
                 (.venv) $ conda activate disperseNN2		
-		(.venv) $ pip install disperseNN2
+		(.venv) $ #pip install disperseNN2 # not live yet
+		(.venv) $ pip install -r requirements/development.txt # temp
 
 ``disperseNN2`` should run fine on a CPU. For using GPUs it is necessary to install additional software. We use the below commands to set things up on our computer. However, note that tensorflow and cuda versions must be compatible with your particular `NVIDIA drivers <https://www.tensorflow.org/install/source#gpu>`_. Therefore, the below commands will not work in every case and you may need to improvise (some commands must be run individually, so don't copy the whole code block.)
 
@@ -38,6 +39,8 @@ Then inside the conda env, install ``disperseNN2`` using pip (NOT YET LIVE; for 
                 (.venv) $ mkdir -p $CONDA_PREFIX/bin/nvvm/libdevice/
                 (.venv) $ cp $CONDA_PREFIX/nvvm/libdevice/libdevice.10.bc $CONDA_PREFIX/bin/nvvm/libdevice/		
 		(.venv) $ mkdir -p $CONDA_PREFIX/etc/conda/activate.d
+		(.venv) $ echo 'CUDNN_PATH=$(dirname $(python -c "import nvidia.cudnn;print(nvidia.cudnn.__file__)"))' >> $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
+		(.venv) $ echo 'export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/:$CUDNN_PATH/lib:$LD_LIBRARY_PATH' >> $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
                 (.venv) $ echo 'export XLA_FLAGS=--xla_gpu_cuda_data_dir=$CONDA_PREFIX/bin/' >> $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh		
 		(.venv) $ source $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
 		(.venv) $ python3 -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))" # verify that gpus get picked up
