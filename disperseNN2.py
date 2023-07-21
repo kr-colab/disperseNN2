@@ -1,6 +1,7 @@
 # main code for disperseNN2
 
 import os
+import random
 import argparse
 from sklearn.model_selection import train_test_split
 from check_params import *
@@ -13,11 +14,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def load_dl_modules():  # load TF only if reading input is successful
+def load_dl_modules():  # load TF only if reading input is successfull
     print("loading bigger modules")
     global tf
     import tensorflow as tf
-    from tensorflow import keras
 
     return
 
@@ -33,16 +33,28 @@ parser.add_argument(
     "--train", action="store_true", default=False, help="run training pipeline"
 )
 parser.add_argument(
-    "--predict", action="store_true", default=False, help="run prediction pipeline"
+    "--predict",
+    action="store_true",
+    default=False,
+    help="run prediction pipeline"
 )
-parser.add_argument("--empirical", default=None, help="prefix for vcf and locs")
+parser.add_argument(
+    "--empirical",
+    default=None,
+    help="prefix for vcf and locs"
+)
 parser.add_argument(
     "--target_list", help="list of filepaths to targets (sigma).", default=None
 )
-parser.add_argument("--tree_list", help="list of tree filepaths.", default=None)
+parser.add_argument(
+    "--tree_list",
+    help="list of tree filepaths.",
+    default=None
+)
 parser.add_argument(
     "--edge_width",
-    help="crop a fixed width from each edge of the map; enter 'sigma' to set edge_width equal to sigma",
+    help="crop a fixed width from each edge of the map; \
+    enter 'sigma' to set edge_width equal to sigma",
     default="0",
     type=str,
 )
@@ -53,7 +65,10 @@ parser.add_argument(
     help="number of SNPs",
 )
 parser.add_argument(
-    "--num_pred", default=None, type=int, help="number of datasets to predict on"
+    "--num_pred",
+    default=None,
+    type=int,
+    help="number of datasets to predict on"
 )
 parser.add_argument(
     "--n",
@@ -67,7 +82,11 @@ parser.add_argument(
     default=1e-15,
     type=float,
 )
-parser.add_argument("--rho", help="recombination rate", default=1e-8, type=float)
+parser.add_argument(
+    "--rho",
+    help="recombination rate",
+    default=1e-8,
+    type=float)
 parser.add_argument(
     "--num_samples",
     default=1,
@@ -90,9 +109,14 @@ parser.add_argument(
     "--validation_split",
     default=0.2,
     type=float,
-    help="proportion of training set (after holding out test data) to use for validation during training.",
+    help="proportion of training set (after holding out test data) \
+    to use for validation during training.",
 )
-parser.add_argument("--batch_size", default=1, type=int, help="batch size for training")
+parser.add_argument(
+    "--batch_size",
+    default=1,
+    type=int,
+    help="batch size for training")
 parser.add_argument(
     "--max_epochs", default=1000, type=int, help="max epochs for training"
 )
@@ -100,7 +124,8 @@ parser.add_argument(
     "--patience",
     type=int,
     default=100,
-    help="n epochs to run the optimizer after last improvement in validation loss.",
+    help="n epochs to run the optimizer after last improvement in \
+    validation loss.",
 )
 parser.add_argument(
     "--dropout",
@@ -130,7 +155,8 @@ parser.add_argument(
     "--gpu",
     default="-1",
     type=str,
-    help="index of gpu. To avoid GPUs, skip this flag or say '-1'. To use any available GPU say 'any' ",
+    help="index of gpu. To avoid GPUs, skip this flag or say '-1'. \
+    To use any available GPU say 'any' ",
 )
 parser.add_argument(
     "--plot_history",
@@ -161,8 +187,9 @@ parser.add_argument(
     default=1,
     type=int,
     help="verbose argument passed to keras in model training. \
-                    0 = silent. 1 = progress bars for minibatches. 2 = show epochs. \
-                    Yes, 1 is more verbose than 2. Blame keras.",
+    0 = silent. 1 = progress bars for minibatches. \
+    2 = show epochs. \
+    Yes, 1 is more verbose than 2. Blame keras.",
 )
 parser.add_argument(
     "--threads",
@@ -181,9 +208,16 @@ parser.add_argument(
 )
 parser.add_argument("--grid_coarseness", help="TO DO", default=50, type=int)
 parser.add_argument(
-    "--sample_grid", help="coarseness of grid for grid-sampling", default=None, type=int
+    "--sample_grid",
+    help="coarseness of grid for grid-sampling",
+    default=None,
+    type=int
 )
-parser.add_argument("--upsample", help="number of upsample layers", default=6, type=int)
+parser.add_argument(
+    "--upsample",
+    help="number of upsample layers",
+    default=6,
+    type=int)
 parser.add_argument(
     "--pairs",
     help="number of pairs to include in the feature block",
@@ -192,13 +226,15 @@ parser.add_argument(
 )
 parser.add_argument(
     "--pairs_encode",
-    help="number of pairs (<= pairs_encode) to use for gradient in the first part of the network",
+    help="number of pairs (<= pairs_encode) to use for gradient \
+    in the first part of the network",
     type=int,
     default=None,
 )
 parser.add_argument(
     "--pairs_estimate",
-    help="average the feature block over 'pairs_encode' / 'pairs_set' sets of pairs",
+    help="average the feature block over 'pairs_encode' / 'pairs_set' \
+    sets of pairs",
     type=int,
     default=None,
 )
@@ -232,7 +268,9 @@ def load_network():
     tf.config.threading.set_inter_op_parallelism_threads(
         threads
     )  # this one is needed too.
-    # gpu_devices = tf.config.experimental.list_physical_devices('GPU') # allocate gpu memory dynamically
+
+    # allocate gpu memory dynamically
+    # gpu_devices = tf.config.experimental.list_physical_devices('GPU')
     # for gpu in gpu_devices:
     #     tf.config.experimental.set_memory_growth(gpu, True)
 
@@ -242,17 +280,17 @@ def load_network():
         num_conv_iterations = 0
 
     # organize pairs of individuals
-    if args.pairs == None:
+    if args.pairs is None:
         pairs = int((args.n * (args.n - 1)) / 2)
     else:
         pairs = args.pairs
-    if args.pairs_encode == None:
+    if args.pairs_encode is None:
         pairs_encode = int((args.n * (args.n - 1)) / 2)
         if pairs_encode > 100:
             pairs_encode = 100
     else:
         pairs_encode = args.pairs_encode
-    if args.pairs_estimate == None:
+    if args.pairs_estimate is None:
         pairs_estimate = int((args.n * (args.n - 1)) / 2)
         if pairs_estimate > 100:
             pairs_estimate = 100
@@ -289,8 +327,8 @@ def load_network():
     hs = []
     for comb in combinations:
         h = tf.gather(geno_input, comb, axis=2)
-        l = tf.gather(loc_input, comb, axis=2)
-        d = l[:, :, 0] - l[:, :, 1]
+        locs = tf.gather(loc_input, comb, axis=2)
+        d = locs[:, :, 0] - locs[:, :, 1]
         d = tf.norm(d, ord="euclidean", axis=1)
         d = tf.keras.layers.Reshape((1,))(d)
         if comb in combinations_encode:
@@ -318,7 +356,7 @@ def load_network():
     row = 0
     dense_stack = []
     for p in range(num_partitions):
-        part = feature_block[:, row : row + pairs_estimate, :]
+        part = feature_block[:, row:row + pairs_estimate, :]
         row += pairs_estimate
         if part.shape[1] < pairs_estimate:
             paddings = tf.constant(
@@ -351,9 +389,10 @@ def load_network():
     )
 
     # load weights
-    if args.predict == True:
+    if args.predict is True:
         if args.load_weights is None:
-            weights = args.out + "/Train/disperseNN2_" + str(args.seed) + "_model.hdf5"
+            weights = args.out + "/Train/disperseNN2_" + \
+                str(args.seed) + "_model.hdf5"
         else:
             weights = args.load_weights
         print("loading weights:", weights)
@@ -361,7 +400,8 @@ def load_network():
 
     # callbacks
     checkpointer = tf.keras.callbacks.ModelCheckpoint(
-        filepath=args.out + "/Train/disperseNN2_" + str(args.seed) + "_model.hdf5",
+        filepath=args.out + "/Train/disperseNN2_"
+        + str(args.seed) + "_model.hdf5",
         verbose=args.keras_verbose,
         save_best_only=True,
         saveweights_only=False,
@@ -424,11 +464,13 @@ def preprocess():
     total_sims = len(trees)
 
     # separate training and test data
-    train, test = train_test_split(np.arange(total_sims), test_size=args.hold_out)
+    train, test = train_test_split(np.arange(total_sims),
+                                   test_size=args.hold_out)
 
     # loop through training targets to get mean and sd
     if os.path.isfile(args.out + "/Train/training_params.npy"):
-        n, num_snps, meanSig, sdSig = np.load(args.out + "/Train/training_params.npy")
+        n, num_snps, meanSig, sdSig = np.load(args.out +
+                                              "/Train/training_params.npy")
     else:
         targets = []
         for i in train:
@@ -439,16 +481,35 @@ def preprocess():
         sdSig = np.std(targets)
         os.makedirs(args.out + "/Train", exist_ok=True)
         np.save(
-            args.out + "/Train/training_params", [args.n, args.num_snps, meanSig, sdSig]
+            args.out + "/Train/training_params",
+            [args.n, args.num_snps, meanSig, sdSig]
         )
 
     # make directories
-    os.makedirs(os.path.join(args.out, "Train/Targets", str(args.seed)), exist_ok=True)
-    os.makedirs(os.path.join(args.out, "Train/Genos", str(args.seed)), exist_ok=True)
-    os.makedirs(os.path.join(args.out, "Train/Locs", str(args.seed)), exist_ok=True)
-    os.makedirs(os.path.join(args.out, "Test/Targets", str(args.seed)), exist_ok=True)
-    os.makedirs(os.path.join(args.out, "Test/Genos", str(args.seed)), exist_ok=True)
-    os.makedirs(os.path.join(args.out, "Test/Locs", str(args.seed)), exist_ok=True)
+    os.makedirs(os.path.join(args.out,
+                             "Train/Targets",
+                             str(args.seed)),
+                exist_ok=True)
+    os.makedirs(os.path.join(args.out,
+                             "Train/Genos",
+                             str(args.seed)),
+                exist_ok=True)
+    os.makedirs(os.path.join(args.out,
+                             "Train/Locs",
+                             str(args.seed)),
+                exist_ok=True)
+    os.makedirs(os.path.join(args.out,
+                             "Test/Targets",
+                             str(args.seed)),
+                exist_ok=True)
+    os.makedirs(os.path.join(args.out,
+                             "Test/Genos",
+                             str(args.seed)),
+                exist_ok=True)
+    os.makedirs(os.path.join(args.out,
+                             "Test/Locs",
+                             str(args.seed)),
+                exist_ok=True)
 
     # process
     for i in range(total_sims):
@@ -466,10 +527,10 @@ def preprocess():
             args.out, split, "Locs", str(args.seed), str(i) + ".locs"
         )
         if (
-            os.path.isfile(genofile + ".npy") == False
-            or os.path.isfile(locfile + ".npy") == False
+            os.path.isfile(genofile + ".npy") is False
+            or os.path.isfile(locfile + ".npy") is False
         ):
-            if args.empirical != None:
+            if args.empirical is not None:
                 locs = read_locs(args.empirical + ".locs")
                 if len(locs) != args.n:
                     print("length of locs file doesn't match n")
@@ -490,10 +551,10 @@ def preprocess():
             np.save(genofile, geno_mat)
             np.save(locfile, locs)
         if (
-            os.path.isfile(genofile + ".npy") == True
-            and os.path.isfile(locfile + ".npy") == True
+            os.path.isfile(genofile + ".npy") is True
+            and os.path.isfile(locfile + ".npy") is True
         ):  # (only add target if inputs successful)
-            if os.path.isfile(targetfile + ".npy") == False:
+            if os.path.isfile(targetfile + ".npy") is False:
                 with open(target_paths[i]) as infile:
                     target = np.log(float(infile.readline().strip()))
                 target = (target - meanSig) / sdSig
@@ -525,7 +586,8 @@ def train():
         or len(train) * args.num_samples % args.batch_size != 0
     ):
         print(
-            "\n\ntrain and val sets each need to be divisible by batch_size; otherwise some batches will have missing data\n\n"
+            "\n\ntrain and val sets each need to be divisible by batch_size; \
+            otherwise some batches will have missing data\n\n"
         )
         exit()
 
@@ -550,14 +612,14 @@ def train():
     load_dl_modules()
     model, checkpointer, earlystop, reducelr = load_network()
     print("training!")
-    history = model.fit(
+    model.fit(
         x=training_generator,
         epochs=args.max_epochs,
         shuffle=False,  # (redundant with shuffling inside the generator)
         verbose=args.keras_verbose,
         validation_data=validation_generator,
         callbacks=[checkpointer, earlystop, reducelr],
-    )  # multi-threading, here, is controlled by tf.config.threading.set_intra_op_parallelism_threads
+    )  # multi-thread via tf.config.threading.set_intra_op_parallelism_threads
 
     return
 
@@ -578,9 +640,11 @@ def predict():
 
     # organize "partition" to hand to data generator
     partition = {}
-    if args.num_pred == None:
+    if args.num_pred is None:
         args.num_pred = int(total_sims)
-    simids = np.random.choice(np.arange(total_sims), args.num_pred, replace=False)
+    simids = np.random.choice(np.arange(total_sims),
+                              args.num_pred,
+                              replace=False)
 
     # get generator ready
     params = make_generator_params_dict(
@@ -603,7 +667,7 @@ def predict():
     for b in range(
         int(np.ceil(args.num_pred / args.batch_size))
     ):  # loop to alleviate memory
-        simids_batch = simids[b * args.batch_size : (b + 1) * args.batch_size]
+        simids_batch = simids[b * args.batch_size:(b + 1) * args.batch_size]
         partition["prediction"] = np.array(simids_batch)
         generator = DataGenerator(partition["prediction"], **params)
         predictions = model.predict(generator)
@@ -613,7 +677,7 @@ def predict():
             args.out + "/Test/predictions_" + str(args.seed) + ".txt", "a"
         ) as out_f:
             for i in range(len(predictions)):
-                trueval = np.load(targets[simids_batch[i]])  # read in normalized
+                trueval = np.load(targets[simids_batch[i]])
                 trueval = (trueval * sdSig) + meanSig
                 trueval = np.exp(trueval)
                 prediction = predictions[i][0]
@@ -667,7 +731,8 @@ def empirical():
         test_genos = vcf2genos(
             args.empirical + ".vcf", args.n, args.num_snps, args.phase
         )
-        # ibd(test_genos, locs, args.phase, args.num_snps) # (doesn't work if sample locations are repeated)
+        # (doesn't work if sample locations are repeated)
+        # ibd(test_genos, locs, args.phase, args.num_snps)
         test_genos = np.reshape(
             test_genos, (1, test_genos.shape[0], test_genos.shape[1])
         )
@@ -675,7 +740,8 @@ def empirical():
         prediction = model.predict([test_genos, test_locs])
 
         # unpack_prediction
-        with open(args.out + "/empirical_" + str(args.seed) + ".txt", "a") as out_f:
+        with open(args.out + "/empirical_" + str(args.seed) + ".txt", "a") \
+             as out_f:
             prediction = prediction[0][0]
             prediction = (prediction * sdSig) + meanSig
             prediction = np.exp(prediction)
@@ -707,16 +773,16 @@ def plot_history():
     fig.savefig(args.plot_history + "_plot.pdf", bbox_inches="tight")
 
 
-### main ###
+# main #
 np.random.seed(args.seed)
 
 # pre-process
-if args.preprocess == True:
+if args.preprocess is True:
     print("starting pre-processing pipeline")
     preprocess()
 
 # train
-if args.train == True:
+if args.train is True:
     print("starting training pipeline")
     train()
 
@@ -725,9 +791,9 @@ if args.plot_history:
     plot_history()
 
 # predict
-if args.predict == True:
+if args.predict is True:
     print("starting prediction pipeline")
-    if args.empirical == None:
+    if args.empirical is None:
         print("predicting on simulated data")
         predict()
     else:

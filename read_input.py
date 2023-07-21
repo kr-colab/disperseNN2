@@ -114,10 +114,10 @@ def parse_provenance(ts, param):
     return val
 
 
-# read in the training targets and input paths from a preprocessed, hierarchical folder
+# read input paths from a preprocessed, hierarchical folder
 def dict_from_preprocessed(path):
     targets, genos, locs, counter = {}, {}, {}, 0
-    for root, subdir, files in os.walk(path + "/Targets/"):  # everything under Targets/
+    for root, subdir, files in os.walk(path + "/Targets/"):
         if subdir == []:  # excluding the Targets/ folder itself
             for f in files:
                 targetpath = os.path.join(root, f)

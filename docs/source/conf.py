@@ -34,7 +34,8 @@ html_theme = "sphinx_rtd_theme"
 # -- Options for EPUB output
 epub_show_urls = "footnote"
 
-# options for copy-button (https://sphinx-copybutton.readthedocs.io/en/latest/use.html)
+# options for copy-button
+# (https://sphinx-copybutton.readthedocs.io/en/latest/use.html)
 copybutton_prompt_text = (
     r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: |^>|\(\.venv\) \$ "
 )

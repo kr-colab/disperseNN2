@@ -52,7 +52,8 @@ class DataGenerator(tf.keras.utils.Sequence):
         "Generate one batch of data"
 
         # Generate indexes of the batch
-        indexes = self.indexes[index * self.batch_size : (index + 1) * self.batch_size]
+        indexes = self.indexes[index * self.batch_size:
+                               (index + 1) * self.batch_size]
 
         # Find list of IDs
         list_IDs_temp = [self.list_IDs[k] for k in indexes]
@@ -65,7 +66,7 @@ class DataGenerator(tf.keras.utils.Sequence):
     def on_epoch_end(self):
         "Updates indexes after each epoch"
         self.indexes = np.arange(len(self.list_IDs))
-        if self.shuffle == True:
+        if self.shuffle is True:
             np.random.shuffle(self.indexes)
 
     def cropper(self, ts, W, sample_width, edge_width, alive_inds):
@@ -108,8 +109,8 @@ class DataGenerator(tf.keras.utils.Sequence):
                 output_ind = ind
                 break
         if (
-            output_ind == None
-        ):  # if no individuals in the current square, then choose a random ind.
+            output_ind is None
+        ):  # if no individuals in the current square, choose a random ind
             output_ind = np.random.choice(sampled_inds, 1, replace=False)
 
         return output_ind
@@ -127,7 +128,7 @@ class DataGenerator(tf.keras.utils.Sequence):
             major, minor = list(set(alleles))  # set() gives random order
             if alleles[major] < alleles[minor]:
                 major, minor = minor, major
-            for i in range(self.n * 2):  # go back through and convert genotypes
+            for i in range(self.n * 2):  # go back through, convert genotypes
                 a = snp[i]
                 if a == major:
                     new_genotype = 0
@@ -151,9 +152,10 @@ class DataGenerator(tf.keras.utils.Sequence):
             for i in indiv_dict:
                 ind = ts.individual(i)
                 loc = ind.location[0:2]
-                d = ((loc[0] - locs[pt, 0]) ** 2 + (loc[1] - locs[pt, 1]) ** 2) ** (
-                    1 / 2
-                )
+                d = ((loc[0] - locs[pt, 0]) ** 2
+                     + (loc[1] - locs[pt, 1]) ** 2) ** (
+                         1 / 2
+                     )
                 dists[d] = i  # see what I did there?
             nearest = dists[min(dists)]
             ind = ts.individual(nearest)
@@ -197,16 +199,21 @@ class DataGenerator(tf.keras.utils.Sequence):
 
         # crop map
         sample_width = W - (edge_width * 2)
-        sampled_inds = self.cropper(ts, W, sample_width, edge_width, alive_inds)
-        failsafe = 0
+        sampled_inds = self.cropper(ts,
+                                    W,
+                                    sample_width,
+                                    edge_width,
+                                    alive_inds)
         if len(sampled_inds) < self.n:
-            print("\tnot enough samples, killed while-loop after 100 loops", flush=True)
+            print("\tnot enough samples, killed while-loop after 100 loops",
+                  flush=True)
             exit()
 
         # sample individuals
-        if self.sample_grid != None:
+        if self.sample_grid is not None:
             if self.n < self.sample_grid**2:
-                print("your sample grid is too fine, not enough samples to fill it")
+                print("your sample grid is too fine, \
+                not enough samples to fill it")
                 exit()
             keep_indivs = []
             for r in range(
@@ -216,7 +223,7 @@ class DataGenerator(tf.keras.utils.Sequence):
                     for j in range(self.sample_grid):
                         new_guy = self.sample_ind(ts, sampled_inds, W, i, j)
                         keep_indivs.append(new_guy)
-                        sampled_inds.remove(new_guy)  # to avoid sampling same guy twice
+                        sampled_inds.remove(new_guy)  # avoid sampling same guy
             keep_indivs = np.random.choice(
                 keep_indivs, self.n, replace=False
             )  # taking n from the >=n list
@@ -237,7 +244,7 @@ class DataGenerator(tf.keras.utils.Sequence):
 
         # mutate
         total_snps = self.num_snps
-        if self.skip_mutate == False:
+        if self.skip_mutate is False:
             mu = float(self.mu)
             ts = msprime.sim_mutations(
                 ts,
@@ -303,7 +310,7 @@ class DataGenerator(tf.keras.utils.Sequence):
             snp_index_map = {}
             for s in range(total_snps):
                 new_genotypes = self.unpolarize(geno_mat0[shuffled_indices[s]])
-                if new_genotypes != False:  # if bi-allelic, add in the snp
+                if new_genotypes is not False:  # if bi-allelic, add in the snp
                     geno_mat1.append(new_genotypes)
                     snp_index_map[shuffled_indices[s]] = int(snp_counter)
                     snp_counter += 1
@@ -312,7 +319,7 @@ class DataGenerator(tf.keras.utils.Sequence):
             ):  # likely need to replace a few non-biallelic sites
                 s += 1
                 new_genotypes = self.unpolarize(geno_mat0[shuffled_indices[s]])
-                if new_genotypes != False:
+                if new_genotypes is not False:
                     geno_mat1.append(new_genotypes)
                     snp_index_map[shuffled_indices[s]] = int(snp_counter)
                     snp_counter += 1
@@ -342,7 +349,7 @@ class DataGenerator(tf.keras.utils.Sequence):
         np.random.shuffle(mask)
         geno_mat1 = geno_mat0[mask, :]
         geno_mat2 = np.zeros((self.num_snps, self.n * self.phase))  # pad
-        geno_mat2[:, 0 : self.n * self.phase] = geno_mat1
+        geno_mat2[:, 0:self.n * self.phase] = geno_mat1
 
         # free memory
         del ts
@@ -355,9 +362,9 @@ class DataGenerator(tf.keras.utils.Sequence):
 
     def __data_generation(self, list_IDs_temp):
         "Generates data containing batch_size samples"
-        X1 = np.empty((self.batch_size, self.num_snps, self.n), dtype="int8")  # genos
-        X2 = np.empty((self.batch_size, 2, self.n), dtype=float)  # locs
-        y = np.empty((self.batch_size,), dtype=float)  # targets
+        X1 = np.empty((self.batch_size, self.num_snps, self.n), dtype="int8")
+        X2 = np.empty((self.batch_size, 2, self.n), dtype=float)
+        y = np.empty((self.batch_size,), dtype=float)
         shuffled_indices = np.arange(self.n)
         np.random.shuffle(shuffled_indices)
         for i, ID in enumerate(list_IDs_temp):
@@ -365,7 +372,7 @@ class DataGenerator(tf.keras.utils.Sequence):
             genomat = np.load(self.genos[ID])
             genomat = genomat[
                 :, shuffled_indices
-            ]  # shuffling augments the training set; especially when pairs_encode<pairs
+            ]  # shuffe augments training set; especially pairs_encode<pairs
             X1[i, :] = genomat
             X2[i, :] = np.load(self.locs[ID])
         # (unindent)

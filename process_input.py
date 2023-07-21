@@ -57,13 +57,12 @@ def pad_locs(locs, n):
 def vcf2genos(vcf_path, n, num_snps, phase):
     geno_mat = []
     vcf = open(vcf_path, "r")
-    current_chrom = None
     for line in vcf:
         if line[0:2] == "##":
             pass
         elif line[0] == "#":
             header = line.strip().split("\t")
-            if n == None:  # option for getting sample size from vcf
+            if n is None:  # option for getting sample size from vcf
                 n = len(header) - 9
         else:
             newline = line.strip().split("\t")
@@ -93,7 +92,9 @@ def vcf2genos(vcf_path, n, num_snps, phase):
 
     # sample snps
     geno_mat = np.array(geno_mat)
-    return geno_mat[np.random.choice(geno_mat.shape[0], num_snps, replace=False), :]
+    return geno_mat[np.random.choice(geno_mat.shape[0],
+                                     num_snps,
+                                     replace=False), :]
 
 
 # calculate isolation by distance
@@ -109,10 +110,10 @@ def ibd(genos, coords, phase, num_snps):
     if phase == 2:
         n = int(n / 2)
     genos = genos[
-        :, 0 : n * phase
+        :, 0:n*phase
     ]  # (maybe don't need to subset, as long as we know n?)
 
-    # if collapsed genos, make fake haplotypes for calculating Rousset's statistic
+    # if collapsed genos, make fake haplotypes
     if phase == 1:
         geno_mat2 = []
         for i in range(genos.shape[1]):
@@ -177,7 +178,7 @@ def ibd(genos, coords, phase, num_snps):
                 + (X21 - X2_ave) ** 2
                 + (X22 - X2_ave) ** 2
             )
-            Xdotdot = (X11 + X12 + X21 + X22) / 4  # average allelic dose for the pair
+            Xdotdot = (X11 + X12 + X21 + X22) / 4  # mean allelic dose for pair
             # a measure of between indiv
             SSb = (X1_ave - Xdotdot) ** 2 + (X2_ave - Xdotdot) ** 2
             locus_specific_numerators = ((2 * SSb) - SSw) / 4
