@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(name='disperseNN2',
-      version='1.0.4',
+      version='1.0.5',
       description='neural net for estimating dispersal',
       long_description=long_description,
       long_description_content_type="text/markdown",
@@ -23,7 +23,7 @@ setup(name='disperseNN2',
                         'tskit',
                         'utm',
                         'matplotlib'],
-      scripts=['disperseNN2/disperseNN2.py',
+      scripts=['disperseNN2/disperseNN2',
                'disperseNN2/data_generation.py',
                'disperseNN2/read_input.py',
                'disperseNN2/check_params.py',

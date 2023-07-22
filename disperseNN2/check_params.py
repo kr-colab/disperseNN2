@@ -29,11 +29,11 @@ def check_params(args):
         and args.predict is False
         and args.preprocess is False
         and args.plot_history is False
-        and args.empirical is False
+        and args.empirical is None
     ):
         print(
-            "either --train or --predict or --preprocess or --plot_history or \
-            --empirical"
+            "either --help, --train, --predict, --preprocess,\
+            --empirical,  or --plot_history"
         )
         exit()
     if args.train is True or args.predict is True or args.preprocess is True:
