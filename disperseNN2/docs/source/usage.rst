@@ -27,8 +27,7 @@ Then inside the conda env, install ``disperseNN2`` using pip:
 .. code-block:: console
 
                 (.venv) $ conda activate disperseNN2		
-		(.venv) $ #pip install disperseNN2 # not live yet
-		(.venv) $ pip install -r requirements/development.txt # temp
+		(.venv) $ pip install disperseNN2
 
 ``disperseNN2`` should run fine on a CPU. For using GPUs it is necessary to install additional software. We use the below commands to set things up on our computer. However, note that tensorflow and cuda versions must be compatible with your particular `NVIDIA drivers <https://www.tensorflow.org/install/source#gpu>`_. Therefore, the below commands will not work in every case and you may need to improvise (some commands must be run individually, so don't copy the whole code block.)
 
@@ -230,7 +229,6 @@ Below is an example command for the training step. Here, we're using some alread
 		>		 --threads 1 \
 		>		 --pairs 45 \
 		>		 --pairs_encode 45 \
-		>		 --pairs_estimate 45 \
 		>		 --gpu -1 \
 		>		 > temp_wd/output_dir/training_history_12345.txt
 
@@ -241,7 +239,6 @@ Below is an example command for the training step. Here, we're using some alread
 - ``--threads``: number of threads to use during training. 
 - ``--pairs``: the total number of pairs to include in the analysis. Defaults to all pairs.
 - ``--pairs_encode``: the number of pairs to include in the gradient in the encoder portion of the neural network. Default: all pairs.
-- ``--pairs_estimate``: the number of pairs to include in the estimator portion of the neural network. Default: all pairs.
 - ``--gpu``: as an integer, specifies the GPU index (e.g., 0, 1, etc). "any" means take any available gpu. -1 means no GPU.
 
 This command will print the training progress to stdout.

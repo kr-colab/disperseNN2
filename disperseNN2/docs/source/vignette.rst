@@ -174,7 +174,7 @@ This filtering results in 1951 SNPs from 95 individuals. These values are includ
 3. Training
 -----------
 
-In the below ``disperseNN2`` training command, we set ``pairs`` to 1000; this is the number of pairs of individuals from each training dataset that are included in the analysis, and we chose 1000 to reduce the memory requirement. The maximum number of pairs with 95 individuals would have been 4465. We've found that using 100 for ``--pairs_encode`` and ``--pairs_estimate`` works well, and further reduces memory. Don't forget to tack on the ``--gpu`` flag if GPUs are available.
+In the below ``disperseNN2`` training command, we set ``pairs`` to 1000; this is the number of pairs of individuals from each training dataset that are included in the analysis, and we chose 1000 to reduce the memory requirement. The maximum number of pairs with 95 individuals would have been 4465. We've found that using 100 for ``--pairs_encode`` works well, and reduces memory significantly. Don't forget to tack on the ``--gpu`` flag if GPUs are available.
 
 .. code-block:: console
 
@@ -188,7 +188,6 @@ In the below ``disperseNN2`` training command, we set ``pairs`` to 1000; this is
 		>                --learning_rate 1e-4 \
 		>                --pairs 1000 \
 		>                --pairs_encode 100 \
-		>                --pairs_estimate 100 \
 		>		 > temp_wd/vignette/output_dir/training_history_12345.txt
 
 After the run completes, let's visualize the training history:
@@ -233,7 +232,6 @@ Next, we will validate the trained model on simulated test data. In a real appli
 		>                --batch_size 10 \
 		>                --pairs 1000 \
 		>                --pairs_encode 100 \
-		>                --pairs_estimate 100 \
 		>                --num_pred 100
 
 We visualized the predictions, ``temp_wd/vignette/output_dir/Test/predictions_12345.txt``, in R:
@@ -272,7 +270,6 @@ Since we are satisfied with the performance of the model on the held-out test se
 		>		 --batch_size 10 \
 		>                --pairs 1000 \
 		>		 --pairs_encode 100 \
-		>                --pairs_estimate 100 \
 		>                --num_reps 10
 
 The final empirical results are stored in: ``temp_wd/vignette/output_dir/empirical_12345.txt``.
