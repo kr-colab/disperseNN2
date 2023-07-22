@@ -3,7 +3,7 @@
 .. _development:
 
 Development
------
+-----------
 
 1. run ``black``
 2. run ``flake8``, fix any issue

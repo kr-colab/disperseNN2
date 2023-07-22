@@ -45,7 +45,8 @@ Below is some bash code to run the simulations using ``square.slim``. If you hav
 
 .. code-block:: console                         
                 :linenos:                       
-                                                
+
+		(.venv) $ cd disperseNN2/disperseNN2                   
                 (.venv) $ mkdir -p temp_wd/vignette/TreeSeqs
                 (.venv) $ mkdir -p temp_wd/vignette/Targets
 		(.venv) $ sigmas=$(python -c 'from scipy.stats import loguniform; import numpy; numpy.random.seed(seed=12345); print(*loguniform.rvs(0.4,6,size=200))')

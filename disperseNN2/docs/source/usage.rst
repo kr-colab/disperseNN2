@@ -94,7 +94,7 @@ The simulation script we use to train ``disperseNN2`` is ``SLiM_recipes/square.s
 
 .. code-block:: console
 
-		(.venv) $ conda activate disperseNN
+		(.venv) $ cd disperseNN2/disperseNN2/
 		(.venv) $ mkdir -p temp_wd/TreeSeqs
 		(.venv) $ slim -d SEED=12345 \
                 >              -d sigma=0.2 \     
