@@ -508,7 +508,7 @@ def preprocess():
                     exit()
                 locs = project_locs(locs, trees[i])
             else:
-                locs = []
+                locs = None
             params = make_generator_params_dict(
                 targets=None,
                 trees=None,
@@ -574,7 +574,7 @@ def train():
         shuffle=True,
         genos=genos,
         locs=locs,
-        empirical_locs=[],
+        empirical_locs=None,
     )
     training_generator = DataGenerator(partition["train"], **params)
     validation_generator = DataGenerator(partition["validation"], **params)
@@ -624,7 +624,7 @@ def predict():
         shuffle=False,
         genos=genos,
         locs=locs,
-        empirical_locs=[],
+        empirical_locs=None,
     )
 
     # predict

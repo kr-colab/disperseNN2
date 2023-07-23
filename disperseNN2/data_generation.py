@@ -227,7 +227,7 @@ class DataGenerator(tf.keras.utils.Sequence):
             keep_indivs = np.random.choice(
                 keep_indivs, self.n, replace=False
             )  # taking n from the >=n list
-        elif self.empirical_locs != []:
+        elif self.empirical_locs is not None:
             keep_indivs = self.empirical_sample(
                 ts, sampled_inds, self.n, len(sampled_inds), W
             )
