@@ -70,7 +70,11 @@ Breaking down this pipeline one line at a time:
 - L9 creates a list of filepaths to the targets.
 - L12 runs the simulation commands. If multiple cores are available, the number of threads used for this vignette can be increased (L11) to speed things up. In a real application, simulations should be distributed across many jobs on a computing cluster.
 
-And to recapitate the tree sequences output by ``SLiM``:
+.. note::
+
+   The above example used only 1,000 spatial generations; this strategy should be used with caution because this can affect how the output is interpreted. In addition, isolation-by-distance is usually weaker with fewer spatial generations which reduces signal for dispersal rate. In the paper we used 100,000 spatial generations.
+  
+To recapitate the tree sequences output by ``SLiM``:
 
 .. code-block:: console
 
