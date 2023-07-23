@@ -2,7 +2,7 @@ Vignette: example workflow
 ==========================
 
 
-This vignette shows a complete pipeline for a small application of ``disperseNN2`` including instructions for the intermediate data-organizing steps. Some details referenced in the below vignette, e.g., descriptions of command line flags, are explained under :doc:`usage`. We recommend using a cluster node with 10s of CPUs and a GPU for the below analysis.
+This vignette shows a complete pipeline for a small application of ``disperseNN2``. Some details referenced in the below vignette, e.g., descriptions of command line flags, are explained under :doc:`usage`. We recommend using a cluster node with 10s of CPUs and a GPU for the below analysis.
 
 
 
@@ -25,50 +25,50 @@ This vignette shows a complete pipeline for a small application of ``disperseNN2
 1. Simulation
 -------------
 
+To start with: create a new working directory and install ``SLiM`` if you haven't yet:
+
+.. code-block:: console
+
+                (.venv) $ mkdir temp_wd
+                (.venv) $ cd temp_wd
+                (.venv) $ mamba install slim==4.0.1 -c conda-forge
+
+
 For this demonstration we will analyze a population of *Internecivus raptus*. Let's assume we have independent estimates from previous studies for several parameters:
 
 - the width of the species range is 78 km
 - population density is 2.5 individuals per km\ :math:`^2`
 - recombination rate is 1e-8 crossovers per bp per generation
 
-With values for these nuisance parameters in hand we can design custom training simulations for inferring :math:`\sigma`. If our a priori expectation for :math:`\sigma` in this species is somewhere between 0.4 and 6, we will simulate dispersal rates in this range. 100 training simulations should suffice for this demonstration, plus 100 more for testing, so we need 200 total simulations.
+With values for these nuisance parameters in hand we can design custom training simulations for inferring :math:`\sigma`. If our a priori expectation for :math:`\sigma` in this species is somewhere between 0.4 and 6, we will simulate dispersal rates in this range. 100 training simulations should suffice for this demonstration, plus 100 more for testing, so we need 200 total simulations.		
 
-Below is some bash code to run the simulations using ``square.slim``. If you haven't yet, first activate the ``disperseNN2`` conda env, and install ``SLiM``:
-
-.. code-block:: console
-
-                (.venv) $ conda activate disperseNN2
-
-.. code-block:: console
-
-                (.venv) $ mamba install slim==4.0.1 -c conda-forge
+Navigate to the :ref:`simulation` section of the docs and copy over the ``square.slim`` script. Below is some bash code for pipelining the simulations. The number of simulations run in parallel can be adjusted with ``num_jobs``.
 
 .. code-block:: console                         
                 :linenos:                       
 
-		(.venv) $ cd disperseNN2/disperseNN2                   
-                (.venv) $ mkdir -p temp_wd/vignette/TreeSeqs
-                (.venv) $ mkdir -p temp_wd/vignette/Targets
+                (.venv) $ mkdir -p vignette/TreeSeqs
+                (.venv) $ mkdir -p vignette/Targets
 		(.venv) $ sigmas=$(python -c 'from scipy.stats import loguniform; import numpy; numpy.random.seed(seed=12345); print(*loguniform.rvs(0.4,6,size=200))')
                 (.venv) $ for i in {1..200}; do \
                 >             sigma=$(echo $sigmas | awk -v var="$i" '{print $var}'); \
-		>             echo "slim -d SEED=$i -d sigma=$sigma -d K=2.5 -d r=1e-8 -d W=78 -d G=1e8 -d maxgens=1000 -d OUTNAME=\"'temp_wd/vignette/TreeSeqs/output'\" SLiM_recipes/square.slim" >> temp_wd/vignette/sim_commands.txt; \
-		>             echo $sigma > temp_wd/vignette/Targets/target_$i.txt; \
-		>             echo temp_wd/vignette/Targets/target_$i.txt >> temp_wd/vignette/target_list.txt; \
+		>             echo "slim -d SEED=$i -d sigma=$sigma -d K=2.5 -d r=1e-8 -d W=78 -d G=1e8 -d maxgens=1000 -d OUTNAME=\"'vignette/TreeSeqs/output'\" square.slim" >> vignette/sim_commands.txt; \
+		>             echo $sigma > vignette/Targets/target_$i.txt; \
+		>             echo vignette/Targets/target_$i.txt >> vignette/target_list.txt; \
 		>         done
-		(.venv) $ num_threads=2 # change to number of available cores
-		(.venv) $ parallel -j $num_threads < temp_wd/vignette/sim_commands.txt
+		(.venv) $ num_jobs=1 # change to number of available cores
+		(.venv) $ parallel -j $num_jobs < vignette/sim_commands.txt
 
 Breaking down this pipeline one line at a time:
 
-- L1 activates our conda environment
-- L2 creates a new folder for the simulation output. The base folder ``temp_wd`` will contain all output from the current vignette.
-- L3 creates another folder for the training targets.
-- L4 draws random :math:`\sigma`\'s from a log-uniform distribution.
-- L7 builds individual commands for simulations.
-- L8 saves each :math:`\sigma` to it's own file.
-- L9 creates a list of filepaths to the targets.
-- L12 runs the simulation commands. If multiple cores are available, the number of threads used for this vignette can be increased (L11) to speed things up. In a real application, simulations should be distributed across many jobs on a computing cluster.
+- L1 creates a new folder for the simulation output. The base folder ``vignette`` will contain all output from the current vignette.
+- L2 creates another folder for the training targets.
+- L3 draws random :math:`\sigma`\'s from a log-uniform distribution.
+- L6 builds individual commands for simulations.
+- L7 saves each :math:`\sigma` to it's own file.
+- L8 creates a list of filepaths to the targets.
+- L10 specifies the number of simulations to run in parallel
+- L11 runs the simulation commands
 
 .. note::
 
@@ -80,16 +80,16 @@ To recapitate the tree sequences output by ``SLiM``:
 
 		(.venv) $ for i in {1..200}; do \
 		>             echo "python -c 'import tskit,msprime; \
-		>                              ts=tskit.load(\"temp_wd/vignette/TreeSeqs/output_$i.trees\"); \
+		>                              ts=tskit.load(\"vignette/TreeSeqs/output_$i.trees\"); \
 		>		               Ne=len(ts.individuals()); \
 		>		               demography = msprime.Demography.from_tree_sequence(ts); \
 		>		               demography[1].initial_size = Ne; \
 		>		               ts = msprime.sim_ancestry(initial_state=ts, recombination_rate=1e-8, demography=demography, start_time=ts.metadata[\"SLiM\"][\"cycle\"],random_seed=$i,); \
-		>		               ts.dump(\"temp_wd/vignette/TreeSeqs/output_$i"_"recap.trees\")'" \
-		>             >> temp_wd/vignette/recap_commands.txt; \
-		>             echo temp_wd/vignette/TreeSeqs/output_$i"_"recap.trees >> temp_wd/vignette/tree_list.txt; \
+		>		               ts.dump(\"vignette/TreeSeqs/output_$i"_"recap.trees\")'" \
+		>             >> vignette/recap_commands.txt; \
+		>             echo vignette/TreeSeqs/output_$i"_"recap.trees >> vignette/tree_list.txt; \
 		>         done   
-		(.venv) $ parallel -j $num_threads < temp_wd/vignette/recap_commands.txt
+		(.venv) $ parallel -j $num_jobs < vignette/recap_commands.txt
 
 
 
@@ -110,54 +110,58 @@ To recapitate the tree sequences output by ``SLiM``:
 2. Preprocessing
 ----------------
 
-Next, we need to preprocess the input for ``disperseNN2``. But first we need to clean up our *I. raptus* metadata.
+Next, we need to preprocess the input for ``disperseNN2``. But first we need to clean up our *I. raptus* metadata, because we will use the empirical sampling locations during preprocessing. Go ahead and clone our git repo which contains the empirical data we're analyzing, 
+
+.. code-block:: console
+
+                (.venv) $ git clone https://github.com/chriscrsmith/disperseNN2.git
+
 
 Let's pretend we want to take a subset of individuals from a particular geographic region, the "Scotian Shelf-East" region. Below is an example command that might be used to parse and reformat the metadata, but these steps will vary depending on the idiosyncracies of your particular dataset. 
 
 .. code-block:: console
 
-		(.venv) $ cat Examples/VCFs/iraptus_meta_full.txt | grep "Scotian Shelf - East" | sed s/"\t"/,/g > temp_wd/vignette/iraptus.csv
+		(.venv) $ cat disperseNN2/Examples/VCFs/iraptus_meta_full.txt | grep "Scotian Shelf - East" | sed s/"\t"/,/g > vignette/iraptus.csv
 
-We provide a simple script for subsetting a VCF for a particular set of individuals, which also filters indels and non-variant sites:
 
-.. code-block:: console
+..
+ We provide a simple script for subsetting a VCF for a particular set of individuals, which also filters indels and non-variant sites:
 
-		(.venv) $ python Empirical/subset_vcf.py Examples/VCFs/iraptus_full.vcf.gz temp_wd/vignette/iraptus.csv temp_wd/vignette/iraptus.vcf 0 1 12345
-		(.venv) $ gunzip temp_wd/vignette/iraptus.vcf.gz
+		(.venv) $ python Empirical/subset_vcf.py disperseNN2/Examples/VCFs/iraptus_full.vcf.gz vignette/iraptus.csv vignette/iraptus.vcf 0 1 12345
+		(.venv) $ gunzip vignette/iraptus.vcf.gz
+ The flags for ``Empirical/subset_vcf.py`` are:
 
-The flags for ``Empirical/subset_vcf.py`` are:
-
-1. path to input vcf (gzipped)
-2. path to metadata (.csv)
-3. output name
-4. minimum read depth to retain a SNP (int)
-5. minimum proportion of samples represented to keep a SNP (float)
-6. random number seed (int)
+ 1. path to input vcf (gzipped)
+ 2. path to metadata (.csv)
+ 3. output name
+ 4. minimum read depth to retain a SNP (int)
+ 5. minimum proportion of samples represented to keep a SNP (float)
+ 6. random number seed (int)
 		
 Last, build a .locs file:
 
 .. code-block:: console                                                                        
                                                                                             
-                (.venv) $ count=$(cat temp_wd/vignette/iraptus.vcf | grep -v "##" | grep "#" | wc -w) 
+                (.venv) $ count=$(cat disperseNN2/Examples/VCFs/iraptus.vcf | grep -v "##" | grep "#" | wc -w) 
                 (.venv) $ for i in $(seq 10 $count); do \                                       
-                >             id=$(cat temp_wd/vignette/iraptus.vcf | grep -v "##" | grep "#" | cut -f $i); \
-                >             grep -w $id temp_wd/vignette/iraptus.csv; \
-                >         done | cut -d "," -f 4,5 | sed s/","/"\t"/g > temp_wd/vignette/iraptus.locs 
+                >             id=$(cat disperseNN2/Examples/VCFs/iraptus.vcf | grep -v "##" | grep "#" | cut -f $i); \
+                >             grep -w $id vignette/iraptus.csv; \
+                >         done | cut -d "," -f 4,5 | sed s/","/"\t"/g > vignette/iraptus.locs 
 		   
 This filtering results in 1951 SNPs from 95 individuals. These values are included in our below ``disperseNN2`` preprocessing command:
 
 .. code-block:: console
 		
-		(.venv) $ python disperseNN2.py \
-		>                 --out temp_wd/vignette/output_dir \
-		>	          --seed 12345 \
-		>	          --preprocess \
-		>	          --num_snps 1951 \
-		>	          --n 95 \
-		>	          --tree_list temp_wd/vignette/tree_list.txt \
-		>	          --target_list temp_wd/vignette/target_list.txt \
-		>	          --empirical temp_wd/vignette/iraptus \
-		>	          --hold_out 100
+		(.venv) $ disperseNN2 \
+		>             --out vignette/output_dir \
+		>	      --seed 12345 \
+		>	      --preprocess \
+		>	      --num_snps 1951 \
+		>	      --n 95 \
+		>	      --tree_list vignette/tree_list.txt \
+		>	      --target_list vignette/target_list.txt \
+		>	      --empirical vignette/iraptus \
+		>	      --hold_out 100
 
 
 
@@ -183,23 +187,23 @@ In the below ``disperseNN2`` training command, we set ``pairs`` to 1000; this is
 
 .. code-block:: console
 
-                (.venv) $ python disperseNN2.py \
-		>                --out temp_wd/vignette/output_dir \
-		> 		 --seed 12345 \
-		> 		 --train \
-		>                --max_epochs 100 \
-		>                --validation_split 0.2 \
-		>                --batch_size 10 \
-		>                --learning_rate 1e-4 \
-		>                --pairs 1000 \
-		>                --pairs_encode 100 \
-		>		 > temp_wd/vignette/output_dir/training_history_12345.txt
+                (.venv) $ disperseNN2 \
+		>             --out vignette/output_dir \
+		> 	      --seed 12345 \
+		> 	      --train \
+		>             --max_epochs 100 \
+		>             --validation_split 0.2 \
+		>             --batch_size 10 \
+		>             --learning_rate 1e-4 \
+		>             --pairs 1000 \
+		>             --pairs_encode 100 \
+		>	      > vignette/output_dir/training_history_12345.txt
 
 After the run completes, let's visualize the training history:
 
 .. code-block:: console
 
-                (.venv) $ python disperseNN2.py --plot_history temp_wd/vignette/output_dir/training_history_12345.txt
+                (.venv) $ disperseNN2 --plot_history vignette/output_dir/training_history_12345.txt
 		
 .. figure:: training_vignette.png
    :scale: 50 %
@@ -230,16 +234,16 @@ Next, we will validate the trained model on simulated test data. In a real appli
 
 .. code-block:: console
 
-                (.venv) $ python disperseNN2.py \
-		>                --out temp_wd/vignette/output_dir \
-                >                --seed 12345 \		
-		>                --predict \
-		>                --batch_size 10 \
-		>                --pairs 1000 \
-		>                --pairs_encode 100 \
-		>                --num_pred 100
+                (.venv) $ disperseNN2 \
+		>             --out vignette/output_dir \
+                >             --seed 12345 \		
+		>             --predict \
+		>             --batch_size 10 \
+		>             --pairs 1000 \
+		>             --pairs_encode 100 \
+		>             --num_pred 100
 
-We visualized the predictions, ``temp_wd/vignette/output_dir/Test/predictions_12345.txt``, in R:
+We visualized the predictions, ``vignette/output_dir/Test/predictions_12345.txt``, in R:
 		
 .. figure:: results_vignette.png
    :scale: 50 %
@@ -267,31 +271,31 @@ Since we are satisfied with the performance of the model on the held-out test se
 
 .. code-block:: console
 
-		(.venv) $ python disperseNN2.py \
-		>                --out temp_wd/vignette/output_dir \
-                >                --seed 12345 \		
-		>		 --predict \
-		>		 --empirical temp_wd/vignette/iraptus \
-		>		 --batch_size 10 \
-		>                --pairs 1000 \
-		>		 --pairs_encode 100 \
-		>                --num_reps 10
+		(.venv) $ disperseNN2 \
+		>             --out vignette/output_dir \
+                >             --seed 12345 \		
+		>	      --predict \
+		>	      --empirical vignette/iraptus \
+		>	      --batch_size 10 \
+		>             --pairs 1000 \
+		>	      --pairs_encode 100 \
+		>             --num_reps 10
 
-The final empirical results are stored in: ``temp_wd/vignette/output_dir/empirical_12345.txt``.
+The final empirical results are stored in: ``vignette/output_dir/empirical_12345.txt``.
 
 .. code-block:: console
 
-		(.venv) $ cat temp_wd/vignette/output_dir/empirical_12345.txt
-		temp_wd/vignette/iraptus rep0 3.9546769304
-		temp_wd/vignette/iraptus rep1 4.6855290594
-		temp_wd/vignette/iraptus rep2 4.3364704416
-		temp_wd/vignette/iraptus rep3 4.7014474282
-		temp_wd/vignette/iraptus rep4 4.8244376973
-		temp_wd/vignette/iraptus rep5 4.0308759743
-		temp_wd/vignette/iraptus rep6 4.4378236653
-		temp_wd/vignette/iraptus rep7 3.298943647
-		temp_wd/vignette/iraptus rep8 3.3897050226
-		temp_wd/vignette/iraptus rep9 4.3753988221
+		(.venv) $ cat vignette/output_dir/empirical_12345.txt
+		vignette/iraptus rep0 3.9546769304
+		vignette/iraptus rep1 4.6855290594
+		vignette/iraptus rep2 4.3364704416
+		vignette/iraptus rep3 4.7014474282
+		vignette/iraptus rep4 4.8244376973
+		vignette/iraptus rep5 4.0308759743
+		vignette/iraptus rep6 4.4378236653
+		vignette/iraptus rep7 3.298943647
+		vignette/iraptus rep8 3.3897050226
+		vignette/iraptus rep9 4.3753988221
 
 
 		
