@@ -28,7 +28,7 @@ Then inside the conda env, install ``disperseNN2`` using pip:
 
                 (.venv) $ conda activate disperseNN2
                 (.venv) $ #pip install disperseNN2 # not live yet
-		(.venv) $ python3 -m pip install --index-url https://test.pypi.org/simple/ --no-deps disperseNN2==1.0.4
+		(.venv) $ python3 -m pip install --index-url https://test.pypi.org/simple/ --no-deps disperseNN2
 		(.venv) $ pip install -r disperseNN2/requirements/development.txt
 
 ``disperseNN2`` should run fine on a CPU. For using GPUs it is necessary to install additional software. We use the below commands to set things up on our computer. However, note that tensorflow and cuda versions must be compatible with your particular `NVIDIA drivers <https://www.tensorflow.org/install/source#gpu>`_. Therefore, the below commands will not work in every case and you may need to improvise (some commands must be run individually, so don't copy the whole code block.)
