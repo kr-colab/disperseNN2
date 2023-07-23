@@ -15,14 +15,14 @@ Usage
 Install
 ^^^^^^^
 
-To use ``disperseNN2``, we recommend first creating a new conda environment for staying organized:
+To use ``disperseNN2``, we recommend first creating a new conda environment to stay organized:
 
 .. code-block:: console
 
 		(.venv) $ conda create -n disperseNN2 python=3.9 --yes
 
 
-Then inside the conda env, install ``disperseNN2`` using pip:
+Then install ``disperseNN2`` using pip:
 
 .. code-block:: console
 
@@ -81,9 +81,9 @@ A typical ``disperseNN2`` workflow involves five steps:
 1. Simulation
 *************
 
-Although ``disperseNN2`` is not used for running simulations, it relies on simulated training data. Therefore, we provide some template code for generating training data. Hhowever, the ideal analysis will tailor the simulation step to take advantage of realistic information from your particular study system. For information on how to implement population genetic simulations, check out the `SLiM manual <http://benhaller.com/slim/SLiM_Manual.pdf>`_.
+Although ``disperseNN2`` is not used for running simulations, it relies on simulated training data. Therefore, we provide some template code for generating training data. However, the ideal analysis will tailor the simulation step to take advantage of realistic information about your particular study system. For information on how to implement population genetic simulations, check out the `SLiM manual <http://benhaller.com/slim/SLiM_Manual.pdf>`_.
 
-The simulation script we use to train ``disperseNN2`` is ``SLiM_recipes/square.slim``. This is a continuous space model where the mother-offspring distance is :math:`N(0,\sigma)` in both the :math:`x` and :math:`y` dimensions. Other details of the model are described in `Battey et al. 2020 <https://doi.org/10.1534/genetics.120.303143>`_. Below is an example simulation command. First activate the conda env and also install ``SLiM``:
+The simulation script we use to train ``disperseNN2`` is ``SLiM_recipes/square.slim``. This is a continuous space model where mother-offspring dispersal is :math:`N(0,\sigma)` in both the :math:`x` and :math:`y` dimensions. Other details of the model are described in `Battey et al. 2020 <https://doi.org/10.1534/genetics.120.303143>`_. Below is an example simulation command. First activate the conda env and also install ``SLiM``:
 
 
 .. code-block:: console
