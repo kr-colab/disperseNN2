@@ -486,6 +486,7 @@ def preprocess():
                 exist_ok=True)
 
     # process
+    load_dl_modules()  # (to get data generator)    
     for i in range(total_sims):
         if i in test:
             split = "Test"
