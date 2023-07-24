@@ -246,7 +246,7 @@ Next, we will validate the trained model on simulated test data. In a real appli
 		>             --pairs_encode 100 \
 		>             --num_pred 100
 
-We visualized the predictions, ``vignette/output_dir/Test/predictions_12345.txt``, in R:
+ Below is a plot of the predictions, ``vignette/output_dir/Test/predictions_12345.txt``:
 		
 .. figure:: results_vignette.png
    :scale: 50 %
