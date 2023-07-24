@@ -2,13 +2,14 @@
 
 # main code for disperseNN2
 
-import os,sys,random
+import os
+import sys
+import random
 import argparse
 from sklearn.model_selection import train_test_split
 from check_params import check_params
 from read_input import list2dict, read_list, read_locs, dict_from_preprocessed
 from process_input import project_locs, vcf2genos
-from data_generation import DataGenerator
 import gpustat
 import itertools
 import numpy as np
@@ -19,6 +20,8 @@ def load_dl_modules():  # load TF only if reading input is successfull
     print("loading bigger modules")
     global tf
     import tensorflow as tf
+    global DataGenerator
+    from data_generation import DataGenerator  # (loads TF)
 
     return
 
@@ -338,7 +341,7 @@ def load_network():
 
     # apply 2d dense layer
     h = DENSE_1(feature_block)
-    
+
     # flatten and final dense
     h = tf.keras.layers.Flatten()(h)
     output = tf.keras.layers.Dense(1, activation="linear")(h)

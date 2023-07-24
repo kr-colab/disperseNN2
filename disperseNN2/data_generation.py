@@ -6,7 +6,7 @@ import tensorflow as tf
 import msprime
 import tskit
 import warnings
-from attrs import define, field
+from attrs import define
 from read_input import parse_provenance
 import gc
 
