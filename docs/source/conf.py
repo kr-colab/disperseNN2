@@ -2,11 +2,11 @@
 
 # -- Project information
 
-project = "disperseNN"
-copyright = "2023, The disperseNN authors"
+project = "disperseNN2"
+copyright = "2023, The disperseNN2 authors"
 
 release = "0.1"
-version = "0.1.0"
+version = "2.0.0"
 
 # -- General configuration
 

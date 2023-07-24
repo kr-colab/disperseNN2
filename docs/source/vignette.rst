@@ -233,7 +233,7 @@ This plot shows that the validation loss decreases over time, without too much u
 4. Validation
 -------------
 
-Next, we will validate the trained model on simulated test data. In a real application you should hold out datasets from training, but we haven't updated the disperseNN code to do this yet.
+Next, we will validate the trained model on simulated test data. In a real application you should hold out datasets from training.
 
 .. code-block:: console
 
