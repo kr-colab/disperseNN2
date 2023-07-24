@@ -5,7 +5,7 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setup(name='disperseNN2',
-      version='4.0.7',
+      version='4.0.8',
       description='neural net for estimating dispersal',
       long_description=read('README'),
       long_description_content_type="text/markdown",

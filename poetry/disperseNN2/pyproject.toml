@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "disperseNN2"
+version = "5.0.7"
+description = ""
+authors = ["chriscrsmith <chriscs@uoregon.edu>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+disperseNN2 = 'dispersenn2.disperseNN2:run'

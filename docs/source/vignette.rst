@@ -113,7 +113,7 @@ To recapitate the tree sequences output by ``SLiM``:
 2. Preprocessing
 ----------------
 
-Next, we need to preprocess the input for ``disperseNN2``. But first we need to clean up our *I. raptus* metadata, because we will use the empirical sampling locations during preprocessing. Go ahead and clone our git repo which contains the empirical data we're analyzing, 
+Next, we need to preprocess the input for ``disperseNN2``. But before we do that we need to clean up our *I. raptus* metadata, because we will use the empirical sampling locations during preprocessing. Go ahead and clone our git repo which contains the empirical data we're analyzing, 
 
 .. code-block:: console
 
@@ -297,6 +297,18 @@ The final empirical results are stored in: ``vignette/output_dir/empirical_12345
 .. code-block:: console
 
 		(.venv) $ cat vignette/output_dir/empirical_12345.txt
+		vignette/iraptus rep0 3.2341451032
+		vignette/iraptus rep1 3.9642933085
+		vignette/iraptus rep2 3.3508346082
+		vignette/iraptus rep3 3.6715345313
+		vignette/iraptus rep4 3.431195108
+		vignette/iraptus rep5 3.2312677469
+		vignette/iraptus rep6 3.4795969837
+		vignette/iraptus rep7 2.3577550127
+		vignette/iraptus rep8 2.6935483629
+		vignette/iraptus rep9 3.4668037613
+
+..
 		vignette/iraptus rep0 2.0451889008
 		vignette/iraptus rep1 2.4742934411
 		vignette/iraptus rep2 2.1864002565

@@ -7,9 +7,9 @@ import sys
 import random
 import argparse
 from sklearn.model_selection import train_test_split
-from check_params import check_params
-from read_input import list2dict, read_list, read_locs, dict_from_preprocessed
-from process_input import project_locs, vcf2genos
+from dispersenn2.check_params import check_params
+from dispersenn2.read_input import list2dict, read_list, read_locs, dict_from_preprocessed
+from dispersenn2.process_input import project_locs, vcf2genos
 import gpustat
 import itertools
 import numpy as np
@@ -21,7 +21,7 @@ def load_dl_modules():  # load TF only if reading input is successfull
     global tf
     import tensorflow as tf
     global DataGenerator
-    from data_generation import DataGenerator  # (loads TF)
+    from dispersenn2.data_generation import DataGenerator  # (loads TF)
 
     return
 
@@ -747,30 +747,31 @@ def plot_history():
     ax1.legend()
     fig.savefig(args.plot_history + "_plot.pdf", bbox_inches="tight")
 
+def run():
+    
+    # main #
+    np.random.seed(args.seed)
 
-# main #
-np.random.seed(args.seed)
+    # pre-process
+    if args.preprocess is True:
+        print("starting pre-processing pipeline")
+        preprocess()
 
-# pre-process
-if args.preprocess is True:
-    print("starting pre-processing pipeline")
-    preprocess()
+    # train
+    if args.train is True:
+        print("starting training pipeline")
+        train()
 
-# train
-if args.train is True:
-    print("starting training pipeline")
-    train()
+    # plot training history
+    if args.plot_history:
+        plot_history()
 
-# plot training history
-if args.plot_history:
-    plot_history()
-
-# predict
-if args.predict is True:
-    print("starting prediction pipeline")
-    if args.empirical is None:
-        print("predicting on simulated data")
-        predict()
-    else:
-        print("predicting on empirical data")
-        empirical()
+    # predict
+    if args.predict is True:
+        print("starting prediction pipeline")
+        if args.empirical is None:
+            print("predicting on simulated data")
+            predict()
+        else:
+            print("predicting on empirical data")
+            empirical()
