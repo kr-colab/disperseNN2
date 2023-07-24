@@ -42,7 +42,7 @@ For this demonstration we will analyze a population of *Internecivus raptus*. Le
 
 With values for these nuisance parameters in hand we can design custom training simulations for inferring :math:`\sigma`. If our a priori expectation for :math:`\sigma` in this species is somewhere between 0.4 and 6, we will simulate dispersal rates in this range. 100 training simulations should suffice for this demonstration, plus 100 more for testing, so we need 200 total simulations.		
 
-Navigate to the :ref:`simulation` section of the docs and copy over the ``square.slim`` script. Below is some bash code for pipelining the simulations. The number of simulations run in parallel can be adjusted with ``num_jobs``.
+Navigate to the :ref:`simulation` section of the docs and copy over the ``square.slim`` script. Below is some bash code for pipelining the simulations.
 
 .. code-block:: console                         
                 :linenos:                       
@@ -56,8 +56,6 @@ Navigate to the :ref:`simulation` section of the docs and copy over the ``square
 		>             echo $sigma > vignette/Targets/target_$i.txt; \
 		>             echo vignette/Targets/target_$i.txt >> vignette/target_list.txt; \
 		>         done
-		(.venv) $ num_jobs=1 # change to number of available cores
-		(.venv) $ parallel -j $num_jobs < vignette/sim_commands.txt
 
 Breaking down this pipeline one line at a time:
 
@@ -67,9 +65,14 @@ Breaking down this pipeline one line at a time:
 - L6 builds individual commands for simulations.
 - L7 saves each :math:`\sigma` to it's own file.
 - L8 creates a list of filepaths to the targets.
-- L10 specifies the number of simulations to run in parallel
-- L11 runs the simulation commands
 
+The number of simulations run in parallel can be adjusted with ``num_jobs``:
+
+.. code-block:: console
+
+                (.venv) $ num_jobs=1 # change to number of available cores
+                (.venv) $ parallel -j $num_jobs < vignette/sim_commands.txt
+  
 .. note::
 
    The above example used only 1,000 spatial generations; this strategy should be used with caution because this can affect how the output is interpreted. In addition, isolation-by-distance is usually weaker with fewer spatial generations which reduces signal for dispersal rate. In the paper we used 100,000 spatial generations.
@@ -273,7 +276,7 @@ Before predicting with ``disperseNN2`` we need both the empirical .vcf and .locs
 
 .. code-block:: console
 		
-		(.venv) $ ln -s disperseNN2/Examples/VCFs/iraptus.vcf vignette/
+		(.venv) $ ln -s $PWD/disperseNN2/Examples/VCFs/iraptus.vcf vignette/
 
 And then we can run ``disperseNN2``:
 		
