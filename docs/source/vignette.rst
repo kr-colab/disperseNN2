@@ -269,6 +269,14 @@ The predictions are reasonably close to the expected values, meaning there is so
 
 Since we are satisfied with the performance of the model on the held-out test set, we can finally predict σ in our empirical data.
 
+Before predicting with ``disperseNN2`` we need both the empirical .vcf and .locs in the same place:
+
+.. code-block:: console
+		
+		(.venv) $ ln -s disperseNN2/Examples/VCFs/iraptus.vcf vignette/
+
+And then we can run ``disperseNN2``:
+		
 .. code-block:: console
 
 		(.venv) $ disperseNN2 \
@@ -286,22 +294,16 @@ The final empirical results are stored in: ``vignette/output_dir/empirical_12345
 .. code-block:: console
 
 		(.venv) $ cat vignette/output_dir/empirical_12345.txt
-		vignette/iraptus rep0 3.9546769304
-		vignette/iraptus rep1 4.6855290594
-		vignette/iraptus rep2 4.3364704416
-		vignette/iraptus rep3 4.7014474282
-		vignette/iraptus rep4 4.8244376973
-		vignette/iraptus rep5 4.0308759743
-		vignette/iraptus rep6 4.4378236653
-		vignette/iraptus rep7 3.298943647
-		vignette/iraptus rep8 3.3897050226
-		vignette/iraptus rep9 4.3753988221
-
-
-		
-
-
-
+		vignette/iraptus rep0 2.0451889008
+		vignette/iraptus rep1 2.4742934411
+		vignette/iraptus rep2 2.1864002565
+		vignette/iraptus rep3 2.409195011
+		vignette/iraptus rep4 2.4650494178
+		vignette/iraptus rep5 2.2217235654
+		vignette/iraptus rep6 2.3767118847
+		vignette/iraptus rep7 1.6925345467
+		vignette/iraptus rep8 1.8629895107
+		vignette/iraptus rep9 2.302927911
 
 **Interpretation**.
 The output, :math:`\sigma`, is an estimate for the standard deviation of the Gaussian dispersal kernel from our training simulations; in addition, the same parameter was used for the mating distance (and competition distance). Therefore, to get the distance to a random parent, i.e., effective :math:`\sigma`,  we would apply a posthoc correction of :math:`\sqrt{\frac{3}{2}} \times \sigma` (see original disperseNN paper for details). In this example, we trained with only 100 generations spatial, hence the dispersal rate estimate reflects demography in the recent past.
