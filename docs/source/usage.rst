@@ -20,13 +20,13 @@ To use ``disperseNN2``, we recommend first creating a new conda environment to s
 .. code-block:: console
 
 		(.venv) $ conda create -n disperseNN2 python=3.9 --yes
+                (.venv) $ conda activate disperseNN2
 
 
 Then install ``disperseNN2`` using pip:
 
 .. code-block:: console
 
-                (.venv) $ conda activate disperseNN2
                 (.venv) $ #pip install disperseNN2 # not live yet
                 (.venv) $ #pip install --index-url https://test.pypi.org/simple/ --no-deps disperseNN2==4.0.8 # setuptools version
 		(.venv) $ pip install --index-url https://test.pypi.org/simple/ --no-deps disperseNN2==5.0.7 # poetry version
