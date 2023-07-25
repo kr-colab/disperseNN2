@@ -19,3 +19,4 @@ Contents
    usage
    vignette
    development
+   gpus

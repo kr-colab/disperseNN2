@@ -32,9 +32,11 @@ Then install ``disperseNN2`` using pip:
 		(.venv) $ pip install --index-url https://test.pypi.org/simple/ --no-deps disperseNN2==5.0.7 # poetry version
 		(.venv) $ pip install tensorflow==2.11.0 gpustat numpy geopy attrs scikit-learn msprime tskit utm matplotlib
 
-``disperseNN2`` should run fine on just CPUs. For using GPUs it is necessary to install additional software. We use the below commands to set things up on our computer. However, note that tensorflow and cuda versions must be compatible with your particular `NVIDIA drivers <https://www.tensorflow.org/install/source#gpu>`_. Therefore, the below commands will not work in every case and you may need to improvise (some commands must be run individually, so don't copy the whole code block.)
+``disperseNN2`` should run fine on just CPUs. But if you have :ref:`gpus` available, see our GPU installation tips.
 
-.. code-block:: console
+..
+  For using GPUs it is necessary to install additional software. We use the below commands to set things up on our computer. However, note that tensorflow and cuda versions must be compatible with your particular `NVIDIA drivers <https://www.tensorflow.org/install/source#gpu>`_. Therefore, the below commands will not work in every case and you may need to improvise (some commands must be run individually, so don't copy the whole code block.)
+   .. code-block:: console
 
 		(.venv) $ mamba install cudatoolkit=11.8.0 cuda-nvcc -c conda-forge -c nvidia
 		(.venv) $ python3 -m pip install nvidia-cudnn-cu11==8.6.0.163 tensorflow==2.12.*
