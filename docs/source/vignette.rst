@@ -297,7 +297,7 @@ The final empirical results are stored in: ``vignette/output_dir/empirical_12345
 .. code-block:: console
 
 		(.venv) $ cat vignette/output_dir/empirical_12345.txt
-		vignette/iraptus rep0 3.2341451032
+		vignette/iraptus rep0 3.2341451032   
 		vignette/iraptus rep1 3.9642933085
 		vignette/iraptus rep2 3.3508346082
 		vignette/iraptus rep3 3.6715345313
@@ -309,7 +309,7 @@ The final empirical results are stored in: ``vignette/output_dir/empirical_12345
 		vignette/iraptus rep9 3.4668037613
 
 ..
-		vignette/iraptus rep0 2.0451889008
+		vignette/iraptus rep0 2.0451889008   # above tf 2.11, below tf 2.12?
 		vignette/iraptus rep1 2.4742934411
 		vignette/iraptus rep2 2.1864002565
 		vignette/iraptus rep3 2.409195011
@@ -320,6 +320,7 @@ The final empirical results are stored in: ``vignette/output_dir/empirical_12345
 		vignette/iraptus rep8 1.8629895107
 		vignette/iraptus rep9 2.302927911
 
+		
 **Interpretation**.
 The output, :math:`\sigma`, is an estimate for the standard deviation of the Gaussian dispersal kernel from our training simulations; in addition, the same parameter was used for the mating distance (and competition distance). Therefore, to get the distance to a random parent, i.e., effective :math:`\sigma`,  we would apply a posthoc correction of :math:`\sqrt{\frac{3}{2}} \times \sigma` (see original disperseNN paper for details). In this example, we trained with only 100 generations spatial, hence the dispersal rate estimate reflects demography in the recent past.
 
