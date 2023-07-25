@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "disperseNN2"
-version = "0.0.1"
+version = "0.0.2"
 description = "Neural net for estimating dispersal distance"
 authors = ["chriscrsmith <chriscs@uoregon.edu>"]
 readme = "README.md"
@@ -16,6 +16,7 @@ msprime = "^1.2.0"
 tskit = "^0.5.5"
 utm = "^0.7.0"
 matplotlib = "^3.7.2"
+tensorflow = "^2.11"
 
 [build-system]
 requires = ["poetry-core"]
