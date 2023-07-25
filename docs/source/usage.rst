@@ -15,7 +15,7 @@ Usage
 Install
 ^^^^^^^
 
-To use ``disperseNN2``, we recommend first creating a new conda environment to stay organized:
+We recommend creating a new conda environment to stay organized:
 
 .. code-block:: console
 
@@ -27,7 +27,9 @@ Then install ``disperseNN2`` using pip:
 
 .. code-block:: console
 
-                (.venv) $ #pip install disperseNN2 # not live yet
+                (.venv) $ pip install disperseNN2
+
+   ..
                 (.venv) $ #pip install --index-url https://test.pypi.org/simple/ --no-deps disperseNN2==4.0.8 # setuptools version
 		(.venv) $ pip install --index-url https://test.pypi.org/simple/ --no-deps disperseNN2==5.0.7 # poetry version
 		(.venv) $ pip install tensorflow==2.11.0 gpustat numpy geopy attrs scikit-learn msprime tskit utm matplotlib
