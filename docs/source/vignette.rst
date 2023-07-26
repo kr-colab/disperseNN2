@@ -2,7 +2,8 @@ Vignette: example workflow
 ==========================
 
 
-This vignette shows a complete pipeline for a small application of ``disperseNN2``. Some details referenced in the below vignette, e.g., descriptions of command line flags, are explained under :doc:`usage`. We recommend using a cluster node with 10s of CPUs and a GPU for the below analysis.
+This vignette shows a complete pipeline for a small application of ``disperseNN2``. Some details referenced in the below vignette, e.g., descriptions of command line flags, are explained under :doc:`usage`.
+We recommend using a machine with 10s of CPUs and a GPU for the below analysis.
 
 
 
@@ -24,6 +25,10 @@ This vignette shows a complete pipeline for a small application of ``disperseNN2
 
 1. Simulation
 -------------
+A complete workflow would include running simulations that approximate the life history and species range of a focal organism
+Here we will use simulations from the ``SLiM`` package to generate training data for ``disperseNN2``. 
+The simulations are use a simple model of a species with a square range and a Gaussian dispersal kernel. 
+The script is included in the ``disperseNN2`` repo under ``SLiM_recipes/square.slim``. 
 
 To start with: create a new working directory and install ``SLiM`` if you haven't yet:
 
@@ -151,7 +156,8 @@ Last, build a .locs file:
                 >             grep -w $id vignette/iraptus.csv; \
                 >         done | cut -d "," -f 4,5 | sed s/","/"\t"/g > vignette/iraptus.locs 
 		   
-This filtering results in 1951 SNPs from 95 individuals. These values are included in our below ``disperseNN2`` preprocessing command:
+This filtering results in 1951 SNPs from 95 individuals. These values are included in our below ``disperseNN2`` preprocessing command.
+This preprocessing step will take a while (maybe an hour), so it's a good time to get some coffee:
 
 .. code-block:: console
 		
@@ -186,7 +192,8 @@ This filtering results in 1951 SNPs from 95 individuals. These values are includ
 3. Training
 -----------
 
-In the below ``disperseNN2`` training command, we set ``pairs`` to 1000; this is the number of pairs of individuals from each training dataset that are included in the analysis, and we chose 1000 to reduce the memory requirement. The maximum number of pairs with 95 individuals would have been 4465. We've found that using 100 for ``--pairs_encode`` works well, and reduces memory significantly. Don't forget to tack on the ``--gpu`` flag if GPUs are available.
+In the below ``disperseNN2`` training command, we set ``pairs`` to 1000; this is the number of pairs of individuals from each training dataset that are included in the analysis, and we chose 1000 to reduce the memory requirement. The maximum number of pairs with 95 individuals would have been 4465. We've found that using 100 for ``--pairs_encode`` works well, and reduces memory significantly.
+Training on CPU cores will take approximately 20 minutes. If you have a GPU available, use the ``--gpu`` flag
 
 .. code-block:: console
 
@@ -202,7 +209,9 @@ In the below ``disperseNN2`` training command, we set ``pairs`` to 1000; this is
 		>             --pairs_encode 100 \
 		>	      > vignette/output_dir/training_history_12345.txt
 
-After the run completes, let's visualize the training history:
+After the run completes, you can visualize the training history. This will create a plot of the training and validation loss
+declining over epochs of training, 
+``vignette/output_dir/training_history_12345.txt_plot.pdf``:
 
 .. code-block:: console
 
