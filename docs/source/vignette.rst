@@ -19,7 +19,9 @@ This vignette shows a complete pipeline for a small application of ``disperseNN2
 :ref:`vignette_empirical`
 
 :ref:`google_colab_notebook`
+
      
+.. _vignette_simulation:
 
 1. Simulation
 -------------
