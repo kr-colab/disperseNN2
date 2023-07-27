@@ -192,8 +192,12 @@ This preprocessing step will take a while (maybe an hour), so it's a good time t
 3. Training
 -----------
 
-In the below ``disperseNN2`` training command, we set ``pairs`` to 1000; this is the number of pairs of individuals from each training dataset that are included in the analysis, and we chose 1000 to reduce the memory requirement. The maximum number of pairs with 95 individuals would have been 4465. We've found that using 100 for ``--pairs_encode`` works well, and reduces memory significantly.
-Training on CPU cores will take approximately 20 minutes. If you have a GPU available, use the ``--gpu`` flag
+In the below ``disperseNN2`` training command, there are two options that bear a bit of explanation.
+In the example data we are working with there are 95 individuals, and so $95 \choose 2$ = 4465 pairs of individuals.
+We set ``--pairs`` to 1000 to reduce the number of pairwise comparisons used and thus the memory requirement.
+Further our architecture only considers a subset of pairs on the backward pass for gradient computation, this number is chosen with ``--pairs_encode``.
+ We've found that using 100 for ``--pairs_encode`` works well, and again reduces memory significantly.
+Training on ~50 CPU cores will take approximately 20 minutes. If you have a GPU available, use the ``--gpu`` flag
 
 .. code-block:: console
 
