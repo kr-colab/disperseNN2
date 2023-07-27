@@ -21,8 +21,6 @@ This vignette shows a complete pipeline for a small application of ``disperseNN2
 :ref:`google_colab_notebook`
      
 
-.. _vignette_simulation:
-
 1. Simulation
 -------------
 
@@ -35,7 +33,7 @@ To start with: create a new working directory and install ``SLiM`` if you haven'
                 (.venv) $ mamba install slim==4.0.1 -c conda-forge
 
 
-For this demonstration we will analyze a sample of 95 individuals from a population of `*Internecivus raptus* <https://en.wikipedia.org/wiki/Xenomorph>`_. Let's assume we have independent estimates from previous studies for several parameters:
+For this demonstration we will analyze a sample of 95 individuals from a population of :role:`Internecivus raptus <https://en.wikipedia.org/wiki/Xenomorph>`_. Let's assume we have independent estimates from previous studies for several parameters:
 
 - the width of the species range is 78 km
 - population density is 2.5 individuals per km\ :math:`^2`
