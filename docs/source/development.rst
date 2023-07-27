@@ -11,8 +11,9 @@ To install the current dev version:
 
                 (.venv) $ git clone https://github.com/chriscrsmith/disperseNN2.git
 		(.venv) $ cd disperseNN2/
-		TO DO ...
+                (.venv) $ pip install .
 
-1. run ``black``
-2. run ``flake8``, fix any issues
-3. open a PR: https://github.com/kr-colab/disperseNN2
+Once you've made your changes:   
+
+1. run ``flake8``, fix any issues
+2. open a PR: https://github.com/kr-colab/disperseNN2

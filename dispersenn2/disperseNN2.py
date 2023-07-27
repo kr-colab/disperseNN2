@@ -159,7 +159,7 @@ parser.add_argument(
     "--gpu",
     default="-1",
     type=str,
-    help="index of gpu. To avoid GPUs, skip this flag or say '-1'. \
+    help="gpu index (uses a single GPU). To avoid GPUs, skip this flag or say '-1'. \
     To use any available GPU say 'any' ",
 )
 parser.add_argument(
@@ -259,14 +259,15 @@ def load_network():
         )
         bestGPU = min(zip(ids, ratios), key=lambda x: x[1])[0]
         os.environ["CUDA_VISIBLE_DEVICES"] = str(bestGPU)
-    threads = int(
-        np.floor(args.threads / 2)
-    )  # in practice it uses double the specified threads
+    if args.threads > 1:
+        args.threads = int(
+            np.floor(args.threads / 2)
+        )  # in practice it uses double the specified threads
     tf.config.threading.set_intra_op_parallelism_threads(
-        threads
+        args.threads
     )  # limits (and sets) threads used during training
     tf.config.threading.set_inter_op_parallelism_threads(
-        threads
+        args.threads
     )  # this one is needed too.
 
     # allocate gpu memory dynamically
