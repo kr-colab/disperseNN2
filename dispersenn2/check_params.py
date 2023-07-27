@@ -8,18 +8,18 @@ def check_params(args):
     if args.train is True:
         if os.path.exists(
             args.out + "/Train/disperseNN2_" + str(args.seed) + "_model.hdf5"
-        ):
+        ) and args.force is False:
             print("saved model with specified output name already \
-                   exists (i.e. --out)")
+                   exists. To force overwrite, use --force.")
             exit()
     if args.predict is True and args.empirical is None:
         if os.path.exists(args.out
                           + "/Test/predictions_"
                           + str(args.seed)
-                          + ".txt"):
+                          + ".txt") and args.force is False:
             print(
-                "saved predictions with specified output name already exists \
-                (i.e. --out + --seed)"
+                "saved predictions with specified output name already exists. \
+                To force overwrite, use --force."
             )
             exit()
 

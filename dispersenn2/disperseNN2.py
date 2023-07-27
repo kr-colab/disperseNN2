@@ -8,7 +8,10 @@ import random
 import argparse
 from sklearn.model_selection import train_test_split
 from dispersenn2.check_params import check_params
-from dispersenn2.read_input import list2dict, read_list, read_locs, dict_from_preprocessed
+from dispersenn2.read_input import list2dict
+from dispersenn2.read_input import read_list
+from dispersenn2.read_input import read_locs
+from dispersenn2.read_input import dict_from_preprocessed
 from dispersenn2.process_input import project_locs, vcf2genos
 import gpustat
 import itertools
@@ -159,7 +162,8 @@ parser.add_argument(
     "--gpu",
     default="-1",
     type=str,
-    help="gpu index (uses a single GPU). To avoid GPUs, skip this flag or say '-1'. \
+    help="gpu index (uses a single GPU). To avoid GPUs, \
+    skip this flag or say '-1'. \
     To use any available GPU say 'any' ",
 )
 parser.add_argument(
@@ -234,6 +238,13 @@ parser.add_argument(
     in the first part of the network",
     type=int,
     default=None,
+)
+parser.add_argument(
+    "--force",
+    action="store_true",
+    default=False,
+    help="force overwrite of existing data: \
+    including existing model, or predictions"
 )
 args = parser.parse_args()
 check_params(args)
@@ -487,7 +498,7 @@ def preprocess():
                 exist_ok=True)
 
     # process
-    load_dl_modules()  # (to get data generator)    
+    load_dl_modules()  # (to get data generator)
     for i in range(total_sims):
         if i in test:
             split = "Test"
@@ -748,8 +759,9 @@ def plot_history():
     ax1.legend()
     fig.savefig(args.plot_history + "_plot.pdf", bbox_inches="tight")
 
+
 def run():
-    
+
     # main #
     np.random.seed(args.seed)
 
