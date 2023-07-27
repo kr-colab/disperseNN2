@@ -33,7 +33,7 @@ To start with: create a new working directory and install ``SLiM`` if you haven'
                 (.venv) $ mamba install slim==4.0.1 -c conda-forge
 
 
-For this demonstration we will analyze a sample of 95 individuals from a population of :role:`Internecivus raptus <https://en.wikipedia.org/wiki/Xenomorph>`_. Let's assume we have independent estimates from previous studies for several parameters:
+For this demonstration we will analyze a sample of 95 individuals from a population of `Internecivus raptus <https://en.wikipedia.org/wiki/Xenomorph>`_. Let's assume we have independent estimates from previous studies for several parameters:
 
 - the width of the species range is 78 km
 - population density is 2.5 individuals per km\ :math:`^2`
@@ -323,7 +323,9 @@ The final empirical results are stored in: ``vignette/output_dir/empirical_12345
 **Interpretation**.
 The output, :math:`\sigma`, is an estimate for the standard deviation of the Gaussian dispersal kernel from our training simulations; in addition, the same parameter was used for the mating distance (and competition distance). Therefore, to get the distance to a random parent, i.e., effective :math:`\sigma`,  we would apply a posthoc correction of :math:`\sqrt{\frac{3}{2}} \times \sigma` (see original disperseNN paper for details). In this example, we trained with only 100 generations spatial, hence the dispersal rate estimate reflects demography in the recent past.
 
+
 .. _google_colab_notebook:
+
 We have also setup a google colab notebook that runs through this example in a GPU enabled cloud setting.
 We highly recommend checking out this notebook for the impatient, as we provide pre-processed simulation
 results a a fully executatble training/validation/prediction pipeline. The notebook can be found here:
