@@ -1,5 +1,0 @@
-Examples/TreeSeqs/target_98217910.txt
-Examples/TreeSeqs/target_99290585.txt
-Examples/TreeSeqs/target_99284440.txt
-Examples/TreeSeqs/target_98180132.txt
-Examples/TreeSeqs/target_99739498.txt
