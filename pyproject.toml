@@ -1,3 +1,0 @@
-[build-system]
-requires = ["setuptools==65.3.0"] # requirements for build
-build-backend = "setuptools.build_meta"
