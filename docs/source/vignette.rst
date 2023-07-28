@@ -86,8 +86,8 @@ The below command runs the simulations. The number of simulations run in paralle
 The longest of these simulations are expected to take over an hour.
 Therefore, at this point we offer three options:
 option (A) is to wait on the simulations to finish.
-If you are feeling impatient, you may (B) download a .tar file (``wget http://sesame.uoregon.edu/~adkern/vignette.tar.gz;`` ``tar -xf vignette.tar.gz``)  with the simulated and pre-processed data and skip to the :ref:`vignette_training` section.
-Or, (C) check out our `colab notebook <https://colab.research.google.com/github/andrewkern/disperseNN2/blob/adk_doc/docs/disperseNN2_vignette.ipynb>`_ where the simulated data and GPUs are available.
+If you are feeling impatient, you may instead (B) download a .tar file (``wget http://sesame.uoregon.edu/~chriscs/output_dir.tar.gz;`` ``tar -xf output_dir.tar.gz -C vignette/``)  with the simulated and pre-processed data and skip to the :ref:`vignette_training` section.
+Or, (C) check out our :ref:`google_colab_notebook` where the simulated data and GPUs are available.
 
 The below command runs the simualtions (option A). The number of simulations run in parallel can be adjusted with ``num_threads``:
 
