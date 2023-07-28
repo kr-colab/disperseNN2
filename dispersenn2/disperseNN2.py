@@ -575,7 +575,7 @@ def train():
          args.pairs,
          args.pairs_encode]
     )
-    
+
     # split into val,train sets
     sim_ids = np.arange(0, total_sims)
     train, val = train_test_split(sim_ids, test_size=args.validation_split)
@@ -633,9 +633,10 @@ def predict():
     args.n, args.num_snps = int(args.n), int(args.num_snps)
 
     # grab num pairs from saved training params
-    params = np.load(args.out + "/Train/training_params_" + str(args.seed) + ".npy")
+    params = np.load(args.out + "/Train/training_params_"
+                     + str(args.seed) + ".npy")
     args.pairs, args.num_pairs = int(params[4]), int(params[5])
-    
+
     # load inputs
     targets, genos, locs = dict_from_preprocessed(args.out + "/Test/")
     total_sims = len(targets)
@@ -702,9 +703,10 @@ def empirical():
     args.n, args.num_snps = int(args.n), int(args.num_snps)
 
     # grab num pairs from saved training params
-    params = np.load(args.out + "/Train/training_params_" + str(args.seed) + ".npy")
+    params = np.load(args.out + "/Train/training_params_"
+                     + str(args.seed) + ".npy")
     args.pairs, args.num_pairs = int(params[4]), int(params[5])
-    
+
     # project locs
     locs = read_locs(args.empirical + ".locs")
     locs = np.array(locs)
