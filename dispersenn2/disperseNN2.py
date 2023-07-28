@@ -295,7 +295,7 @@ def load_network():
     if args.pairs is None:
         args.pairs = int((args.n * (args.n - 1)) / 2)
     if args.pairs_encode is None:
-        args.pairs_encode = int((args.n * (args.n - 1)) / 2)
+        args.pairs_encode = int(args.pairs)
     combinations = list(itertools.combinations(range(args.n), 2))
     combinations = random.sample(combinations, args.pairs)
     combinations_encode = random.sample(combinations, args.pairs_encode)
@@ -454,9 +454,9 @@ def preprocess():
                                    test_size=args.hold_out)
 
     # loop through training targets to get mean and sd
-    if os.path.isfile(args.out + "/Train/training_params.npy"):
+    if os.path.isfile(args.out + "/preprocess_params.npy"):
         n, num_snps, meanSig, sdSig = np.load(
-            args.out + "/Train/training_params.npy")
+            args.out + "/preprocess_params.npy")
     else:
         targets = []
         for i in train:
@@ -467,7 +467,7 @@ def preprocess():
         sdSig = np.std(targets)
         os.makedirs(args.out + "/Train", exist_ok=True)
         np.save(
-            args.out + "/Train/training_params",
+            args.out + "/preprocess_params",
             [args.n, args.num_snps, meanSig, sdSig]
         )
 
@@ -559,12 +559,23 @@ def train():
     # grab n and num_snps from preprocessed dir
     if args.training_mean_sd is None:
         args.n, args.num_snps, meanSig, sdSig = np.load(
-            args.out + "/Train/training_params.npy"
+            args.out + "/preprocess_params.npy"
         )
     else:
         args.n, args.num_snps, meanSid, sdSig = np.load(args.training_mean_sd)
     args.n, args.num_snps = int(args.n), int(args.num_snps)
 
+    # save training params: 
+    np.save(
+        args.out + "/Train/training_params_" + str(args.seed),
+        [args.seed,
+         args.max_epochs,
+         args.validation_split,
+         args.learning_rate,
+         args.pairs,
+         args.pairs_encode]
+    )
+    
     # split into val,train sets
     sim_ids = np.arange(0, total_sims)
     train, val = train_test_split(sim_ids, test_size=args.validation_split)
@@ -615,12 +626,16 @@ def predict():
     # grab mean and sd from training distribution
     if args.training_mean_sd is None:
         args.n, args.num_snps, meanSig, sdSig = np.load(
-            args.out + "/Train/training_params.npy"
+            args.out + "/preprocess_params.npy"
         )
     else:
         args.n, args.num_snps, meanSid, sdSig = np.load(args.training_mean_sd)
     args.n, args.num_snps = int(args.n), int(args.num_snps)
 
+    # grab num pairs from saved training params
+    params = np.load(args.out + "/Train/training_params.npy") + str(args.seed)
+    args.pairs, args.num_pairs = int(params[4]), int(params[5])
+    
     # load inputs
     targets, genos, locs = dict_from_preprocessed(args.out + "/Test/")
     total_sims = len(targets)
@@ -680,12 +695,16 @@ def empirical():
     # grab mean and sd from training distribution
     if args.training_mean_sd is None:
         args.n, args.num_snps, meanSig, sdSig = np.load(
-            args.out + "/Train/training_params.npy"
+            args.out + "/preprocess_params.npy"
         )
     else:
         args.n, args.num_snps, meanSid, sdSig = np.load(args.training_mean_sd)
     args.n, args.num_snps = int(args.n), int(args.num_snps)
 
+    # grab num pairs from saved training params
+    params = np.load(args.out + "/Train/training_params.npy") + str(args.seed)
+    args.pairs, args.num_pairs = int(params[4]), int(params[5])
+    
     # project locs
     locs = read_locs(args.empirical + ".locs")
     locs = np.array(locs)
