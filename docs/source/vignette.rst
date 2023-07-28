@@ -88,7 +88,7 @@ Therefore, at this point we offer three options:
 option (A) is to wait on the simulations to finish.
 If you are feeling impatient, you may instead (B) download a .tar file---``wget http://sesame.uoregon.edu/~chriscs/output_dir.tar.gz;`` ``tar -xf output_dir.tar.gz -C vignette/``---that contains data that was pre-processed for training with ``disperseNN2`` and skip to the :ref:`vignette_training` section.
 Or, (C) check out our :ref:`google_colab_notebook` where the pre-processed data and GPUs are available.
-(The tree sequences are available as a 5gb tarball `here <http://sesame.uoregon.edu/~chriscs/TreeSeqs.tar.gz>`_).
+(The tree sequences are available as a 6gb tarball `here <http://sesame.uoregon.edu/~chriscs/TreeSeqs.tar.gz>`_).
 
 The below command runs the simualtions (option A). The number of simulations run in parallel can be adjusted with ``num_threads``:
 
