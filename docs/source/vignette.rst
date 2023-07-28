@@ -356,9 +356,7 @@ The output, :math:`\sigma`, is an estimate for the standard deviation of the Gau
 We have also setup a google colab notebook that runs through this example in a GPU enabled cloud setting.
 We highly recommend checking out this notebook for the impatient, as we provide pre-processed simulation
 results and a fully executable training/validation/prediction pipeline. The notebook can be found here:
-`colab notebook <https://colab.research.google.com/github/andrewkern/disperseNN2/blob/adk_doc/docs/disperseNN2_vignette.ipynb>`_.
-
-
+`colab notebook <https://colab.research.google.com/github/kr-colab/disperseNN2/blob/main/docs/disperseNN2_vignette.ipynb>`_.
 
 
 
