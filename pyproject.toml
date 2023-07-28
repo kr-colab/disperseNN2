@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "disperseNN2"
-version = "0.0.2"
+version = "0.0.3"
 description = "Neural net for estimating dispersal distance"
 authors = ["chriscrsmith <chriscs@uoregon.edu>"]
 readme = "README.md"
