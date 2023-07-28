@@ -3,7 +3,8 @@ Vignette: example workflow
 
 
 This vignette shows a complete pipeline for a small application of ``disperseNN2``. Some details referenced in the below vignette, e.g., descriptions of command line flags, are explained under :doc:`usage`.
-We recommend using a machine with 10s of CPUs and a GPU for the below analysis.
+We recommend using a machine with 10s of CPUs for the below analysis.
+
 
 
 
@@ -26,10 +27,9 @@ We recommend using a machine with 10s of CPUs and a GPU for the below analysis.
 
 1. Simulation
 -------------
-A complete workflow would include running simulations that approximate the life history and species range of a focal organism
+A complete workflow would include running simulations that approximate the life history and species range of a focal organism.
 Here we will use simulations from the ``SLiM`` package to generate training data for ``disperseNN2``. 
-The simulations are use a simple model of a species with a square range and a Gaussian dispersal kernel. 
-The script is included in the ``disperseNN2`` repo under ``SLiM_recipes/square.slim``. 
+The simulations use a simple model of a species with a square range and a Gaussian dispersal kernel.
 
 To start with: create a new working directory and install ``SLiM`` if you haven't yet:
 
@@ -48,7 +48,7 @@ For this demonstration we will analyze a sample of 95 individuals from a populat
 
 With values for these nuisance parameters in hand we can design custom training simulations for inferring :math:`\sigma`. If our a priori expectation for :math:`\sigma` in this species is somewhere between 0.4 and 6, we will simulate dispersal rates in this range. 100 training simulations should suffice for this demonstration, plus 100 more for testing, so we need 200 total simulations.		
 
-Navigate to the :ref:`simulation` section of the docs and copy over the `square.slim script <https://github.com/andrewkern/disperseNN2/blob/main/SLiM_recipes/square.slim>`_. Below is some bash code for pipelining the simulations.
+Next copy over the `square.slim script <https://github.com/andrewkern/disperseNN2/blob/main/SLiM_recipes/square.slim>`_, introduced in the :ref:`simulation` section of the docs. Below is some bash code for pipelining the simulations.
 
 .. code-block:: console                         
                 :linenos:                       
@@ -72,12 +72,18 @@ Breaking down this pipeline one line at a time:
 - L7 saves each :math:`\sigma` to it's own file.
 - L8 creates a list of filepaths to the targets.
 
-The number of simulations run in parallel can be adjusted with ``num_jobs``:
+The longest of these simulations are expected to take over an hour.
+Therefore, at this point we offer three options:
+option (A) is to wait on the simulations to finish.
+If you are feeling impatient, you may (B) download a .tar with the simulated and pre-processed data and skip to the :ref:`vignette_training` section.
+Or, (C) check out our `colab notebook <https://colab.research.google.com/github/andrewkern/disperseNN2/blob/adk_doc/docs/disperseNN2_vignette.ipynb>`_ where the simulated data and GPUs are available.
+
+The below command runs the simualtions (option A). The number of simulations run in parallel can be adjusted with ``num_threads``:
 
 .. code-block:: console
 
-                (.venv) $ num_jobs=1 # change to number of available cores
-                (.venv) $ parallel -j $num_jobs < vignette/sim_commands.txt
+                (.venv) $ num_threads=1 # change to number of available cores
+                (.venv) $ parallel -j $num_threads < vignette/sim_commands.txt
   
 .. note::
 
@@ -98,7 +104,7 @@ To recapitate the tree sequences output by ``SLiM``:
 		>             >> vignette/recap_commands.txt; \
 		>             echo vignette/TreeSeqs/output_$i"_"recap.trees >> vignette/tree_list.txt; \
 		>         done   
-		(.venv) $ parallel -j $num_jobs < vignette/recap_commands.txt
+		(.venv) $ parallel -j $num_threads < vignette/recap_commands.txt
 
 
 
@@ -194,10 +200,10 @@ This preprocessing step will take a while (maybe an hour), so it's a good time t
 -----------
 
 In the below ``disperseNN2`` training command, there are two options that bear a bit of explanation.
-In the example data we are working with there are 95 individuals, and so $95 \choose 2$ = 4465 pairs of individuals.
+In the example data we are working with there are 95 individuals, and so $\binom{95}{2}$ = 4465 pairs of individuals.
 We set ``--pairs`` to 1000 to reduce the number of pairwise comparisons used and thus the memory requirement.
 Further our architecture only considers a subset of pairs on the backward pass for gradient computation, this number is chosen with ``--pairs_encode``.
- We've found that using 100 for ``--pairs_encode`` works well, and again reduces memory significantly.
+We've found that using 100 for ``--pairs_encode`` works well, and again reduces memory significantly.
 Training on ~50 CPU cores will take approximately 20 minutes. If you have a GPU available, use the ``--gpu`` flag
 
 .. code-block:: console
@@ -212,6 +218,7 @@ Training on ~50 CPU cores will take approximately 20 minutes. If you have a GPU 
 		>             --learning_rate 1e-4 \
 		>             --pairs 1000 \
 		>             --pairs_encode 100 \
+		>             --threads $num_threads \
 		>	      > vignette/output_dir/training_history_12345.txt
 
 After the run completes, you can visualize the training history. This will create a plot of the training and validation loss
@@ -258,7 +265,8 @@ Next, we will validate the trained model on simulated test data. In a real appli
 		>             --batch_size 10 \
 		>             --pairs 1000 \
 		>             --pairs_encode 100 \
-		>             --num_pred 100
+		>             --num_pred 100 \
+		>             --threads $num_threads
 
 Below is a plot of the predictions, ``vignette/output_dir/Test/predictions_12345.txt``:
 		
@@ -304,7 +312,8 @@ And then we can run ``disperseNN2``:
 		>	      --batch_size 10 \
 		>             --pairs 1000 \
 		>	      --pairs_encode 100 \
-		>             --num_reps 10
+		>             --num_reps 10 \
+                >     	      --threads	$num_threads
 
 The final empirical results are stored in: ``vignette/output_dir/empirical_12345.txt``.
 
@@ -339,12 +348,18 @@ The final empirical results are stored in: ``vignette/output_dir/empirical_12345
 The output, :math:`\sigma`, is an estimate for the standard deviation of the Gaussian dispersal kernel from our training simulations; in addition, the same parameter was used for the mating distance (and competition distance). Therefore, to get the distance to a random parent, i.e., effective :math:`\sigma`,  we would apply a posthoc correction of :math:`\sqrt{\frac{3}{2}} \times \sigma` (see original disperseNN paper for details). In this example, we trained with only 100 generations spatial, hence the dispersal rate estimate reflects demography in the recent past.
 
 
+
+
 .. _google_colab_notebook:
+
+6. Google Colab notebook
+------------------------
 
 We have also setup a google colab notebook that runs through this example in a GPU enabled cloud setting.
 We highly recommend checking out this notebook for the impatient, as we provide pre-processed simulation
-results a a fully executatble training/validation/prediction pipeline. The notebook can be found here:
-`<https://colab.research.google.com/github/andrewkern/disperseNN2/blob/adk_doc/docs/disperseNN2_vignette.ipynb>`_
+results and a fully executable training/validation/prediction pipeline. The notebook can be found here:
+`colab notebook <https://colab.research.google.com/github/andrewkern/disperseNN2/blob/adk_doc/docs/disperseNN2_vignette.ipynb>`_.
+
 
 
 
