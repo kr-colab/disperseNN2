@@ -72,23 +72,26 @@ Breaking down this pipeline one line at a time:
 - L7 saves each :math:`\sigma` to it's own file.
 - L8 creates a list of filepaths to the targets.
 
-The longest of these simulations are expected to take over an hour.
-Therefore, at this point we offer three options:
-option (A) is to wait on the simulations to finish.
-If you are feeling impatient, you may (B) download a .tar with the simulated and pre-processed data and skip to the :ref:`vignette_training` section.
-Or, (C) check out our `colab notebook <https://colab.research.google.com/github/andrewkern/disperseNN2/blob/adk_doc/docs/disperseNN2_vignette.ipynb>`_ where the simulated data and GPUs are available.
+.. note::
 
-The below command runs the simualtions (option A). The number of simulations run in parallel can be adjusted with ``num_threads``:
+   The above example used only 1,000 spatial generations; this strategy should be used with caution because this can affect how the output is interpreted. In addition, isolation-by-distance is usually weaker with fewer spatial generations which reduces signal for dispersal rate. In the paper we used 100,000 spatial generations.
+
+The below command runs the simulations. The number of simulations run in parallel can be adjusted with ``num_threads``:
 
 .. code-block:: console
 
                 (.venv) $ num_threads=1 # change to number of available cores
                 (.venv) $ parallel -j $num_threads < vignette/sim_commands.txt
   
-.. note::
+The longest of these simulations are expected to take over an hour.
+Therefore, at this point we offer three options:
+option (A) is to wait on the simulations to finish.
+If you are feeling impatient, you may (B) download a .tar file (``wget http://sesame.uoregon.edu/~adkern/vignette.tar.gz;`` ``tar -xf vignette.tar.gz``)  with the simulated and pre-processed data and skip to the :ref:`vignette_training` section.
+Or, (C) check out our `colab notebook <https://colab.research.google.com/github/andrewkern/disperseNN2/blob/adk_doc/docs/disperseNN2_vignette.ipynb>`_ where the simulated data and GPUs are available.
 
-   The above example used only 1,000 spatial generations; this strategy should be used with caution because this can affect how the output is interpreted. In addition, isolation-by-distance is usually weaker with fewer spatial generations which reduces signal for dispersal rate. In the paper we used 100,000 spatial generations.
-  
+The below command runs the simualtions (option A). The number of simulations run in parallel can be adjusted with ``num_threads``:
+
+   
 To recapitate the tree sequences output by ``SLiM``:
 
 .. code-block:: console
@@ -282,10 +285,10 @@ And some code for visualizing the predictions:
 		(.venv) $ python -c 'import pandas as pd; from matplotlib import pyplot as plt; x = pd.read_csv("vignette/output_dir/Test/predictions_12345.txt", sep="\t", header=None); plt.scatter(x[0], x[1]); plt.xlabel("true"); plt.ylabel("predicted"); plt.savefig("results.pdf", format="pdf", bbox_inches="tight")'
 
 		
-Below is a plot of the predictions, ``results.pdf``:
+Below is the plot of the predictions, ``results.pdf``:
 		
 .. figure:: results_vignette.png
-   :scale: 50 %
+   :scale: 25 %
    :alt: results_plot
 
    Validation results. True :math:`\sigma` is on the x-axis and predicted values are on the y-axis. The dashed line is :math:`x=y`.
