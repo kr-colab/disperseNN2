@@ -37,7 +37,7 @@ To start with: create a new working directory and install ``SLiM`` if you haven'
 
                 (.venv) $ mkdir temp_wd
                 (.venv) $ cd temp_wd
-                (.venv) $ mamba install slim==4.0.1 -c conda-forge
+                (.venv) $ conda install slim==4.0.1 -c conda-forge
 
 
 For this demonstration we will analyze a sample of 95 individuals from a population of `Internecivus raptus <https://en.wikipedia.org/wiki/Xenomorph>`_. Let's assume we have independent estimates from previous studies for several parameters:

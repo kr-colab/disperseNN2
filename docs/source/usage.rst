@@ -31,20 +31,8 @@ Then install ``disperseNN2`` using pip:
 
 ``disperseNN2`` should run fine on just CPUs. But if you have GPUs available, see our :ref:`gpus` installation tips.
 
-..
-  For using GPUs it is necessary to install additional software. We use the below commands to set things up on our computer. However, note that tensorflow and cuda versions must be compatible with your particular `NVIDIA drivers <https://www.tensorflow.org/install/source#gpu>`_. Therefore, the below commands will not work in every case and you may need to improvise (some commands must be run individually, so don't copy the whole code block.)
-   .. code-block:: console
 
-		(.venv) $ mamba install cudatoolkit=11.8.0 cuda-nvcc -c conda-forge -c nvidia
-		(.venv) $ python3 -m pip install nvidia-cudnn-cu11==8.6.0.163 tensorflow==2.12.*
-                (.venv) $ mkdir -p $CONDA_PREFIX/bin/nvvm/libdevice/
-                (.venv) $ cp $CONDA_PREFIX/nvvm/libdevice/libdevice.10.bc $CONDA_PREFIX/bin/nvvm/libdevice/		
-		(.venv) $ mkdir -p $CONDA_PREFIX/etc/conda/activate.d
-		(.venv) $ echo 'CUDNN_PATH=$(dirname $(python -c "import nvidia.cudnn;print(nvidia.cudnn.__file__)"))' >> $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
-		(.venv) $ echo 'export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/:$CUDNN_PATH/lib:$LD_LIBRARY_PATH' >> $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
-                (.venv) $ echo 'export XLA_FLAGS=--xla_gpu_cuda_data_dir=$CONDA_PREFIX/bin/' >> $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh		
-		(.venv) $ source $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
-		(.venv) $ python3 -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))" # verify that gpus get picked up
+
 
 
 
@@ -55,9 +43,9 @@ Workflow
 ^^^^^^^^
 This section describes the command line flags associated with each step in the workflow; for a complete, worked example, see :doc:`vignette`.
 
-A typical ``disperseNN2`` workflow involves five steps:
+A typical ``disperseNN2`` workflow involves four steps:
 
-.. While it might be possible to run smaller tests on a laptop, it is generally advisable to seek out a high performance computing cluster, particularly for the simulation step.                                                                                                                                                     
+
 
 :ref:`preprocessing`
 
@@ -79,7 +67,7 @@ A typical ``disperseNN2`` workflow involves five steps:
 1. Preprocessing
 ****************
 
-``disperseNN2`` trains on simulated data (see :ref:`simulation`) which come in the form of tree sequences.
+``disperseNN2`` trains on simulated data (see :ref:`simulation`) which produce output in the form of tree sequences.
 The "preprocessing step" adds mutations to the tree sequences, takes a sample of individuals, and then saves the genotypes and sample locations in numpy arrays.
 Doing these steps up front instead of during training is faster.
 
@@ -112,8 +100,6 @@ Simulated individuals are sampled near the empirical sample locations: a table w
 
 .. Last, the spatial coordinates are rescaled to :math:`(0,1)`, preserving aspect ratio, before being shown to the neural network as input.
   
-The preprocessing step can be parallelized to some extent: a single command preprocesses all simulations serially by taking one sample of genotypes from each dataset. Independent commands can be used with different random number seeds to take multiple, pseudo-independent samples from each simulation.
-		
 The preprocessed data are saved in the directory specified by ``--out``; ``disperseNN2`` will look in this folder for inputs and outputs in the following steps.
 
 
@@ -150,6 +136,7 @@ Below is what a command looks like for the training step.
 		>	      --threads <int> \
 		>	      --pairs <int> \
 		>	      --pairs_encode <int> \
+		>             --threads <int> \
 		>	      --gpu <int> \
 
 - ``--train``: tells ``disperseNN2`` to train a neural network
@@ -159,6 +146,7 @@ Below is what a command looks like for the training step.
 - ``--threads``: number of threads to use during training. 
 - ``--pairs``: the total number of pairs to include in the analysis. Defaults to all pairs.
 - ``--pairs_encode``: the number of pairs to include in the gradient in the encoder portion of the neural network. Default: all pairs.
+- ``--threads``; the number of threads to use. This works pretty well for speeding up training or prediction. 40-50 CPUs approximates the speed of one GPU.
 - ``--gpu``: as an integer, specifies the GPU index (e.g., 0, 1, etc). "any" means take any available gpu. -1 means no GPU.
 
 This command will print the training progress to stdout.
@@ -348,7 +336,7 @@ If you want to run the simulation, save the above script as ``square.slim``, and
    
 .. code-block:: console
 
-                (.venv) $ mamba install slim==4.0.1 -c conda-forge
+                (.venv) $ conda install slim==4.0.1 -c conda-forge
 
 Below is an example command using this script:
 		
