@@ -129,14 +129,14 @@ Next, we need to preprocess the input for ``disperseNN2``. But before we do that
 
 .. code-block:: console
 
-                (.venv) $ wget https://raw.githubusercontent.com/kr-colab/disperseNN2/main/Examples/VCFs/iraptus_meta_full.txt
-		(.venv) $ wget https://raw.githubusercontent.com/kr-colab/disperseNN2/main/Examples/VCFs/iraptus.vcf
+                (.venv) $ wget https://raw.githubusercontent.com/kr-colab/disperseNN2/main/Examples/VCFs/iraptus_meta_full.txt -P vignette/
+		(.venv) $ wget https://raw.githubusercontent.com/kr-colab/disperseNN2/main/Examples/VCFs/iraptus.vcf -P vignette/
 
 Let's pretend we want to take a subset of individuals from a particular geographic region, the "Scotian Shelf-East" region. Below is an example command that might be used to parse and reformat the metadata, but these steps will vary depending on the idiosyncracies of your particular dataset. 
 
 .. code-block:: console
 
-		(.venv) $ cat iraptus_meta_full.txt | grep "Scotian Shelf - East" | sed s/"\t"/,/g > vignette/iraptus.csv
+		(.venv) $ cat vignette/iraptus_meta_full.txt | grep "Scotian Shelf - East" | sed s/"\t"/,/g > vignette/iraptus.csv
 
 
 ..
@@ -152,14 +152,16 @@ Let's pretend we want to take a subset of individuals from a particular geograph
  4. minimum read depth to retain a SNP (int)
  5. minimum proportion of samples represented to keep a SNP (float)
  6. random number seed (int)
-		
+
+
+    
 Last, build a .locs file:
 
 .. code-block:: console                                                                        
                                                                                             
-                (.venv) $ count=$(cat iraptus.vcf | grep -v "##" | grep "#" | wc -w) 
+                (.venv) $ count=$(cat vignette/iraptus.vcf | grep -v "##" | grep "#" | wc -w) 
                 (.venv) $ for i in $(seq 10 $count); do \                                       
-                >             id=$(cat iraptus.vcf | grep -v "##" | grep "#" | cut -f $i); \
+                >             id=$(cat vignette/iraptus.vcf | grep -v "##" | grep "#" | cut -f $i); \
                 >             grep -w $id vignette/iraptus.csv; \
                 >         done | cut -d "," -f 4,5 | sed s/","/"\t"/g > vignette/iraptus.locs 
 		   
@@ -202,9 +204,11 @@ This preprocessing step will take a while (maybe an hour), so it's a good time t
 In the below ``disperseNN2`` training command, there are two options that bear a bit of explanation.
 In the example data we are working with there are 95 individuals, and so ${95\choose 2}$ = 4465 pairs of individuals.
 We set ``--pairs`` to 1000 to reduce the number of pairwise comparisons used and thus the memory requirement.
-Further our architecture only considers a subset of pairs on the backward pass for gradient computation, this number is chosen with ``--pairs_encode``.
-We've found that using 100 for ``--pairs_encode`` works well, and again reduces memory significantly.
-Training on ~50 CPU cores will take approximately 20 minutes. If you have a GPU available, use the ``--gpu`` flag
+Further our architecture only considers a subset of pairs on the backward pass for gradient computation in first half of the network;
+this number is chosen with ``--pairs_encode``.
+In our paper we found that using 100 for ``--pairs_encode`` reduced memory significantly without affecting accuracy;
+100 is not a rule of thumb and you should try different values in your analysis.
+Training on ~50 CPU cores, or one GPU, will take approximately 20 minutes.
 
 .. code-block:: console
 
@@ -222,8 +226,9 @@ Training on ~50 CPU cores will take approximately 20 minutes. If you have a GPU 
 		>	      > vignette/output_dir/training_history_12345.txt
 
 After the run completes, you can visualize the training history. This will create a plot of the training and validation loss
-declining over epochs of training, 
-``vignette/output_dir/training_history_12345.txt_plot.pdf``:
+declining over epochs of training:
+
+.. ``vignette/output_dir/training_history_12345.txt_plot.pdf``:
 
 .. code-block:: console
 
@@ -254,7 +259,7 @@ This plot shows that the validation loss decreases over time, without too much u
 4. Validation
 -------------
 
-Next, we will validate the trained model on simulated test data. In a real application you should hold out datasets from training.
+Next, we will validate the trained model on simulated test data. In a real application you should hold out datasets from training like we did here.
 
 .. code-block:: console
 
@@ -294,14 +299,6 @@ The predictions are reasonably close to the expected values, meaning there is so
 
 Since we are satisfied with the performance of the model on the held-out test set, we can finally predict σ in our empirical data.
 
-Before predicting with ``disperseNN2`` we need both the empirical .vcf and .locs in the same place:
-
-.. code-block:: console
-		
-		(.venv) $ ln -s $PWD/disperseNN2/Examples/VCFs/iraptus.vcf vignette/
-
-And then we can run ``disperseNN2``:
-		
 .. code-block:: console
 
 		(.venv) $ disperseNN2 \
