@@ -259,7 +259,7 @@ This plot shows that the validation loss decreases over time, without too much u
 4. Validation
 -------------
 
-Next, we will validate the trained model on simulated test data. In a real application you should hold out datasets from training like we did here.
+Next, we will validate the trained model on simulated test data that was held out from training.
 
 .. code-block:: console
 
@@ -273,7 +273,16 @@ Next, we will validate the trained model on simulated test data. In a real appli
 		>             --num_pred 100 \
 		>             --threads $num_threads
 
-Below is a plot of the predictions, ``vignette/output_dir/Test/predictions_12345.txt``:
+
+And some code for visualizing the predictions:
+
+.. code-block:: console
+
+		(.venv) $ pip install pandas
+		(.venv) $ python -c 'import pandas as pd; from matplotlib import pyplot as plt; x = pd.read_csv("vignette/output_dir/Test/predictions_12345.txt", sep="\t", header=None); plt.scatter(x[0], x[1]); plt.xlabel("true"); plt.ylabel("predicted"); plt.savefig("results.pdf", format="pdf", bbox_inches="tight")'
+
+		
+Below is a plot of the predictions, ``results.pdf``:
 		
 .. figure:: results_vignette.png
    :scale: 50 %
