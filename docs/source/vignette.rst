@@ -129,14 +129,14 @@ Next, we need to preprocess the input for ``disperseNN2``. But before we do that
 
 .. code-block:: console
 
-                (.venv) $ git clone https://github.com/chriscrsmith/disperseNN2.git
-
+                (.venv) $ wget https://raw.githubusercontent.com/kr-colab/disperseNN2/main/Examples/VCFs/iraptus_meta_full.txt
+		(.venv) $ wget https://raw.githubusercontent.com/kr-colab/disperseNN2/main/Examples/VCFs/iraptus.vcf
 
 Let's pretend we want to take a subset of individuals from a particular geographic region, the "Scotian Shelf-East" region. Below is an example command that might be used to parse and reformat the metadata, but these steps will vary depending on the idiosyncracies of your particular dataset. 
 
 .. code-block:: console
 
-		(.venv) $ cat disperseNN2/Examples/VCFs/iraptus_meta_full.txt | grep "Scotian Shelf - East" | sed s/"\t"/,/g > vignette/iraptus.csv
+		(.venv) $ cat iraptus_meta_full.txt | grep "Scotian Shelf - East" | sed s/"\t"/,/g > vignette/iraptus.csv
 
 
 ..
@@ -157,9 +157,9 @@ Last, build a .locs file:
 
 .. code-block:: console                                                                        
                                                                                             
-                (.venv) $ count=$(cat disperseNN2/Examples/VCFs/iraptus.vcf | grep -v "##" | grep "#" | wc -w) 
+                (.venv) $ count=$(cat iraptus.vcf | grep -v "##" | grep "#" | wc -w) 
                 (.venv) $ for i in $(seq 10 $count); do \                                       
-                >             id=$(cat disperseNN2/Examples/VCFs/iraptus.vcf | grep -v "##" | grep "#" | cut -f $i); \
+                >             id=$(cat iraptus.vcf | grep -v "##" | grep "#" | cut -f $i); \
                 >             grep -w $id vignette/iraptus.csv; \
                 >         done | cut -d "," -f 4,5 | sed s/","/"\t"/g > vignette/iraptus.locs 
 		   
@@ -200,7 +200,7 @@ This preprocessing step will take a while (maybe an hour), so it's a good time t
 -----------
 
 In the below ``disperseNN2`` training command, there are two options that bear a bit of explanation.
-In the example data we are working with there are 95 individuals, and so $\binom{95}{2}$ = 4465 pairs of individuals.
+In the example data we are working with there are 95 individuals, and so ${95\choose 2}$ = 4465 pairs of individuals.
 We set ``--pairs`` to 1000 to reduce the number of pairwise comparisons used and thus the memory requirement.
 Further our architecture only considers a subset of pairs on the backward pass for gradient computation, this number is chosen with ``--pairs_encode``.
 We've found that using 100 for ``--pairs_encode`` works well, and again reduces memory significantly.
