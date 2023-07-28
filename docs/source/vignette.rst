@@ -321,37 +321,26 @@ Since we are satisfied with the performance of the model on the held-out test se
 		>             --num_reps 10 \
                 >     	      --threads	$num_threads
 
-The final empirical results are stored in: ``vignette/output_dir/empirical_12345.txt``.
+The final empirical results are stored here:
 
 .. code-block:: console
 
 		(.venv) $ cat vignette/output_dir/empirical_12345.txt
-		vignette/iraptus rep0 3.2341451032   
-		vignette/iraptus rep1 3.9642933085
-		vignette/iraptus rep2 3.3508346082
-		vignette/iraptus rep3 3.6715345313
-		vignette/iraptus rep4 3.431195108
-		vignette/iraptus rep5 3.2312677469
-		vignette/iraptus rep6 3.4795969837
-		vignette/iraptus rep7 2.3577550127
-		vignette/iraptus rep8 2.6935483629
-		vignette/iraptus rep9 3.4668037613
+		vignette/iraptus rep0 2.0844352861
+		vignette/iraptus rep1 2.5100254281
+		vignette/iraptus rep2 2.2156516418
+		vignette/iraptus rep3 2.4447924536
+		vignette/iraptus rep4 2.505104107
+		vignette/iraptus rep5 2.2632444932
+		vignette/iraptus rep6 2.4132488538
+		vignette/iraptus rep7 1.7120651222
+		vignette/iraptus rep8 1.8796258058
+		vignette/iraptus rep9 2.3444896444
 
-..
-		vignette/iraptus rep0 2.0451889008   # above tf 2.11, below tf 2.12?
-		vignette/iraptus rep1 2.4742934411
-		vignette/iraptus rep2 2.1864002565
-		vignette/iraptus rep3 2.409195011
-		vignette/iraptus rep4 2.4650494178
-		vignette/iraptus rep5 2.2217235654
-		vignette/iraptus rep6 2.3767118847
-		vignette/iraptus rep7 1.6925345467
-		vignette/iraptus rep8 1.8629895107
-		vignette/iraptus rep9 2.302927911
 
 		
 **Interpretation**.
-The output, :math:`\sigma`, is an estimate for the standard deviation of the Gaussian dispersal kernel from our training simulations; in addition, the same parameter was used for the mating distance (and competition distance). Therefore, to get the distance to a random parent, i.e., effective :math:`\sigma`,  we would apply a posthoc correction of :math:`\sqrt{\frac{3}{2}} \times \sigma` (see original disperseNN paper for details). In this example, we trained with only 100 generations spatial, hence the dispersal rate estimate reflects demography in the recent past.
+The output, :math:`\sigma`, is an estimate for the standard deviation of the Gaussian dispersal kernel from our training simulations. In addition, the same parameter was used for the mating distance (and competition distance). Therefore, to get the distance to a random parent, i.e., effective :math:`\sigma`,  we would apply a posthoc correction of :math:`\sqrt{\frac{3}{2}} \times \sigma` (see original disperseNN paper for details). In this example, we trained with only 100 generations spatial, hence the dispersal rate estimate reflects demography in the recent past.
 
 
 
