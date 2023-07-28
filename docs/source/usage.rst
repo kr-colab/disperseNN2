@@ -114,14 +114,6 @@ The preprocessed data are saved in the directory specified by ``--out``; ``dispe
 2. Training
 ***********
 
-..
-    DEV:
-        Preprocessing and training commands to get the training data, after simulating as in the vignette
-	python disperseNN2.py                  --out temp_wd/vignette/output_dir_n10                  --seed 12345                  --preprocess                  --num_snps 1951                  --n 10                  --tree_list temp2                  --target_list temp1                  --empirical Examples/VCFs/halibut                  --hold_out 10
-	python disperseNN2.py                --out Examples/Preprocessed                --seed 67890                --train                --num_snps 1951                --max_epochs 50                --validation_split 0.2                --batch_size 10                --threads 1                --n 10                --pairs 45                --pairs_encode 45                --pairs_estimate 45                --gpu 2
-
-
-
 Below is what a command looks like for the training step. 
 
 .. code-block:: console
@@ -195,7 +187,9 @@ If you want to predict :math:`\sigma` from simulated data, a predict command lik
 - ``--predict``: tells ``disperseNN2`` to perform predictions
 - ``--num_pred``: number of datasets to predict with.
 
-This will generate a file called ``<out>/Test/predictions_<seed>.txt`` containing true and predicted :math:`\sigma` for each simulation.
+The number of pairs and pairs_encode used during training are read in from the `training_params.npy` and the same values are used for prediction.
+
+The prediction command will generate a file called ``<out>/Test/predictions_<seed>.txt`` containing true and predicted :math:`\sigma` for each simulation.
 
 
 

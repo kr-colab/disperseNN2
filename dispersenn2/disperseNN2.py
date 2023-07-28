@@ -121,7 +121,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--batch_size",
-    default=1,
+    default=10,
     type=int,
     help="batch size for training")
 parser.add_argument(
@@ -292,10 +292,6 @@ def load_network():
         num_conv_iterations = 0
 
     # organize pairs of individuals
-    if args.pairs is None:
-        args.pairs = int((args.n * (args.n - 1)) / 2)
-    if args.pairs_encode is None:
-        args.pairs_encode = int(args.pairs)
     combinations = list(itertools.combinations(range(args.n), 2))
     combinations = random.sample(combinations, args.pairs)
     combinations_encode = random.sample(combinations, args.pairs_encode)
@@ -565,7 +561,11 @@ def train():
         args.n, args.num_snps, meanSid, sdSig = np.load(args.training_mean_sd)
     args.n, args.num_snps = int(args.n), int(args.num_snps)
 
-    # save training params: 
+    # save training params:
+    if args.pairs is None:
+        args.pairs = int((args.n * (args.n - 1)) / 2)
+    if args.pairs_encode is None:
+        args.pairs_encode = int(args.pairs)
     np.save(
         args.out + "/Train/training_params_" + str(args.seed),
         [args.seed,
@@ -633,7 +633,7 @@ def predict():
     args.n, args.num_snps = int(args.n), int(args.num_snps)
 
     # grab num pairs from saved training params
-    params = np.load(args.out + "/Train/training_params.npy") + str(args.seed)
+    params = np.load(args.out + "/Train/training_params_" + str(args.seed) + ".npy")
     args.pairs, args.num_pairs = int(params[4]), int(params[5])
     
     # load inputs
@@ -702,7 +702,7 @@ def empirical():
     args.n, args.num_snps = int(args.n), int(args.num_snps)
 
     # grab num pairs from saved training params
-    params = np.load(args.out + "/Train/training_params.npy") + str(args.seed)
+    params = np.load(args.out + "/Train/training_params_" + str(args.seed) + ".npy")
     args.pairs, args.num_pairs = int(params[4]), int(params[5])
     
     # project locs
