@@ -129,14 +129,14 @@ Next, we need to preprocess the input for ``disperseNN2``. But before we do that
 
 .. code-block:: console
 
-                (.venv) $ git clone https://github.com/chriscrsmith/disperseNN2.git
-
+                (.venv) $ wget https://raw.githubusercontent.com/kr-colab/disperseNN2/main/Examples/VCFs/iraptus_meta_full.txt -P vignette/
+		(.venv) $ wget https://raw.githubusercontent.com/kr-colab/disperseNN2/main/Examples/VCFs/iraptus.vcf -P vignette/
 
 Let's pretend we want to take a subset of individuals from a particular geographic region, the "Scotian Shelf-East" region. Below is an example command that might be used to parse and reformat the metadata, but these steps will vary depending on the idiosyncracies of your particular dataset. 
 
 .. code-block:: console
 
-		(.venv) $ cat disperseNN2/Examples/VCFs/iraptus_meta_full.txt | grep "Scotian Shelf - East" | sed s/"\t"/,/g > vignette/iraptus.csv
+		(.venv) $ cat vignette/iraptus_meta_full.txt | grep "Scotian Shelf - East" | sed s/"\t"/,/g > vignette/iraptus.csv
 
 
 ..
@@ -152,14 +152,16 @@ Let's pretend we want to take a subset of individuals from a particular geograph
  4. minimum read depth to retain a SNP (int)
  5. minimum proportion of samples represented to keep a SNP (float)
  6. random number seed (int)
-		
+
+
+    
 Last, build a .locs file:
 
 .. code-block:: console                                                                        
                                                                                             
-                (.venv) $ count=$(cat disperseNN2/Examples/VCFs/iraptus.vcf | grep -v "##" | grep "#" | wc -w) 
+                (.venv) $ count=$(cat vignette/iraptus.vcf | grep -v "##" | grep "#" | wc -w) 
                 (.venv) $ for i in $(seq 10 $count); do \                                       
-                >             id=$(cat disperseNN2/Examples/VCFs/iraptus.vcf | grep -v "##" | grep "#" | cut -f $i); \
+                >             id=$(cat vignette/iraptus.vcf | grep -v "##" | grep "#" | cut -f $i); \
                 >             grep -w $id vignette/iraptus.csv; \
                 >         done | cut -d "," -f 4,5 | sed s/","/"\t"/g > vignette/iraptus.locs 
 		   
@@ -200,11 +202,13 @@ This preprocessing step will take a while (maybe an hour), so it's a good time t
 -----------
 
 In the below ``disperseNN2`` training command, there are two options that bear a bit of explanation.
-In the example data we are working with there are 95 individuals, and so $\binom{95}{2}$ = 4465 pairs of individuals.
+In the example data we are working with there are 95 individuals, and so ${95\choose 2}$ = 4465 pairs of individuals.
 We set ``--pairs`` to 1000 to reduce the number of pairwise comparisons used and thus the memory requirement.
-Further our architecture only considers a subset of pairs on the backward pass for gradient computation, this number is chosen with ``--pairs_encode``.
-We've found that using 100 for ``--pairs_encode`` works well, and again reduces memory significantly.
-Training on ~50 CPU cores will take approximately 20 minutes. If you have a GPU available, use the ``--gpu`` flag
+Further our architecture only considers a subset of pairs on the backward pass for gradient computation in first half of the network;
+this number is chosen with ``--pairs_encode``.
+In our paper we found that using 100 for ``--pairs_encode`` reduced memory significantly without affecting accuracy;
+100 is not a rule of thumb and you should try different values in your analysis.
+Training on ~50 CPU cores, or one GPU, will take approximately 20 minutes.
 
 .. code-block:: console
 
@@ -222,8 +226,9 @@ Training on ~50 CPU cores will take approximately 20 minutes. If you have a GPU 
 		>	      > vignette/output_dir/training_history_12345.txt
 
 After the run completes, you can visualize the training history. This will create a plot of the training and validation loss
-declining over epochs of training, 
-``vignette/output_dir/training_history_12345.txt_plot.pdf``:
+declining over epochs of training:
+
+.. ``vignette/output_dir/training_history_12345.txt_plot.pdf``:
 
 .. code-block:: console
 
@@ -254,7 +259,7 @@ This plot shows that the validation loss decreases over time, without too much u
 4. Validation
 -------------
 
-Next, we will validate the trained model on simulated test data. In a real application you should hold out datasets from training.
+Next, we will validate the trained model on simulated test data that was held out from training.
 
 .. code-block:: console
 
@@ -268,7 +273,16 @@ Next, we will validate the trained model on simulated test data. In a real appli
 		>             --num_pred 100 \
 		>             --threads $num_threads
 
-Below is a plot of the predictions, ``vignette/output_dir/Test/predictions_12345.txt``:
+
+And some code for visualizing the predictions:
+
+.. code-block:: console
+
+		(.venv) $ pip install pandas
+		(.venv) $ python -c 'import pandas as pd; from matplotlib import pyplot as plt; x = pd.read_csv("vignette/output_dir/Test/predictions_12345.txt", sep="\t", header=None); plt.scatter(x[0], x[1]); plt.xlabel("true"); plt.ylabel("predicted"); plt.savefig("results.pdf", format="pdf", bbox_inches="tight")'
+
+		
+Below is a plot of the predictions, ``results.pdf``:
 		
 .. figure:: results_vignette.png
    :scale: 50 %
@@ -294,14 +308,6 @@ The predictions are reasonably close to the expected values, meaning there is so
 
 Since we are satisfied with the performance of the model on the held-out test set, we can finally predict σ in our empirical data.
 
-Before predicting with ``disperseNN2`` we need both the empirical .vcf and .locs in the same place:
-
-.. code-block:: console
-		
-		(.venv) $ ln -s $PWD/disperseNN2/Examples/VCFs/iraptus.vcf vignette/
-
-And then we can run ``disperseNN2``:
-		
 .. code-block:: console
 
 		(.venv) $ disperseNN2 \
@@ -315,37 +321,26 @@ And then we can run ``disperseNN2``:
 		>             --num_reps 10 \
                 >     	      --threads	$num_threads
 
-The final empirical results are stored in: ``vignette/output_dir/empirical_12345.txt``.
+The final empirical results are stored here:
 
 .. code-block:: console
 
 		(.venv) $ cat vignette/output_dir/empirical_12345.txt
-		vignette/iraptus rep0 3.2341451032   
-		vignette/iraptus rep1 3.9642933085
-		vignette/iraptus rep2 3.3508346082
-		vignette/iraptus rep3 3.6715345313
-		vignette/iraptus rep4 3.431195108
-		vignette/iraptus rep5 3.2312677469
-		vignette/iraptus rep6 3.4795969837
-		vignette/iraptus rep7 2.3577550127
-		vignette/iraptus rep8 2.6935483629
-		vignette/iraptus rep9 3.4668037613
+		vignette/iraptus rep0 2.0844352861
+		vignette/iraptus rep1 2.5100254281
+		vignette/iraptus rep2 2.2156516418
+		vignette/iraptus rep3 2.4447924536
+		vignette/iraptus rep4 2.505104107
+		vignette/iraptus rep5 2.2632444932
+		vignette/iraptus rep6 2.4132488538
+		vignette/iraptus rep7 1.7120651222
+		vignette/iraptus rep8 1.8796258058
+		vignette/iraptus rep9 2.3444896444
 
-..
-		vignette/iraptus rep0 2.0451889008   # above tf 2.11, below tf 2.12?
-		vignette/iraptus rep1 2.4742934411
-		vignette/iraptus rep2 2.1864002565
-		vignette/iraptus rep3 2.409195011
-		vignette/iraptus rep4 2.4650494178
-		vignette/iraptus rep5 2.2217235654
-		vignette/iraptus rep6 2.3767118847
-		vignette/iraptus rep7 1.6925345467
-		vignette/iraptus rep8 1.8629895107
-		vignette/iraptus rep9 2.302927911
 
 		
 **Interpretation**.
-The output, :math:`\sigma`, is an estimate for the standard deviation of the Gaussian dispersal kernel from our training simulations; in addition, the same parameter was used for the mating distance (and competition distance). Therefore, to get the distance to a random parent, i.e., effective :math:`\sigma`,  we would apply a posthoc correction of :math:`\sqrt{\frac{3}{2}} \times \sigma` (see original disperseNN paper for details). In this example, we trained with only 100 generations spatial, hence the dispersal rate estimate reflects demography in the recent past.
+The output, :math:`\sigma`, is an estimate for the standard deviation of the Gaussian dispersal kernel from our training simulations. In addition, the same parameter was used for the mating distance (and competition distance). Therefore, to get the distance to a random parent, i.e., effective :math:`\sigma`,  we would apply a posthoc correction of :math:`\sqrt{\frac{3}{2}} \times \sigma` (see original disperseNN paper for details). In this example, we trained with only 100 generations spatial, hence the dispersal rate estimate reflects demography in the recent past.
 
 
 
