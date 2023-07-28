@@ -271,8 +271,6 @@ Next, we will validate the trained model on simulated test data that was held ou
                 >             --seed 12345 \		
 		>             --predict \
 		>             --batch_size 10 \
-		>             --pairs 1000 \
-		>             --pairs_encode 100 \
 		>             --num_pred 100 \
 		>             --threads $num_threads
 
@@ -319,8 +317,6 @@ Since we are satisfied with the performance of the model on the held-out test se
 		>	      --predict \
 		>	      --empirical vignette/iraptus \
 		>	      --batch_size 10 \
-		>             --pairs 1000 \
-		>	      --pairs_encode 100 \
 		>             --num_reps 10 \
                 >     	      --threads	$num_threads
 
