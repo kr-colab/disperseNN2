@@ -48,12 +48,13 @@ For this demonstration we will analyze a sample of 95 individuals from a populat
 
 With values for these nuisance parameters in hand we can design custom training simulations for inferring :math:`\sigma`. If our a priori expectation for :math:`\sigma` in this species is somewhere between 0.4 and 6, we will simulate dispersal rates in this range. 100 training simulations should suffice for this demonstration, plus 100 more for testing, so we need 200 total simulations.		
 
-Next copy over the `square.slim script <https://github.com/andrewkern/disperseNN2/blob/main/SLiM_recipes/square.slim>`_, introduced in the :ref:`simulation` section of the docs. Below is some bash code for pipelining the simulations.
+Next run the below code block which copies over the `square.slim script <https://github.com/andrewkern/disperseNN2/blob/main/SLiM_recipes/square.slim>`_ (introduced in the :ref:`simulation` section) and creates a pipeline for the simulations.
 
 .. code-block:: console                         
                 :linenos:                       
 
-                (.venv) $ mkdir -p vignette/TreeSeqs
+                (.venv) $ wget https://raw.githubusercontent.com/kr-colab/disperseNN2/main/SLiM_recipes/square.slim
+		(.venv) $ mkdir -p vignette/TreeSeqs
                 (.venv) $ mkdir -p vignette/Targets
 		(.venv) $ sigmas=$(python -c 'from scipy.stats import loguniform; import numpy; numpy.random.seed(seed=12345); print(*loguniform.rvs(0.4,6,size=200))')
                 (.venv) $ for i in {1..200}; do \
@@ -206,7 +207,7 @@ This preprocessing step will take a while (maybe an hour), so it's a good time t
 -----------
 
 In the below ``disperseNN2`` training command, there are two options that bear a bit of explanation.
-In the example data we are working with there are 95 individuals, and so ${95\choose 2}$ = 4465 pairs of individuals.
+In the example data we are working with there are 95 individuals, and so :math:`{95 \choose 2} = 4465` pairs of individuals.
 We set ``--pairs`` to 1000 to reduce the number of pairwise comparisons used and thus the memory requirement.
 Further our architecture only considers a subset of pairs on the backward pass for gradient computation in first half of the network;
 this number is chosen with ``--pairs_encode``.
