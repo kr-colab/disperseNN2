@@ -7,12 +7,12 @@ import sys
 import random
 import argparse
 from sklearn.model_selection import train_test_split
-from dispersenn2.check_params import check_params
-from dispersenn2.read_input import list2dict
-from dispersenn2.read_input import read_list
-from dispersenn2.read_input import read_locs
-from dispersenn2.read_input import dict_from_preprocessed
-from dispersenn2.process_input import project_locs, vcf2genos
+from disperseNN2.check_params import check_params
+from disperseNN2.read_input import list2dict
+from disperseNN2.read_input import read_list
+from disperseNN2.read_input import read_locs
+from disperseNN2.read_input import dict_from_preprocessed
+from disperseNN2.process_input import project_locs, vcf2genos
 import gpustat
 import itertools
 import numpy as np
@@ -24,7 +24,7 @@ def load_dl_modules():  # load TF only if reading input is successfull
     global tf
     import tensorflow as tf
     global DataGenerator
-    from dispersenn2.data_generation import DataGenerator  # (loads TF)
+    from disperseNN2.data_generation import DataGenerator  # (loads TF)
 
     return
 

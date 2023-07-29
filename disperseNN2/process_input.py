@@ -6,7 +6,7 @@ from geopy import distance
 import random
 import utm
 import tskit
-from dispersenn2.read_input import parse_provenance
+from disperseNN2.read_input import parse_provenance
 
 
 # project sample locations
