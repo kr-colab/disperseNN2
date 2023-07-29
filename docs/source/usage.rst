@@ -67,7 +67,7 @@ A typical ``disperseNN2`` workflow involves four steps:
 1. Preprocessing
 ****************
 
-``disperseNN2`` trains on simulated data (see :ref:`simulation`) which produce output in the form of tree sequences.
+``disperseNN2`` trains on simulated data (see :ref:`simulation`) in the form of tree sequences.
 The "preprocessing step" adds mutations to the tree sequences, takes a sample of individuals, and then saves the genotypes and sample locations in numpy arrays.
 Doing these steps up front instead of during training is faster.
 

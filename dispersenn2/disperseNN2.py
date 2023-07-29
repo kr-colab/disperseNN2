@@ -317,7 +317,6 @@ def load_network():
             )
         )
     DENSE_0 = tf.keras.layers.Dense(128, activation="relu", name="DENSE_0")
-    DENSE_1 = tf.keras.layers.Dense(128, activation="relu", name="DENSE_1")
 
     # convolutions for each pair
     hs = []
@@ -345,14 +344,12 @@ def load_network():
         hs.append(h)
     # (unindent)
     feature_block = tf.stack(hs, axis=1)
-    print("\nfeature block:", feature_block.shape)
-
-    # apply 2d dense layer
-    h = DENSE_1(feature_block)
 
     # flatten and final dense
-    h = tf.keras.layers.Flatten()(h)
-    output = tf.keras.layers.Dense(1, activation="linear")(h)
+    feature_block = tf.keras.layers.Flatten()(feature_block)
+    output = tf.keras.layers.Dense(1,
+                                   activation="linear",
+                                   name="DENSE_1")(feature_block)
 
     # model overview and hyperparams
     opt = tf.keras.optimizers.Adam(learning_rate=args.learning_rate)
@@ -635,7 +632,7 @@ def predict():
     # grab num pairs from saved training params
     params = np.load(args.out + "/Train/training_params_"
                      + str(args.seed) + ".npy")
-    args.pairs, args.num_pairs = int(params[4]), int(params[5])
+    args.pairs, args.pairs_encode = int(params[4]), int(params[5])
 
     # load inputs
     targets, genos, locs = dict_from_preprocessed(args.out + "/Test/")
@@ -705,7 +702,7 @@ def empirical():
     # grab num pairs from saved training params
     params = np.load(args.out + "/Train/training_params_"
                      + str(args.seed) + ".npy")
-    args.pairs, args.num_pairs = int(params[4]), int(params[5])
+    args.pairs, args.pairs_encode = int(params[4]), int(params[5])
 
     # project locs
     locs = read_locs(args.empirical + ".locs")
