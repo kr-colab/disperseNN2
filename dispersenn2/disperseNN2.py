@@ -344,14 +344,12 @@ def load_network():
         hs.append(h)
     # (unindent)
     feature_block = tf.stack(hs, axis=1)
-    #print("\nfeature block:", feature_block.shape)
-
-    # apply 2d dense layer
-    h = tf.keras.layers.Dense(128, activation="relu", name="DENSE_1") (feature_block)
 
     # flatten and final dense
-    h = tf.keras.layers.Flatten()(h)
-    output = tf.keras.layers.Dense(1, activation="linear", name="DENSE_2")(h)
+    feature_block = tf.keras.layers.Flatten()(feature_block)
+    output = tf.keras.layers.Dense(1,
+                                   activation="linear",
+                                   name="DENSE_1")(feature_block)
 
     # model overview and hyperparams
     opt = tf.keras.optimizers.Adam(learning_rate=args.learning_rate)
