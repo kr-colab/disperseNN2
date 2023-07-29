@@ -7,7 +7,7 @@ import msprime
 import tskit
 import warnings
 from attrs import define
-from dispersenn2.read_input import parse_provenance
+from disperseNN2.read_input import parse_provenance
 import gc
 
 

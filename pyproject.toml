@@ -1,5 +1,8 @@
 [tool.poetry]
 name = "disperseNN2"
+packages = [
+    {include = "disperseNN2"}
+]
 version = "0.0.4"
 description = "Neural net for estimating dispersal distance"
 authors = ["chriscrsmith <chriscs@uoregon.edu>"]
@@ -23,4 +26,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-disperseNN2 = 'dispersenn2.disperseNN2:run'
+disperseNN2 = 'disperseNN2.disperseNN2:run'
