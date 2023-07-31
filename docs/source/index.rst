@@ -2,7 +2,7 @@ Welcome to disperseNN2 documentation!
 =====================================
 
 ``disperseNN2`` is a deep learning framework for the estimation of
-dispersal rate from population genetic data. See Smith et al (2023).
+dispersal rate from population genetic data. See `Smith et al (2023) <https://www.biorxiv.org/content/10.1101/2023.07.30.551115v1>`_.
 
 Check out the :doc:`usage` section for further information, including how to :ref:`install` the project.
 And check out the :doc:`vignette` section to see a complete application of ``disperseNN2``.
