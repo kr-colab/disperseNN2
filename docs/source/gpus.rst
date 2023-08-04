@@ -7,11 +7,11 @@ GPUs
 
 Since tensorflow and cuda versions must be compatible with the particular `NVIDIA drivers <https://www.tensorflow.org/install/source#gpu>`_ on your computer, there is no single set of instructions that will work for everyone. In fact, since the `disperseNN2` code requires a newer tensorflow, our code is simply not compatible with older GPU setups.
 
-We use the below commands to set things up on our computer. These will hopefully work for you, or at least serve as a startng point, but you may need to improvise. Some commands must be run individually, so don't copy the whole code block:
+We use the below commands to set things up on our computer. These will hopefully work for you, or at least serve as a startng point, but you may need to improvise.
 
 .. code-block:: console
 
-                (.venv) $ conda install cudatoolkit=11.8.0 cuda-nvcc -c conda-forge -c nvidia --yes
+                (.venv) $ conda install cudatoolkit=11.8.0 cuda-nvcc -c conda-forge -c nvidia --yes # or use mamba
                 (.venv) $ python3 -m pip install nvidia-cudnn-cu11==8.6.0.163 tensorflow==2.12.*
                 (.venv) $ mkdir -p $CONDA_PREFIX/bin/nvvm/libdevice/
                 (.venv) $ ln -s $CONDA_PREFIX/nvvm/libdevice/libdevice.10.bc $CONDA_PREFIX/bin/nvvm/libdevice/

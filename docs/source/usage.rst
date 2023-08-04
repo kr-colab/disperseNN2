@@ -330,7 +330,7 @@ If you want to run the simulation, save the above script as ``square.slim``, and
    
 .. code-block:: console
 
-                (.venv) $ conda install slim==4.0.1 -c conda-forge
+                (.venv) $ conda install slim==4.0.1 -c conda-forge # or use mamba
 
 Below is an example command using this script:
 		

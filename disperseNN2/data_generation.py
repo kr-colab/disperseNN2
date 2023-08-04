@@ -366,15 +366,25 @@ class DataGenerator(tf.keras.utils.Sequence):
         X2 = np.empty((self.batch_size, 2, self.n), dtype=float)
         y = np.empty((self.batch_size,), dtype=float)
         shuffled_indices = np.arange(self.n)
-        np.random.shuffle(shuffled_indices)
+        np.random.shuffle(shuffled_indices)  # augment training set
         for i, ID in enumerate(list_IDs_temp):
+            # load target
             y[i] = np.load(self.targets[ID])
+
+            # load and re-order genos
             genomat = np.load(self.genos[ID])
             genomat = genomat[
                 :, shuffled_indices
-            ]  # shuffe augments training set; especially pairs_encode<pairs
+            ]
             X1[i, :] = genomat
-            X2[i, :] = np.load(self.locs[ID])
+
+            # load and re-order locs
+            locs = np.load(self.locs[ID])
+            locs = locs[
+                :, shuffled_indices
+            ]
+            X2[i, :] = locs
+
         # (unindent)
         X = [X1, X2]
 
