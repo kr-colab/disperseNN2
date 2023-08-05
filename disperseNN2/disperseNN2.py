@@ -246,6 +246,12 @@ parser.add_argument(
     help="force overwrite of existing data: \
     including existing model, or predictions"
 )
+parser.add_argument(
+    "--shuffle_inds",
+    action="store_true",
+    default=False,
+    help="shuffles input data to augment training set."
+)
 args = parser.parse_args()
 check_params(args)
 if len(sys.argv) == 1:
@@ -432,6 +438,7 @@ def make_generator_params_dict(
         "grid_coarseness": args.grid_coarseness,
         "sample_grid": args.sample_grid,
         "empirical_locs": empirical_locs,
+        "shuffle_inds": args.shuffle_inds,
     }
     return params
 

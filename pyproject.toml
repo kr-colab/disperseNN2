@@ -3,7 +3,7 @@ name = "disperseNN2"
 packages = [
     {include = "disperseNN2"}
 ]
-version = "0.0.5"
+version = "0.0.6"
 description = "Neural net for estimating dispersal distance"
 authors = ["chriscrsmith <chriscs@uoregon.edu>"]
 readme = "README.md"
