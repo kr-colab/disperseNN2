@@ -327,16 +327,17 @@ The final empirical results are stored here:
 .. code-block:: console
 
 		(.venv) $ cat vignette/output_dir/empirical_12345.txt
-		vignette/iraptus rep0 2.0844352861
-		vignette/iraptus rep1 2.5100254281
-		vignette/iraptus rep2 2.2156516418
-		vignette/iraptus rep3 2.4447924536
-		vignette/iraptus rep4 2.505104107
-		vignette/iraptus rep5 2.2632444932
-		vignette/iraptus rep6 2.4132488538
-		vignette/iraptus rep7 1.7120651222
-		vignette/iraptus rep8 1.8796258058
-		vignette/iraptus rep9 2.3444896444
+		vignette/iraptus rep0 4.087428185
+		vignette/iraptus rep1 4.8111677578
+		vignette/iraptus rep2 4.0876021093
+		vignette/iraptus rep3 4.3992516724
+		vignette/iraptus rep4 4.4688130948
+		vignette/iraptus rep5 3.5237183759
+		vignette/iraptus rep6 4.3386011562
+		vignette/iraptus rep7 3.2029612009
+		vignette/iraptus rep8 3.4571107255
+		vignette/iraptus rep9 4.0926149904
+
 
 
 		

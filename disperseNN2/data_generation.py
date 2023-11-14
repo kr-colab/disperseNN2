@@ -35,7 +35,6 @@ class DataGenerator(tf.keras.utils.Sequence):
     grid_coarseness: int
     sample_grid: int
     empirical_locs: list
-    shuffle_inds: bool
 
     def __attrs_post_init__(self):
         "Initialize a few things"
@@ -366,16 +365,16 @@ class DataGenerator(tf.keras.utils.Sequence):
         X1 = np.empty((self.batch_size, self.num_snps, self.n), dtype="int8")
         X2 = np.empty((self.batch_size, 2, self.n), dtype=float)
         y = np.empty((self.batch_size,), dtype=float)
-        if self.shuffle_inds is True:
+        if self.empirical_locs is None: # augment training set by shuffling individuals
             shuffled_indices = np.arange(self.n)
-            np.random.shuffle(shuffled_indices)  # augment training set
+            np.random.shuffle(shuffled_indices)
         for i, ID in enumerate(list_IDs_temp):
             # load target
             y[i] = np.load(self.targets[ID])
 
             # load and re-order genos
             genomat = np.load(self.genos[ID])
-            if self.shuffle_inds is True:
+            if self.empirical_locs is None:
                 genomat = genomat[
                     :, shuffled_indices
                 ]
@@ -383,7 +382,7 @@ class DataGenerator(tf.keras.utils.Sequence):
 
             # load and re-order locs
             locs = np.load(self.locs[ID])
-            if self.shuffle_inds is True:
+            if self.empirical_locs is None:
                 locs = locs[
                     :, shuffled_indices
                 ]
