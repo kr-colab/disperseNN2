@@ -5,7 +5,9 @@
 Development
 -----------
 
-To install the current dev version:
+Fork the current dev version: https://github.com/kr-colab/disperseNN2.git.
+
+After cloning your fork, you can install with:
 
 .. code-block:: console
 
