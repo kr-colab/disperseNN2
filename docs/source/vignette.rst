@@ -246,6 +246,8 @@ declining over epochs of training:
    Plot of training history. X-axis the training iteration, and Y-axis is mean squared error.
 
 This plot shows that the validation loss decreases over time, without too much under- or over-fitting.
+Note that your outputs may diverge from those in the vignette, even if your results are reproducible on your machine. 
+This is due to differences in software environment, e.g., numpy version.
 		
 
 
