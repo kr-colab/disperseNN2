@@ -5,7 +5,7 @@
 GPUs
 ----
 
-Since tensorflow and cuda versions must be compatible with the particular `NVIDIA drivers <https://www.tensorflow.org/install/source#gpu>`_ on your computer, there is no single set of instructions that will work for everyone. In fact, since the `disperseNN2` code requires a newer tensorflow, our code is simply not compatible with older GPU setups.
+Since tensorflow and cuda versions must be compatible with the particular `NVIDIA drivers <https://www.tensorflow.org/install/source#gpu>`_ on your computer, there is no single set of instructions that will work for everyone. In fact, since the ``disperseNN2`` code requires a newer tensorflow, our code is simply not compatible with older GPU setups.
 
 We use the below commands to set things up on our computer. These will hopefully work for you, or at least serve as a startng point, but you may need to improvise.
 
@@ -21,5 +21,5 @@ We use the below commands to set things up on our computer. These will hopefully
                 (.venv) $ echo 'export XLA_FLAGS=--xla_gpu_cuda_data_dir=$CONDA_PREFIX/bin/' >> $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
                 (.venv) $ source $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
 
-To test that your installation works, train with `disperseNN2` (see  :doc:`vignette`.), and in a separate window run `gpustat` to make sure the GPU is actually firing. It isn't sufficient to just "pick up" the GPU, because often bits of cuda code are still missing and the GPU remains unused.
+To test that your installation works, train with ``disperseNN2`` (see  :doc:`vignette`.), and in a separate window run `gpustat` to make sure the GPU is actually firing. It isn't sufficient to just "pick up" the GPU, because often bits of cuda code are still missing and the GPU remains unused.
 
