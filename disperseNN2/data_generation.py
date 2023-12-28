@@ -22,7 +22,8 @@ class DataGenerator(tf.keras.utils.Sequence):
     n: int
     batch_size: int
     mu: float
-    shuffle: bool
+    shuffle_datasets: bool
+    shuffle_individuals: bool
     rho: float
     baseseed: int
     recapitate: bool
@@ -66,7 +67,7 @@ class DataGenerator(tf.keras.utils.Sequence):
     def on_epoch_end(self):
         "Updates indexes after each epoch"
         self.indexes = np.arange(len(self.list_IDs))
-        if self.shuffle is True:
+        if self.shuffle_datasets is True:
             np.random.shuffle(self.indexes)
 
     def cropper(self, ts, W, sample_width, edge_width, alive_inds):
@@ -365,8 +366,8 @@ class DataGenerator(tf.keras.utils.Sequence):
         X1 = np.empty((self.batch_size, self.num_snps, self.n), dtype="int8")
         X2 = np.empty((self.batch_size, 2, self.n), dtype=float)
         y = np.empty((self.batch_size,), dtype=float)
-        if self.empirical_locs is None: # augment training set by shuffling individuals
-            shuffled_indices = np.arange(self.n)
+        shuffled_indices = np.arange(self.n)
+        if self.shuffle_individuals is True: # augment training set by shuffling individuals
             np.random.shuffle(shuffled_indices)
         for i, ID in enumerate(list_IDs_temp):
             # load target

@@ -246,6 +246,12 @@ parser.add_argument(
     help="force overwrite of existing data: \
     including existing model, or predictions"
 )
+parser.add_argument(
+    "--no_shuffle_individuals",
+    action="store_false",
+    help="skip shuffling individuals within each dataset to get different pairs each batch and augment the training set (default is to shuffle)",
+    default=True,
+)
 args = parser.parse_args()
 check_params(args)
 if len(sys.argv) == 1:
@@ -407,7 +413,7 @@ def load_network():
 def make_generator_params_dict(
     targets,
     trees,
-    shuffle,
+    shuffle_datasets,
     genos,
     locs,
     empirical_locs,
@@ -419,7 +425,8 @@ def make_generator_params_dict(
         "n": args.n,
         "batch_size": args.batch_size,
         "mu": args.mu,
-        "shuffle": shuffle,
+        "shuffle_datasets": shuffle_datasets,
+        "shuffle_individuals": args.no_shuffle_individuals,
         "rho": args.rho,
         "baseseed": args.seed,
         "recapitate": args.recapitate,
@@ -521,7 +528,7 @@ def preprocess():
             params = make_generator_params_dict(
                 targets=None,
                 trees=None,
-                shuffle=None,
+                shuffle_datasets=None,
                 genos=None,
                 locs=None,
                 empirical_locs=locs,
@@ -595,7 +602,7 @@ def train():
     params = make_generator_params_dict(
         targets=targets,
         trees=None,
-        shuffle=True,
+        shuffle_datasets=True,
         genos=genos,
         locs=locs,
         empirical_locs=None,
@@ -650,7 +657,7 @@ def predict():
     params = make_generator_params_dict(
         targets=targets,
         trees=None,
-        shuffle=False,
+        shuffle_datasets=False,
         genos=genos,
         locs=locs,
         empirical_locs=None,
