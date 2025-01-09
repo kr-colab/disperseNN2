@@ -25,6 +25,7 @@ class DataGenerator(tf.keras.utils.Sequence):
     shuffle_datasets: bool
     shuffle_individuals: bool
     rho: float
+    w: float
     baseseed: int
     recapitate: bool
     skip_mutate: bool
@@ -174,7 +175,10 @@ class DataGenerator(tf.keras.utils.Sequence):
         np.random.seed(seed)
 
         # grab map width and sigma from provenance
-        W = parse_provenance(ts, "W")
+        if self.w == None:
+            W = parse_provenance(ts, "W")
+        else:
+            W = float(self.w)
         if self.edge_width == "sigma":
             edge_width = parse_provenance(ts, "sigma")
         else:

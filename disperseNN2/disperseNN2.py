@@ -95,6 +95,12 @@ parser.add_argument(
     default=1e-8,
     type=float)
 parser.add_argument(
+    "--w",
+    default=None,
+    type=int,
+    help="map width (will try to parse automatically if \"W\" provided to SLiM)",
+)
+parser.add_argument(
     "--num_samples",
     default=1,
     type=int,
@@ -428,6 +434,7 @@ def make_generator_params_dict(
         "shuffle_datasets": shuffle_datasets,
         "shuffle_individuals": args.no_shuffle_individuals,
         "rho": args.rho,
+        "w": args.w,
         "baseseed": args.seed,
         "recapitate": args.recapitate,
         "skip_mutate": args.skip_mutate,
