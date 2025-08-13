@@ -10,9 +10,9 @@ build:
   tools:
     python: "3.11"
 
-# # Build from the docs/ directory with Sphinx
-# sphinx:
-#   configuration: docs/conf.py
+# Path to your Sphinx configuration file
+sphinx:
+  configuration: docs/source/conf.py
 
 # Explicitly set the version of Python and its requirements
 python:
