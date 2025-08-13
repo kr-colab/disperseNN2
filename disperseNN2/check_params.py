@@ -7,7 +7,7 @@ def check_params(args):
     # avoid overwriting saved weights or other output files
     if args.train is True:
         if os.path.exists(
-            args.out + "/Train/disperseNN2_" + str(args.seed) + "_model.keras"
+            args.out + "/Train/disperseNN2_" + str(args.seed) + ".weights.h5"
         ) and args.force is False:
             print("saved model with specified output name already \
                    exists. To force overwrite, use --force.")

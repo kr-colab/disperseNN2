@@ -184,7 +184,7 @@ parser.add_argument(
     "--load_weights",
     default=None,
     type=str,
-    help="Path to a _weights.keras file to load weight from previous run.",
+    help="Path to a .weights.h5 file to load weight from previous run.",
 )
 parser.add_argument(
     "--phase",
@@ -385,7 +385,7 @@ def load_network():
     if args.predict is True:
         if args.load_weights is None:
             weights = args.out + "/Train/disperseNN2_" + \
-                str(args.seed) + "_model.keras"
+                str(args.seed) + ".weights.h5"
         else:
             weights = args.load_weights
         print("loading weights:", weights)
@@ -394,10 +394,10 @@ def load_network():
     # callbacks
     checkpointer = tf.keras.callbacks.ModelCheckpoint(
         filepath=args.out + "/Train/disperseNN2_"
-        + str(args.seed) + "_model.keras",
+        + str(args.seed) + ".weights.h5",
         verbose=args.keras_verbose,
         save_best_only=True,
-        save_weights_only=False,
+        save_weights_only=True,
         monitor="val_loss",
     )
     earlystop = tf.keras.callbacks.EarlyStopping(
