@@ -394,6 +394,6 @@ class DataGenerator(tf.keras.utils.Sequence):
             X2[i, :] = locs
 
         # (unindent)
-        X = [X1, X2]
+        X = (X1, X2)
 
         return (X, y)
