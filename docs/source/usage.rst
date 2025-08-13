@@ -142,7 +142,7 @@ Below is what a command looks like for the training step.
 - ``--gpu``: as an integer, specifies the GPU index (e.g., 0, 1, etc). "any" means take any available gpu. -1 means no GPU.
 
 This command will print the training progress to stdout.
-The model weights are saved to ``<out>/Train/disperseNN2_<seed>_model.hdf5``.
+The model weights are saved to ``<out>/Train/disperseNN2_<seed>_model.keras``.
 A single thread should be sufficient for reading preprocessed data, but we found that between 2 and 10 threads speeds up training.
 
 After training has completed (or has been interrupted), the training history can be visualized using a ``disperseNN2`` functionality:

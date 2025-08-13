@@ -23,6 +23,8 @@ def load_dl_modules():  # load TF only if reading input is successfull
     print("loading bigger modules")
     global tf
     import tensorflow as tf
+    global K
+    import keras.ops as K
     global DataGenerator
     from disperseNN2.data_generation import DataGenerator  # (loads TF)
 
@@ -182,7 +184,7 @@ parser.add_argument(
     "--load_weights",
     default=None,
     type=str,
-    help="Path to a _weights.hdf5 file to load weight from previous run.",
+    help="Path to a _weights.keras file to load weight from previous run.",
 )
 parser.add_argument(
     "--phase",
@@ -333,10 +335,12 @@ def load_network():
     # convolutions for each pair
     hs = []
     for comb in combinations:
-        h = tf.gather(geno_input, comb, axis=2)
-        locs = tf.gather(loc_input, comb, axis=2)
-        d = locs[:, :, 0] - locs[:, :, 1]
-        d = tf.norm(d, ord="euclidean", axis=1)
+        h = K.take(geno_input, comb, axis=2)
+        locs = K.take(loc_input, comb, axis=2)
+        d = locs[:, :, 0] - locs[:, :, 1]   # difference in spatial coordinates
+        d = K.square(d)  # squared differences
+        d = K.sum(d, axis=-1, keepdims=True)  # ss differences
+        d = K.sqrt(d)  # distance (euclidean)
         d = tf.keras.layers.Reshape((1,))(d)
         if comb in combinations_encode:
             for i in range(num_conv_iterations):
@@ -347,15 +351,15 @@ def load_network():
             h = DENSE_0(h)
         else:  # cut gradient tape on some pairs to save memory
             for i in range(num_conv_iterations):
-                h = tf.stop_gradient(CONV_LAYERS[i](h))
+                h = K.stop_gradient(CONV_LAYERS[i](h))
                 h = tf.keras.layers.AveragePooling1D(pool_size=pooling_size)(h)
             h = tf.keras.layers.Flatten()(h)
             h = tf.keras.layers.concatenate([h, d])
-            h = tf.stop_gradient(DENSE_0(h))
+            h = K.stop_gradient(DENSE_0(h))
         # (unindent)
         hs.append(h)
     # (unindent)
-    feature_block = tf.stack(hs, axis=1)
+    feature_block = K.stack(hs, axis=1)    
 
     # flatten and final dense
     feature_block = tf.keras.layers.Flatten()(feature_block)
@@ -370,9 +374,7 @@ def load_network():
         outputs=[output],
     )
     model.compile(loss="mse", optimizer=opt)
-    # model.summary()
-    for v in model.trainable_variables:
-        print(v.name)
+    #model.summary()
     print(
         "total params:",
         np.sum([np.prod(v.shape) for v in model.trainable_variables]),
@@ -383,7 +385,7 @@ def load_network():
     if args.predict is True:
         if args.load_weights is None:
             weights = args.out + "/Train/disperseNN2_" + \
-                str(args.seed) + "_model.hdf5"
+                str(args.seed) + "_model.keras"
         else:
             weights = args.load_weights
         print("loading weights:", weights)
@@ -392,12 +394,11 @@ def load_network():
     # callbacks
     checkpointer = tf.keras.callbacks.ModelCheckpoint(
         filepath=args.out + "/Train/disperseNN2_"
-        + str(args.seed) + "_model.hdf5",
+        + str(args.seed) + "_model.keras",
         verbose=args.keras_verbose,
         save_best_only=True,
-        saveweights_only=False,
+        save_weights_only=False,
         monitor="val_loss",
-        period=1,
     )
     earlystop = tf.keras.callbacks.EarlyStopping(
         monitor="val_loss", min_delta=0, patience=args.patience
