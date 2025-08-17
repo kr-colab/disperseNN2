@@ -7,7 +7,7 @@ GPUs
 
 Since tensorflow and cuda versions must be compatible with the particular `NVIDIA drivers <https://www.tensorflow.org/install/source#gpu>`_ on your computer, there is no single set of instructions that will work for everyone. In fact, since the `disperseNN2` code requires a newer tensorflow, our code is simply not compatible with older GPU setups.
 
-We use the below commands to set things up on our computer. These will hopefully work for you, or at least serve as a startng point, but you may need to improvise.
+We use the below commands to set things up on our computer. These will hopefully work for you, or at least serve as a startng point, but you may need to improvise. Make sure to checkout a GPU node first:
 
 .. code-block:: console
 
