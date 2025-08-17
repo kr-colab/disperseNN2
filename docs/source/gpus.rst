@@ -11,7 +11,6 @@ We use the below commands to set things up on our computer. These will hopefully
 
 .. code-block:: console
 
-                (.venv) $ mamba install -c nvidia cuda-toolkit=12.3 
                 (.venv) $ wget https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-9.12.0.46_cuda12-archive.tar.xz
                 (.venv) $ tar -xf cudnn-linux-x86_64-9.12.0.46_cuda12-archive.tar.xz
                 (.venv) $ cp cudnn-linux-x86_64-9.12.0.46_cuda12-archive/include/cudnn*.h $CONDA_PREFIX/include/
@@ -19,5 +18,6 @@ We use the below commands to set things up on our computer. These will hopefully
                 (.venv) $ mkdir -p $CONDA_PREFIX/etc/conda/activate.d
                 (.venv) $ echo 'export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/:$LD_LIBRARY_PATH' >> $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
                 (.venv) $ source $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
-
+                (.venv) $ mamba install -c nvidia cuda-toolkit=12.3 --yes
+		
 To test that your installation works, train with `disperseNN2` (see  :doc:`vignette`.), and in a separate window run `gpustat` to make sure the GPU is actually firing. It isn't sufficient to just "pick up" the GPU, because often bits of cuda code are still missing and the GPU remains unused.
