@@ -1,5 +1,5 @@
 setuptools
-tensorflow==2.11.0
+tensorflow=2.20.0 -c conda-forge
 gpustat
 numpy
 geopy
@@ -9,3 +9,4 @@ msprime
 tskit
 utm
 matplotlib
+slim==4.0.1
