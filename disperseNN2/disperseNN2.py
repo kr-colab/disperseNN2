@@ -756,7 +756,8 @@ def empirical():
         test_genos = np.reshape(
             test_genos, (1, test_genos.shape[0], test_genos.shape[1])
         )
-        test_locs = np.reshape(locs, (1, locs.shape[1], locs.shape[0]))
+        test_locs = locs.T  # (2, n)
+        test_locs = np.expand_dims(test_locs, axis=0)  # (1, 2, n)
         prediction = model.predict([test_genos, test_locs])
 
         # unpack_prediction
