@@ -70,14 +70,14 @@ early() {
 }
 
 1: late() {
-        print(c("Finished generation", sim.cycle, "; N=", p1.individualCount));
+        print(c("Finished tick", sim.cycle, "; N=", p1.individualCount));
 	if (p1.individualCount == 0){
            catn("Population died.");
            sim.simulationFinished();
         }
         else{
-	    // end after maxgens
-	    if (sim.cycle == maxgens){
+	    // end after a number of ticks
+	    if (sim.cycle == ticks){
                sim.treeSeqOutput(paste(c(OUTNAME,"_",SEED,".trees"), sep=""));
                catn("Done.");
                sim.simulationFinished();
