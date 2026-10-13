@@ -131,7 +131,7 @@ To recapitate the tree sequences output by ``SLiM`` with a generation time of 5.
 2. Preprocessing
 ----------------
 
-Next, we need to preprocess the input for ``disperseNN2``. But before we do that we need to clean up our *I. raptus* metadata, because we will use the empirical sampling locations during preprocessing. Go ahead and clone our git repo which contains the empirical data we're analyzing, 
+Next, we need to preprocess the input for ``disperseNN2``. But before we do that we need to clean up our *I. raptus* metadata, because we will use the empirical sampling locations during preprocessing. Go ahead and download the empirical data we're analyzing:
 
 .. code-block:: console
 
