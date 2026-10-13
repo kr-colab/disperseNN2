@@ -59,7 +59,7 @@ Next run the below code block which copies over the `square.slim script <https:/
 		(.venv) $ sigmas=$(python -c 'from scipy.stats import loguniform; import numpy; numpy.random.seed(seed=12345); print(*loguniform.rvs(0.4,6,size=200))')
                 (.venv) $ for i in {1..200}; do \
                 >             sigma=$(echo $sigmas | awk -v var="$i" '{print $var}'); \
-		>             echo "slim -d SEED=$i -d sigma=$sigma -d K=2.5 -d r=1e-8 -d W=78 -d G=1e8 -d maxgens=1000 -d OUTNAME=\"'vignette/TreeSeqs/output'\" square.slim" >> vignette/sim_commands.txt; \
+		>             echo "slim -d SEED=$i -d sigma=$sigma -d K=2.5 -d r=1e-8 -d W=78 -d G=1e8 -d ticks=1000 -d OUTNAME=\"'vignette/TreeSeqs/output'\" square.slim" >> vignette/sim_commands.txt; \
 		>             echo $sigma > vignette/Targets/target_$i.txt; \
 		>             echo vignette/Targets/target_$i.txt >> vignette/target_list.txt; \
 		>         done
@@ -75,7 +75,7 @@ Breaking down this pipeline one line at a time:
 
 .. note::
 
-   The above example used only 1,000 spatial generations; this strategy should be used with caution because this can affect how the output is interpreted. In addition, isolation-by-distance is usually weaker with fewer spatial generations which reduces signal for dispersal rate. In the paper we used 100,000 spatial generations.
+   The above example used only 1,000 spatial ticks; this strategy should be used with caution because this can affect how the output is interpreted. In addition, isolation-by-distance is usually weaker with fewer spatial generations which reduces signal for dispersal rate. In the paper we used 100,000 spatial ticks.
 
 The below command runs the simulations. The number of simulations run in parallel can be adjusted with ``num_threads``:
 
@@ -94,17 +94,18 @@ Or, (C) check out our :ref:`google_colab_notebook` where the pre-processed data 
 The below command runs the simualtions (option A). The number of simulations run in parallel can be adjusted with ``num_threads``:
 
    
-To recapitate the tree sequences output by ``SLiM``:
+To recapitate the tree sequences output by ``SLiM`` with a generation time of 5.25:
 
 .. code-block:: console
 
 		(.venv) $ for i in {1..200}; do \
 		>             echo "python -c 'import tskit,msprime; \
+		>                              generation_time=5.25; \
 		>                              ts=tskit.load(\"vignette/TreeSeqs/output_$i.trees\"); \
-		>		               Ne=len(ts.individuals()); \
+		>		               N=len(ts.individuals()); \
 		>		               demography = msprime.Demography.from_tree_sequence(ts); \
-		>		               demography[1].initial_size = Ne; \
-		>		               ts = msprime.sim_ancestry(initial_state=ts, recombination_rate=1e-8, demography=demography, start_time=ts.metadata[\"SLiM\"][\"cycle\"],random_seed=$i,); \
+		>		               demography[1].initial_size = N*generation_time; \
+		>		               ts = msprime.sim_ancestry(initial_state=ts, recombination_rate=1e-8/generation_time, demography=demography, start_time=ts.metadata[\"SLiM\"][\"cycle\"],random_seed=$i,); \
 		>		               ts.dump(\"vignette/TreeSeqs/output_$i"_"recap.trees\")'" \
 		>             >> vignette/recap_commands.txt; \
 		>             echo vignette/TreeSeqs/output_$i"_"recap.trees >> vignette/tree_list.txt; \
@@ -130,7 +131,7 @@ To recapitate the tree sequences output by ``SLiM``:
 2. Preprocessing
 ----------------
 
-Next, we need to preprocess the input for ``disperseNN2``. But before we do that we need to clean up our *I. raptus* metadata, because we will use the empirical sampling locations during preprocessing. Go ahead and clone our git repo which contains the empirical data we're analyzing, 
+Next, we need to preprocess the input for ``disperseNN2``. But before we do that we need to clean up our *I. raptus* metadata, because we will use the empirical sampling locations during preprocessing. Go ahead and download the empirical data we're analyzing:
 
 .. code-block:: console
 
@@ -344,7 +345,7 @@ The final empirical results are stored here:
 
 		
 **Interpretation**.
-The output, :math:`\sigma`, is an estimate for the standard deviation of the Gaussian dispersal kernel from our training simulations. In addition, the same parameter was used for the mating distance (and competition distance). Therefore, to get the distance to a random parent, i.e., effective :math:`\sigma`,  we would apply a posthoc correction of :math:`\sqrt{\frac{3}{2}} \times \sigma` (see original disperseNN paper for details). In this example, we trained with only 100 generations spatial, hence the dispersal rate estimate reflects demography in the recent past.
+The output, :math:`\sigma`, is an estimate for the standard deviation of the Gaussian dispersal kernel from our training simulations. In addition, the same parameter was used for the mating distance (and competition distance). Therefore, to get the distance to a random parent, i.e., effective :math:`\sigma`,  we would apply a posthoc correction of :math:`\sqrt{\frac{3}{2}} \times \sigma` (see original disperseNN paper for details). In this example, we trained with few generations, hence the dispersal rate estimate reflects demography in the recent past.
 
 
 

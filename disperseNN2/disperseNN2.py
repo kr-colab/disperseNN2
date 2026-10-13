@@ -155,6 +155,9 @@ parser.add_argument(
     default=False,
 )
 parser.add_argument(
+    "--generation_time", type=float, help="generation time in units of SLiM ticks"
+)
+parser.add_argument(
     "--skip_mutate",
     action="store_true",
     help="skip adding mutations",
@@ -447,6 +450,7 @@ def make_generator_params_dict(
         "grid_coarseness": args.grid_coarseness,
         "sample_grid": args.sample_grid,
         "empirical_locs": empirical_locs,
+        "generation_time": args.generation_time,
     }
     return params
 

@@ -307,14 +307,14 @@ The simulation script we use to train ``disperseNN2`` is ``SLiM_recipes/square.s
    }
 
    1: late() {
-       print(c("Finished generation", sim.cycle, "; N=", p1.individualCount));
+       print(c("Finished tick", sim.cycle, "; N=", p1.individualCount));
        if (p1.individualCount == 0){
            catn("Population died.");
            sim.simulationFinished();
        }
        else{
-	   // end after maxgens
-	   if (sim.cycle == maxgens){
+	   // end after a number of ticks
+	   if (sim.cycle == ticks){
                sim.treeSeqOutput(paste(c(OUTNAME,"_",SEED,".trees"), sep=""));
                catn("Done.");
                sim.simulationFinished();
@@ -342,7 +342,7 @@ Below is an example command using this script:
 		>	       -d r=<float> \
 		>	       -d W=<int> \
 		>	       -d G=<int> \
-		>	       -d maxgens=<int> \
+		>	       -d ticks=<int> \
 		>	       -d OUTNAME="'<path>'" \
 		>	       square.slim
 		
@@ -351,22 +351,35 @@ Command line arguments are passed to ``SLiM`` using the ``-d`` flag followed by 
 - ``SEED``: a random seed to reproduce the simulation results.
 - ``sigma``: the dispersal parameter.
 - ``K``: carrying capacity. Note: the carrying capacity in this model, K, corresponds roughly to density, but the actual density will vary depending on the model, and will fluctuate a bit over time.
-- ``r``:  per base per genertation recombination rate.
+- ``r``:  per base per generation recombination rate.
 - ``W``: the height and width of the geographic spatial boundaries.
 - ``G``: total size of the simulated genome.
-- ``maxgens``: number of generations to run simulation.
+- ``ticks``: number of ticks to run simulation.
 - ``OUTNAME``: prefix to name output files. Note the two sets of quotes around the output name
 
-In the ``disperseNN2`` paper we ran 100,000 spatial generations. After running ``SLiM`` for a fixed number of generations, the simulation is still not complete, as many trees will likely not have coalesced still. Next you will need to finish, or "recapitate", the tree sequences. We recommend recapitating at this early stage, before training, as training can be prohibitively slow if you recapitate on-the-fly. The below code snippet in python can be used to recapitate a tree sequence:
+In the ``disperseNN2`` paper we ran 100,000 spatial ticks in SLiM. After
+running ``SLiM`` for a fixed number of ticks, the simulation is still not
+complete, as many trees will likely not have fully coalesced. Next you will
+need to finish, or "recapitate", the tree sequences. We recommend recapitating
+at this early stage, before training, as training can be prohibitively slow if
+you recapitate on-the-fly.
+You must also provide the generation time (via the ``--generation_time`` flag if
+used on-the-fly) to convert time units from generations in msprime to ticks
+from SLiM: see the PySlim docs (https://tskit.dev/pyslim/docs/latest/time_units.html) for instructions on measuring generation time in SLiM.
+In Smith and Kern (2023) the time units were not converted (i.e., generation_time=1.0).
+The below example uses a generation time of 5.25 SLiM ticks.
+
+The below code snippet in python can be used to recapitate a tree sequence:
 
 .. code-block:: pycon
 
 		>>> import tskit,msprime
+		>>> generation_time=5.25
 		>>> ts=tskit.load("<prefix>.trees")
-		>>> Ne=len(ts.individuals())
+		>>> N=len(ts.individuals())
 		>>> demography = msprime.Demography.from_tree_sequence(ts)
-		>>> demography[1].initial_size = Ne
-		>>> ts = msprime.sim_ancestry(initial_state=ts, recombination_rate=<r>, demography=demography, start_time=ts.metadata["SLiM"]["cycle"],random_seed=12345)
+		>>> demography[1].initial_size = N * generation_time
+		>>> ts = msprime.sim_ancestry(initial_state=ts, recombination_rate=<r>/generation_time, demography=demography, start_time=ts.metadata["SLiM"]["cycle"],random_seed=12345)
 		>>> ts.dump("<prefix>_recap.trees")
 
 Where ``prefix`` is a path to a tree sequence excluding ".trees", and ``r`` is the recombination rate.

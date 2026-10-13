@@ -61,3 +61,6 @@ def check_params(args):
             currently"
         )
         exit()
+    if args.recapitate and args.generation_time is None:
+        print("generation time in units of SLiM ticks must be provided to recapitate.")
+        exit()

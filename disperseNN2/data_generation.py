@@ -37,6 +37,7 @@ class DataGenerator(tf.keras.utils.Sequence):
     grid_coarseness: int
     sample_grid: int
     empirical_locs: list
+    generation_time: float
 
     def __attrs_post_init__(self):
         "Initialize a few things"
@@ -188,17 +189,17 @@ class DataGenerator(tf.keras.utils.Sequence):
         alive_inds = []
         for i in ts.individuals():
             alive_inds.append(i.id)
-        if self.recapitate == "True":
-            Ne = len(alive_inds)
+        if self.recapitate:
+            N = len(alive_inds)
             if ts.num_populations > 1:
                 ts = ts.simplify()  # gets rid of weird, extraneous populations
             demography = msprime.Demography.from_tree_sequence(ts)
-            demography[0].initial_size = Ne
+            demography[0].initial_size = N * self.generation_time  # in SLiM ticks
             ts = msprime.sim_ancestry(
                 initial_state=ts,
-                recombination_rate=self.rho,
+                recombination_rate=self.rho / self.generation_time,  # in SLiM ticks
                 demography=demography,
-                start_time=ts.metadata["SLiM"]["generation"],
+                start_time=ts.metadata["SLiM"]["tick"],
                 random_seed=seed,
             )
 
